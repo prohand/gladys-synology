@@ -3,8 +3,8 @@
   "type": "device",
   "name": "Synology DSM",
   "description": {
-    "en": "Monitor a Synology NAS: CPU, memory, temperature and storage volumes.",
-    "fr": "Supervisez un NAS Synology : processeur, mémoire, température et volumes de stockage."
+    "en": "Monitor Synology NAS system metrics, storage volumes, disk SMART health and backups.",
+    "fr": "Supervisez les métriques système, volumes, états SMART des disques et sauvegardes d'un NAS Synology."
   },
   "version": "1.0.0",
   "docker_image": "ghcr.io/prohand/gladys-synology:1.0.0",
@@ -75,29 +75,145 @@
       "default": true
     },
     {
-      "key": "additional_nas",
-      "type": "secret",
-      "label": {
-        "en": "Additional NAS (JSON)",
-        "fr": "NAS supplémentaires (JSON)"
-      },
+      "key": "nas_2_section",
+      "type": "section",
+      "label": { "en": "NAS 2 (optional)", "fr": "NAS 2 (facultatif)" },
       "description": {
-        "en": "Optional JSON array of additional DSM connections. Example: [{\"url\":\"https://nas2:5001\",\"username\":\"gladys\",\"password\":\"secret\",\"otp_code\":\"123456\",\"verify_ssl\":true}]",
-        "fr": "Liste JSON facultative de connexions DSM supplémentaires. Exemple : [{\"url\":\"https://nas2:5001\",\"username\":\"gladys\",\"password\":\"secret\",\"otp_code\":\"123456\",\"verify_ssl\":true}]"
-      },
+        "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+      }
+    },
+    {
+      "key": "nas_2_url",
+      "type": "string",
+      "label": { "en": "NAS 2 — DSM URL", "fr": "NAS 2 — URL DSM" },
       "required": false
+    },
+    {
+      "key": "nas_2_username",
+      "type": "string",
+      "label": { "en": "NAS 2 — Username", "fr": "NAS 2 — Nom d'utilisateur" },
+      "required": false
+    },
+    {
+      "key": "nas_2_password",
+      "type": "secret",
+      "label": { "en": "NAS 2 — Password", "fr": "NAS 2 — Mot de passe" },
+      "required": false
+    },
+    {
+      "key": "nas_2_otp_code",
+      "type": "secret",
+      "label": { "en": "NAS 2 — Current OTP code", "fr": "NAS 2 — Code OTP actuel" },
+      "required": false
+    },
+    {
+      "key": "nas_2_verify_ssl",
+      "type": "boolean",
+      "label": {
+        "en": "NAS 2 — Verify TLS certificate",
+        "fr": "NAS 2 — Vérifier le certificat TLS"
+      },
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "nas_3_section",
+      "type": "section",
+      "label": { "en": "NAS 3 (optional)", "fr": "NAS 3 (facultatif)" },
+      "description": {
+        "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+      }
+    },
+    {
+      "key": "nas_3_url",
+      "type": "string",
+      "label": { "en": "NAS 3 — DSM URL", "fr": "NAS 3 — URL DSM" },
+      "required": false
+    },
+    {
+      "key": "nas_3_username",
+      "type": "string",
+      "label": { "en": "NAS 3 — Username", "fr": "NAS 3 — Nom d'utilisateur" },
+      "required": false
+    },
+    {
+      "key": "nas_3_password",
+      "type": "secret",
+      "label": { "en": "NAS 3 — Password", "fr": "NAS 3 — Mot de passe" },
+      "required": false
+    },
+    {
+      "key": "nas_3_otp_code",
+      "type": "secret",
+      "label": { "en": "NAS 3 — Current OTP code", "fr": "NAS 3 — Code OTP actuel" },
+      "required": false
+    },
+    {
+      "key": "nas_3_verify_ssl",
+      "type": "boolean",
+      "label": {
+        "en": "NAS 3 — Verify TLS certificate",
+        "fr": "NAS 3 — Vérifier le certificat TLS"
+      },
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "nas_4_section",
+      "type": "section",
+      "label": { "en": "NAS 4 (optional)", "fr": "NAS 4 (facultatif)" },
+      "description": {
+        "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+      }
+    },
+    {
+      "key": "nas_4_url",
+      "type": "string",
+      "label": { "en": "NAS 4 — DSM URL", "fr": "NAS 4 — URL DSM" },
+      "required": false
+    },
+    {
+      "key": "nas_4_username",
+      "type": "string",
+      "label": { "en": "NAS 4 — Username", "fr": "NAS 4 — Nom d'utilisateur" },
+      "required": false
+    },
+    {
+      "key": "nas_4_password",
+      "type": "secret",
+      "label": { "en": "NAS 4 — Password", "fr": "NAS 4 — Mot de passe" },
+      "required": false
+    },
+    {
+      "key": "nas_4_otp_code",
+      "type": "secret",
+      "label": { "en": "NAS 4 — Current OTP code", "fr": "NAS 4 — Code OTP actuel" },
+      "required": false
+    },
+    {
+      "key": "nas_4_verify_ssl",
+      "type": "boolean",
+      "label": {
+        "en": "NAS 4 — Verify TLS certificate",
+        "fr": "NAS 4 — Vérifier le certificat TLS"
+      },
+      "required": false,
+      "default": true
     },
     {
       "key": "poll_frequency",
       "type": "number",
       "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
       "description": {
-        "en": "Custom interval in seconds (300 to 86400). The default is 900 seconds. A moderate interval limits the growth of the Gladys database.",
-        "fr": "Intervalle personnalisé en secondes (300 à 86400). La valeur par défaut est 900 secondes. Un intervalle modéré limite la croissance de la base Gladys."
+        "en": "Custom interval in seconds (60 to 86400). The default is 900 seconds. A moderate interval limits the growth of the Gladys database.",
+        "fr": "Intervalle personnalisé en secondes (60 à 86400). La valeur par défaut est 900 secondes. Un intervalle modéré limite la croissance de la base Gladys."
       },
       "required": false,
       "default": 900,
-      "min": 300,
+      "min": 60,
       "max": 86400,
       "placeholder": { "en": "900", "fr": "900" }
     }

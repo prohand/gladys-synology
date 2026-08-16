@@ -110,8 +110,26 @@ test('client loads optional Hyper Backup and Active Backup task APIs when availa
               });
         }
         if (body.api === 'SYNO.ActiveBackup.Task') {
+          if (!body.filter) {
+            return jsonResponse({
+              success: true,
+              data: { tasks: [{ task_id: 2, task_name: 'Workstations' }] },
+            });
+          }
           assert.equal(body.load_versions, 'true');
-          return jsonResponse({ success: true, data: { tasks: [{ task_id: 2 }] } });
+          assert.deepEqual(JSON.parse(body.filter), { task_id: 2, data_formats: [1, 4] });
+          return jsonResponse({
+            success: true,
+            data: {
+              tasks: [
+                {
+                  task_id: 2,
+                  last_result: { status: 2, time_end: 1_700_000_100 },
+                  versions: [{ status: 3, time_end: 1_700_000_100 }],
+                },
+              ],
+            },
+          });
         }
         return jsonResponse({ success: true, data: {} });
       },
@@ -122,6 +140,8 @@ test('client loads optional Hyper Backup and Active Backup task APIs when availa
   assert.equal(snapshot.hyperBackup.task_list[0].task_id, 1);
   assert.equal(snapshot.hyperBackup.task_list[0].last_bkp_result, 'success');
   assert.equal(snapshot.activeBackup.tasks[0].task_id, 2);
+  assert.equal(snapshot.activeBackup.tasks[0].task_name, 'Workstations');
+  assert.equal(snapshot.activeBackup.tasks[0].last_result.time_end, 1_700_000_100);
 });
 
 test('client reports DSM authentication errors without exposing the password', async () => {

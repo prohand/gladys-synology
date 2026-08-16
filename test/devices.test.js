@@ -89,6 +89,33 @@ test('backup tasks are discovered as text-only Gladys devices', () => {
   assert.ok(states.every((state) => typeof state.text === 'string'));
 });
 
+test('disk SMART status is discovered as text and binary health features', () => {
+  const diskSnapshot = {
+    ...snapshot,
+    disks: [{ id: 'disk_1', name: 'Drive 1', smartStatus: 'normal', smartHealthy: 1 }],
+  };
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', diskSnapshot);
+  const diskDevice = devices.find((device) => device.external_id.startsWith('synology-disk:'));
+  assert.equal(diskDevice.name, 'Synology Drive 1');
+  assert.deepEqual(
+    diskDevice.features.map((feature) => feature.external_id),
+    ['synology-disk:ABC123:disk_1:smart-status', 'synology-disk:ABC123:disk_1:smart-healthy'],
+  );
+  const states = buildStates(gladys, 'ABC123', diskSnapshot).filter((state) =>
+    state.device_feature_external_id.startsWith('synology-disk:'),
+  );
+  assert.deepEqual(states, [
+    {
+      device_feature_external_id: 'synology-disk:ABC123:disk_1:smart-status',
+      text: 'normal',
+    },
+    {
+      device_feature_external_id: 'synology-disk:ABC123:disk_1:smart-healthy',
+      state: 1,
+    },
+  ]);
+});
+
 test('every discovered feature includes the numeric bounds required by Gladys', () => {
   const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   for (const feature of devices.flatMap((device) => device.features)) {

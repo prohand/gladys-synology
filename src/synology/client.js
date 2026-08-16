@@ -201,6 +201,44 @@ export class SynologyClient {
     return { ...list, task_list: enriched };
   }
 
+  async getActiveBackup() {
+    const list = await this.optionalCall(
+      'SYNO.ActiveBackup.Task',
+      'list',
+      {},
+      { preferredVersion: 1 },
+    );
+    if (!list) return null;
+    const tasks = Array.isArray(list.tasks)
+      ? list.tasks
+      : Array.isArray(list.task_list)
+        ? list.task_list
+        : [];
+    const enriched = await Promise.all(
+      tasks.map(async (task) => {
+        const taskId = task.task_id ?? task.id;
+        if (taskId === undefined) return task;
+        const detail = await this.optionalCall(
+          'SYNO.ActiveBackup.Task',
+          'list',
+          {
+            load_verify_status: 'true',
+            load_versions: 'true',
+            filter: JSON.stringify({ task_id: taskId, data_formats: [1, 4] }),
+          },
+          { preferredVersion: 1 },
+        );
+        const detailedTask = detail?.tasks?.[0] ?? detail?.task_list?.[0];
+        return detailedTask ? { ...task, ...detailedTask } : task;
+      }),
+    );
+    return {
+      ...list,
+      tasks: enriched,
+      ...(Array.isArray(list.task_list) ? { task_list: enriched } : {}),
+    };
+  }
+
   async getSnapshot() {
     if (!this.apis) await this.discoverApis();
     if (!this.sid) await this.login();
@@ -214,12 +252,7 @@ export class SynologyClient {
         { preferredVersion: 1, required: false },
       ),
       this.getHyperBackup(),
-      this.optionalCall(
-        'SYNO.ActiveBackup.Task',
-        'list',
-        { load_verify_status: 'true', load_versions: 'true' },
-        { preferredVersion: 1 },
-      ),
+      this.getActiveBackup(),
     ]);
     return { system, utilization, storage, hyperBackup, activeBackup };
   }

@@ -26,7 +26,21 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       password: '1234',
       otp_code: '123456',
       verify_ssl: false,
-      additional_nas: '',
+      nas_2_url: '',
+      nas_2_username: '',
+      nas_2_password: '',
+      nas_2_otp_code: '',
+      nas_2_verify_ssl: true,
+      nas_3_url: '',
+      nas_3_username: '',
+      nas_3_password: '',
+      nas_3_otp_code: '',
+      nas_3_verify_ssl: true,
+      nas_4_url: '',
+      nas_4_username: '',
+      nas_4_password: '',
+      nas_4_otp_code: '',
+      nas_4_verify_ssl: true,
       poll_frequency: 700,
     },
   );
@@ -34,25 +48,22 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
 
 test('normalizeConfig accepts a manual monitoring interval within safe bounds', () => {
   assert.equal(normalizeConfig({ poll_frequency: '731' }).poll_frequency, 731);
-  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, MIN_POLL_FREQUENCY);
+  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 60);
+  assert.equal(normalizeConfig({ poll_frequency: '30' }).poll_frequency, MIN_POLL_FREQUENCY);
   assert.equal(normalizeConfig({ poll_frequency: '999999' }).poll_frequency, MAX_POLL_FREQUENCY);
 });
 
-test('getNasConfigs parses additional NAS connections with the shared interval', () => {
+test('getNasConfigs builds additional NAS connections from dedicated secret slots', () => {
   const config = normalizeConfig({
     url: 'https://nas1:5001',
     username: 'one',
     password: 'password-one',
     poll_frequency: 731,
-    additional_nas: JSON.stringify([
-      {
-        url: 'nas2:5001',
-        username: 'two',
-        password: 'password-two',
-        otp_code: '123456',
-        verify_ssl: false,
-      },
-    ]),
+    nas_2_url: 'nas2:5001',
+    nas_2_username: 'two',
+    nas_2_password: 'password-two',
+    nas_2_otp_code: '123456',
+    nas_2_verify_ssl: false,
   });
   const connections = getNasConfigs(config);
   assert.equal(connections.length, 2);
@@ -61,15 +72,18 @@ test('getNasConfigs parses additional NAS connections with the shared interval',
   assert.equal(connections[1].verify_ssl, false);
 });
 
-test('getNasConfigs rejects malformed additional NAS configuration', () => {
+test('getNasConfigs ignores empty slots and rejects incomplete additional NAS fields', () => {
   const base = { url: 'https://nas', username: 'u', password: 'p' };
+  assert.equal(getNasConfigs(normalizeConfig(base)).length, 1);
+  const legacy = normalizeConfig({
+    ...base,
+    additional_nas: '[{"url":"nas2","username":"u","password":"visible"}]',
+  });
+  assert.equal(legacy.additional_nas, undefined);
+  assert.equal(getNasConfigs(legacy).length, 1);
   assert.throws(
-    () => getNasConfigs(normalizeConfig({ ...base, additional_nas: 'not-json' })),
-    /valid JSON/,
-  );
-  assert.throws(
-    () => getNasConfigs(normalizeConfig({ ...base, additional_nas: '[{"url":"nas2"}]' })),
-    /Additional NAS 1.*username/i,
+    () => getNasConfigs(normalizeConfig({ ...base, nas_2_url: 'nas2' })),
+    /NAS 2.*username/i,
   );
 });
 
