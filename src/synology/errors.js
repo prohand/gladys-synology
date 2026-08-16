@@ -13,7 +13,7 @@ const DSM_ERROR_MESSAGES = new Map([
   [102, 'Requested DSM API does not exist'],
   [103, 'Requested DSM API method does not exist'],
   [104, 'Requested DSM API version is unsupported'],
-  [105, 'Insufficient DSM user privileges'],
+  [105, 'Insufficient DSM user privileges; add the account to the administrators group'],
   [106, 'DSM session timed out'],
   [107, 'DSM session was interrupted'],
   [400, 'Invalid DSM credentials'],

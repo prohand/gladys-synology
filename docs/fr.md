@@ -4,12 +4,15 @@ Cette intégration supervise un NAS Synology depuis Gladys Assistant. Elle fonct
 
 ## Avant de commencer
 
-1. Dans DSM, créez un utilisateur dédié à Gladys.
-2. Accordez-lui uniquement les droits de lecture nécessaires aux informations système et de stockage.
-3. Dans **Panneau de configuration → Portail de connexion**, relevez le port HTTPS de DSM (généralement `5001`).
-4. Vérifiez que la machine qui exécute Gladys peut joindre cette adresse. N'exposez pas DSM à Internet uniquement pour cette intégration.
+1. Dans **Panneau de configuration → Utilisateur et groupe → Utilisateur**, créez un utilisateur dédié à Gladys.
+2. À l'étape d'affectation aux groupes, ajoutez-le au groupe **administrators**. Ce droit est obligatoire : les WebAPI DSM utilisées pour la charge système et le stockage refusent un utilisateur ordinaire avec l'erreur `105` (droits insuffisants). Le rôle délégué **Surveillance du système** ne remplace pas ce droit de manière fiable pour ces API.
+3. Attribuez **Pas d'accès** à tous les dossiers partagés.
+4. Attribuez **Refuser** à toutes les applications. Les API de supervision restent accessibles grâce au groupe administrators, même si le compte ne peut pas utiliser DSM ni parcourir les fichiers.
+5. N'accordez aucun quota ni accès à File Station, Surveillance Station, SSH ou à un autre service.
+6. Dans **Panneau de configuration → Portail de connexion**, relevez le port HTTPS de DSM (généralement `5001`).
+7. Vérifiez que la machine qui exécute Gladys peut joindre cette adresse. N'exposez pas DSM à Internet uniquement pour cette intégration.
 
-Une intégration en arrière-plan ne peut pas saisir interactivement un code de double authentification. Utilisez un compte dédié et restreint dont la politique autorise la connexion API, puis protégez-le avec le pare-feu DSM et un mot de passe unique et robuste.
+Cette intégration ne transmet pas encore les mots de passe à usage unique de DSM. N'imposez donc pas la double authentification à ce compte dédié. Compensez avec un mot de passe long et unique, ainsi qu'une règle du pare-feu DSM qui n'autorise le port HTTPS que depuis l'adresse IP de l'hôte Gladys.
 
 ## Configuration
 
@@ -27,7 +30,7 @@ L'intégration crée un appareil pour le NAS et un appareil par volume de stocka
 ## Dépannage
 
 - **Identifiants incorrects** : vérifiez le compte dédié et sa politique de connexion.
-- **Droits insuffisants** : accordez l'accès en lecture aux informations système et de stockage DSM.
+- **Droits insuffisants / erreur 105** : ajoutez le compte dédié au groupe DSM `administrators`. Le seul rôle délégué Surveillance du système ne suffit pas pour ces API.
 - **DSM injoignable** : testez l'URL depuis l'hôte Gladys et vérifiez le pare-feu du NAS.
 - **Erreur de certificat** : installez un certificat de confiance dans DSM. Pour une installation privée auto-signée uniquement, la vérification peut être désactivée.
 - **Volume absent** : relancez une recherche après la création ou la suppression d'un volume.
