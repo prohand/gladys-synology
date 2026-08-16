@@ -56,7 +56,6 @@ export function normalizeSnapshot(snapshot) {
   const utilization = snapshot.utilization ?? {};
   const cpu = utilization.cpu ?? {};
   const memory = utilization.memory ?? {};
-  const network = Array.isArray(utilization.network) ? utilization.network : [];
 
   const userLoad = finite(cpu.user_load, cpu.user);
   const systemLoad = finite(cpu.system_load, cpu.system);
@@ -67,9 +66,6 @@ export function normalizeSnapshot(snapshot) {
     cpu.load,
     calculatedCpu.length ? calculatedCpu.reduce((sum, value) => sum + value, 0) : undefined,
   );
-  const rx = network.reduce((sum, item) => sum + (finite(item.rx, item.receive) ?? 0), 0);
-  const tx = network.reduce((sum, item) => sum + (finite(item.tx, item.transmit) ?? 0), 0);
-
   return {
     nas: {
       serial: String(system.serial ?? system.serial_number ?? ''),
@@ -79,8 +75,6 @@ export function normalizeSnapshot(snapshot) {
       uptime: finite(system.up_time, system.uptime, utilization.time),
       cpuUsage,
       memoryUsage: finite(memory.real_usage, memory.usage),
-      receiveRate: rx,
-      transmitRate: tx,
     },
     volumes: normalizeVolumes(snapshot.storage ?? {}),
   };

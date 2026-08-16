@@ -40,8 +40,6 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
     uptime: 12345,
     cpuUsage: 13,
     memoryUsage: 37,
-    receiveRate: 3000,
-    transmitRate: 1250,
   });
   assert.equal(snapshot.volumes[0].usagePercent, 25);
   assert.equal(snapshot.volumes[0].freeBytes, 750);

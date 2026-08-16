@@ -21,7 +21,7 @@ test('manifest configuration defaults stay in sync with code', () => {
   assert.equal(Number(fields.poll_frequency.default), DEFAULT_CONFIG.poll_frequency);
   assert.deepEqual(
     fields.poll_frequency.options.map(({ value }) => Number(value)),
-    [30, 60],
+    [300, 900, 3600],
   );
   assert.equal(fields.password.type, 'secret');
   assert.equal(fields.otp_code.type, 'secret');

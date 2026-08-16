@@ -10,8 +10,6 @@ export const SYSTEM_FEATURE = {
   CPU: 'cpu-usage',
   MEMORY: 'memory-usage',
   TEMPERATURE: 'temperature',
-  RECEIVE_RATE: 'network-receive',
-  TRANSMIT_RATE: 'network-transmit',
   UPTIME: 'uptime',
   DSM_VERSION: 'dsm-version',
 };
@@ -20,18 +18,16 @@ export function systemDeviceExternalId(gladys, nasId) {
   return gladys.externalIds(DEVICE_TYPE, nasId).device;
 }
 
-export function buildSystemDevice(gladys, nasId, nas, config) {
+export function buildSystemDevice(gladys, nasId, nas) {
   const ids = gladys.externalIds(DEVICE_TYPE, nasId);
   return {
     name: nas.model || 'Synology NAS',
     external_id: ids.device,
-    // The configuration is user-facing seconds; Gladys' device contract uses milliseconds.
-    poll_frequency: config.poll_frequency * 1000,
     features: [
       {
         name: 'CPU usage',
         external_id: ids.feature(SYSTEM_FEATURE.CPU),
-        category: DEVICE_FEATURE_CATEGORIES.UNKNOWN,
+        category: DEVICE_FEATURE_CATEGORIES.LEVEL_SENSOR,
         type: DEVICE_FEATURE_TYPES.SENSOR.DECIMAL,
         unit: DEVICE_FEATURE_UNITS.PERCENT,
         min: 0,
@@ -43,7 +39,7 @@ export function buildSystemDevice(gladys, nasId, nas, config) {
       {
         name: 'Memory usage',
         external_id: ids.feature(SYSTEM_FEATURE.MEMORY),
-        category: DEVICE_FEATURE_CATEGORIES.UNKNOWN,
+        category: DEVICE_FEATURE_CATEGORIES.LEVEL_SENSOR,
         type: DEVICE_FEATURE_TYPES.SENSOR.DECIMAL,
         unit: DEVICE_FEATURE_UNITS.PERCENT,
         min: 0,
@@ -60,30 +56,6 @@ export function buildSystemDevice(gladys, nasId, nas, config) {
         unit: DEVICE_FEATURE_UNITS.CELSIUS,
         min: -20,
         max: 120,
-        read_only: true,
-        has_feedback: false,
-        keep_history: true,
-      },
-      {
-        name: 'Network received',
-        external_id: ids.feature(SYSTEM_FEATURE.RECEIVE_RATE),
-        category: DEVICE_FEATURE_CATEGORIES.DATARATE,
-        type: DEVICE_FEATURE_TYPES.DATARATE.RATE,
-        unit: DEVICE_FEATURE_UNITS.BYTES_PER_SECOND,
-        min: 0,
-        max: 10 ** 11,
-        read_only: true,
-        has_feedback: false,
-        keep_history: true,
-      },
-      {
-        name: 'Network transmitted',
-        external_id: ids.feature(SYSTEM_FEATURE.TRANSMIT_RATE),
-        category: DEVICE_FEATURE_CATEGORIES.DATARATE,
-        type: DEVICE_FEATURE_TYPES.DATARATE.RATE,
-        unit: DEVICE_FEATURE_UNITS.BYTES_PER_SECOND,
-        min: 0,
-        max: 10 ** 11,
         read_only: true,
         has_feedback: false,
         keep_history: true,
@@ -121,8 +93,6 @@ export function buildSystemStates(gladys, nasId, nas) {
     [SYSTEM_FEATURE.CPU, nas.cpuUsage],
     [SYSTEM_FEATURE.MEMORY, nas.memoryUsage],
     [SYSTEM_FEATURE.TEMPERATURE, nas.temperature],
-    [SYSTEM_FEATURE.RECEIVE_RATE, nas.receiveRate],
-    [SYSTEM_FEATURE.TRANSMIT_RATE, nas.transmitRate],
     [SYSTEM_FEATURE.UPTIME, nas.uptime],
   ];
   const states = numericValues

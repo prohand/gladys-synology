@@ -20,13 +20,13 @@ MFA is supported through DSM verification codes (OTP). **Approve sign-in** and h
 - **Username / password**: credentials of the dedicated DSM user.
 - **Current OTP code (MFA)**: a current 6-digit code for the first MFA login or after the DSM trusted device is revoked. It is not sent once the remembered device is accepted.
 - **Verify the TLS certificate**: keep enabled for a trusted certificate. Disable only for a self-signed local certificate after verifying the NAS address yourself.
-- **Refresh interval**: 30 or 60 seconds.
+- **Refresh interval**: 5 minutes, 15 minutes (recommended and used by default), or 1 hour. A moderate interval prevents unnecessary Gladys database growth.
 
 Click **Test the DSM connection**. A successful result shows the NAS model, DSM version and number of detected volumes. Then scan for devices in Gladys.
 
 ## Devices
 
-The integration creates one device for the NAS and one device for every storage volume. The NAS triggers the periodic refresh; every refresh updates both the system and volume values in one batch.
+The integration creates one device for the NAS and one device for every storage volume. A first snapshot is sent immediately after a device is added, then every refresh updates both the system and volume values in one batch. History is kept for utilization, temperature and health values; capacities and static information do not create redundant history.
 
 ## Troubleshooting
 

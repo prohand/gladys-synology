@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { DEVICE_FEATURE_CATEGORIES } from '@gladysassistant/integration-sdk';
-import { normalizeConfig } from '../src/config.js';
 import { buildDiscoveredDevices, buildStates } from '../src/devices/index.js';
 import { createFakeGladys } from './helpers/fakeGladys.js';
 
@@ -15,8 +14,6 @@ const snapshot = {
     uptime: 300,
     cpuUsage: 10,
     memoryUsage: 20,
-    receiveRate: 30,
-    transmitRate: 40,
   },
   volumes: [
     {
@@ -32,25 +29,33 @@ const snapshot = {
 };
 
 test('discovery creates one NAS and one device per volume', () => {
-  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   assert.equal(devices.length, 2);
-  assert.equal(devices[0].poll_frequency, 60_000);
+  assert.equal(devices[0].poll_frequency, undefined);
   assert.equal(devices[1].poll_frequency, undefined);
   assert.equal(new Set(devices.map((device) => device.external_id)).size, 2);
 });
 
-test('discovery uses canonical Gladys categories for temperature, data and rates', () => {
-  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
+test('discovery uses canonical Gladys categories for levels, temperature and data', () => {
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   const categories = devices.flatMap((device) =>
     device.features.map((feature) => feature.category),
   );
+  assert.ok(categories.includes(DEVICE_FEATURE_CATEGORIES.LEVEL_SENSOR));
   assert.ok(categories.includes(DEVICE_FEATURE_CATEGORIES.DEVICE_TEMPERATURE_SENSOR));
-  assert.ok(categories.includes(DEVICE_FEATURE_CATEGORIES.DATARATE));
   assert.ok(categories.includes(DEVICE_FEATURE_CATEGORIES.DATA));
 });
 
+test('discovery does not expose network traffic features', () => {
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
+  const featureIds = devices.flatMap((device) =>
+    device.features.map((feature) => feature.external_id),
+  );
+  assert.ok(featureIds.every((id) => !id.includes('network-')));
+});
+
 test('every discovered feature includes the numeric bounds required by Gladys', () => {
-  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   for (const feature of devices.flatMap((device) => device.features)) {
     assert.equal(Number.isFinite(feature.min), true, `${feature.external_id} min`);
     assert.equal(Number.isFinite(feature.max), true, `${feature.external_id} max`);
@@ -58,7 +63,7 @@ test('every discovered feature includes the numeric bounds required by Gladys', 
 });
 
 test('states use the same stable feature IDs as discovery', () => {
-  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   const featureIds = new Set(
     devices.flatMap((device) => device.features.map((f) => f.external_id)),
   );
@@ -78,7 +83,7 @@ test('DSM version is published through the Gladys text field', () => {
 
 test('undefined optional values are not published', () => {
   const states = buildStates(gladys, 'ABC123', {
-    nas: { model: 'NAS', dsmVersion: '', receiveRate: 0, transmitRate: 0 },
+    nas: { model: 'NAS', dsmVersion: '', cpuUsage: 0, memoryUsage: 0 },
     volumes: [],
   });
   assert.equal(states.length, 2);

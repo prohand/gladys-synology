@@ -59,3 +59,34 @@ test('service publishes a normalized state batch', async () => {
     ),
   );
 });
+
+test('service throttles scheduled publications and allows a forced refresh', async () => {
+  let now = 1_000;
+  const gladys = createFakeGladys();
+  const service = new SynologyService(
+    normalizeConfig({
+      url: 'https://nas',
+      username: 'u',
+      password: 'p',
+      poll_frequency: 300,
+    }),
+    {
+      now: () => now,
+      clientFactory: () => ({
+        async getSnapshot() {
+          return rawSnapshot();
+        },
+        async close() {},
+      }),
+    },
+  );
+
+  await service.publishStates(gladys);
+  const firstBatchSize = gladys.published.length;
+  now += 60_000;
+  await service.publishStates(gladys);
+  assert.equal(gladys.published.length, firstBatchSize);
+
+  await service.publishStates(gladys, { force: true });
+  assert.equal(gladys.published.length, firstBatchSize * 2);
+});

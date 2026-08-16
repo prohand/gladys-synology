@@ -1,9 +1,9 @@
 import { buildSystemDevice, buildSystemStates } from './system.js';
 import { buildVolumeDevice, buildVolumeStates } from './volume.js';
 
-export function buildDiscoveredDevices(gladys, nasId, snapshot, config) {
+export function buildDiscoveredDevices(gladys, nasId, snapshot) {
   return [
-    buildSystemDevice(gladys, nasId, snapshot.nas, config),
+    buildSystemDevice(gladys, nasId, snapshot.nas),
     ...snapshot.volumes.map((volume) => buildVolumeDevice(gladys, nasId, volume)),
   ];
 }

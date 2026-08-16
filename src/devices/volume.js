@@ -31,7 +31,7 @@ export function buildVolumeDevice(gladys, nasId, volume) {
     max: 10 ** 9,
     read_only: true,
     has_feedback: false,
-    keep_history: key === VOLUME_FEATURE.USED,
+    keep_history: false,
   });
   return {
     name: `Synology ${volume.name}`,
@@ -40,7 +40,7 @@ export function buildVolumeDevice(gladys, nasId, volume) {
       {
         name: 'Usage',
         external_id: ids.feature(VOLUME_FEATURE.USAGE),
-        category: DEVICE_FEATURE_CATEGORIES.UNKNOWN,
+        category: DEVICE_FEATURE_CATEGORIES.LEVEL_SENSOR,
         type: DEVICE_FEATURE_TYPES.SENSOR.DECIMAL,
         unit: DEVICE_FEATURE_UNITS.PERCENT,
         min: 0,

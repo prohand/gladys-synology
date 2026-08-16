@@ -7,12 +7,17 @@ import { normalizeSnapshot } from './synology/metrics.js';
 const logger = createLogger({ name: 'synology' });
 
 export class SynologyService {
-  constructor(config, { clientFactory = (clientConfig) => new SynologyClient(clientConfig) } = {}) {
+  constructor(
+    config,
+    { clientFactory = (clientConfig) => new SynologyClient(clientConfig), now = Date.now } = {},
+  ) {
     validateConfig(config);
     this.config = config;
     this.client = clientFactory(config);
+    this.now = now;
     this.snapshot = null;
     this.inFlightRefresh = null;
+    this.lastPublishedAt = null;
   }
 
   get nasId() {
@@ -37,13 +42,23 @@ export class SynologyService {
 
   async discover(gladys, { refresh = true } = {}) {
     const snapshot = refresh || !this.snapshot ? await this.refresh() : this.snapshot;
-    return buildDiscoveredDevices(gladys, this.nasId, snapshot, this.config);
+    return buildDiscoveredDevices(gladys, this.nasId, snapshot);
   }
 
-  async publishStates(gladys) {
+  async publishStates(gladys, { force = false } = {}) {
+    const now = this.now();
+    if (
+      !force &&
+      this.lastPublishedAt !== null &&
+      now - this.lastPublishedAt < this.config.poll_frequency * 1000
+    ) {
+      return this.snapshot;
+    }
+
     const snapshot = await this.refresh();
     const states = buildStates(gladys, this.nasId, snapshot);
     if (states.length > 0) await gladys.publishStates(states);
+    this.lastPublishedAt = now;
     logger.info(`Published ${states.length} Synology monitoring values`);
     return snapshot;
   }

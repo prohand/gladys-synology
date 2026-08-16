@@ -6,6 +6,12 @@ const gladys = new GladysIntegration();
 let config = normalizeConfig();
 let service = null;
 let initialization = Promise.resolve();
+let refreshTimer = null;
+
+function clearRefreshTimer() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  refreshTimer = null;
+}
 
 function unavailableMessage(error) {
   return {
@@ -15,6 +21,7 @@ function unavailableMessage(error) {
 }
 
 async function initialize(rawConfig) {
+  clearRefreshTimer();
   const previousService = service;
   config = normalizeConfig(rawConfig);
   service = new SynologyService(config);
@@ -25,6 +32,16 @@ async function initialize(rawConfig) {
     await gladys.publishDiscoveredDevices(devices);
     await service.publishStates(gladys);
     await gladys.setConnectionStatus(true);
+    refreshTimer = setInterval(() => {
+      service
+        .publishStates(gladys)
+        .then(() => gladys.setConnectionStatus(true))
+        .catch(async (error) => {
+          logger.error('Synology DSM scheduled refresh failed', error);
+          await gladys.setConnectionStatus(false, unavailableMessage(error)).catch(() => {});
+        });
+    }, config.poll_frequency * 1000);
+    refreshTimer.unref?.();
     logger.info(`Synology DSM initialized with ${devices.length} device(s)`);
   } catch (error) {
     logger.error('Synology DSM initialization failed', error);
@@ -51,6 +68,11 @@ gladys.onPoll(async () => {
   }
 });
 
+gladys.onDeviceCreated(async () => {
+  await initialization;
+  await service.publishStates(gladys, { force: true });
+});
+
 gladys.onAction('test_connection', async () => {
   await initialization;
   const snapshot = await service.refresh();
@@ -73,6 +95,7 @@ gladys.on('connected', () => {
 
 gladys.handleShutdown(async (signal) => {
   logger.info(`Received ${signal} -> graceful shutdown`);
+  clearRefreshTimer();
   await service?.close();
 });
 

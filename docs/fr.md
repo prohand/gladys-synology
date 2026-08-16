@@ -20,13 +20,13 @@ La MFA est prise en charge avec les codes de vérification DSM (OTP). **Approuve
 - **Nom d'utilisateur / mot de passe** : identifiants du compte DSM dédié.
 - **Code OTP actuel (MFA)** : code actuel à 6 chiffres pour la première connexion MFA ou après révocation de l'appareil approuvé dans DSM. Il n'est plus transmis lorsque l'appareil mémorisé est accepté.
 - **Vérifier le certificat TLS** : laissez cette option activée avec un certificat de confiance. Ne la désactivez que pour un certificat local auto-signé, après avoir vérifié vous-même l'adresse du NAS.
-- **Intervalle de rafraîchissement** : 30 ou 60 secondes.
+- **Intervalle de rafraîchissement** : 5 minutes, 15 minutes (recommandé et utilisé par défaut) ou 1 heure. Un intervalle modéré évite de remplir inutilement la base Gladys.
 
 Cliquez sur **Tester la connexion DSM**. En cas de succès, le résultat indique le modèle du NAS, la version DSM et le nombre de volumes détectés. Lancez ensuite une recherche d'appareils dans Gladys.
 
 ## Appareils
 
-L'intégration crée un appareil pour le NAS et un appareil par volume de stockage. Le NAS déclenche le rafraîchissement périodique ; chaque cycle met à jour en une seule fois les valeurs du système et des volumes.
+L'intégration crée un appareil pour le NAS et un appareil par volume de stockage. Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, puis chaque cycle met à jour en une seule fois les valeurs du système et des volumes. L'historique est conservé pour les taux d'utilisation, la température et l'état de santé ; les capacités et informations statiques ne créent pas d'historique redondant.
 
 ## Dépannage
 

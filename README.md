@@ -6,7 +6,6 @@ External [Gladys Assistant](https://gladysassistant.com/) integration for monito
 
 - NAS CPU and memory usage
 - System temperature and uptime
-- Aggregate network receive/transmit rates
 - DSM version
 - Per-volume usage, used/free/total capacity and health
 
@@ -19,7 +18,9 @@ Volumes are discovered dynamically. Metrics are read-only: this integration does
 3. Ensure the Gladys host can reach DSM, preferably through HTTPS on the local network.
 4. When MFA is enabled, configure **Verification code (OTP)** for the account. Approval notifications and hardware keys cannot authenticate DSM API clients.
 5. Install the integration and enter the DSM URL, username, password and a current OTP. After the first successful login, the trusted-device token is persisted in `/data`; the OTP field can be cleared.
-6. Use **Test the DSM connection**, then scan for devices.
+6. Use **Test the DSM connection**, then scan for devices. A first state snapshot is sent as soon as a discovered device is added.
+
+Metrics are saved every 15 minutes by default (configurable from 5 minutes to 1 hour) to limit Gladys database growth. Capacity totals and the DSM version update their latest value without keeping redundant history.
 
 See [docs/en.md](docs/en.md) or [docs/fr.md](docs/fr.md) for the complete guide.
 

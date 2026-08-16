@@ -11,7 +11,7 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       password: 1234,
       otp_code: ' 123456 ',
       verify_ssl: false,
-      poll_frequency: '45',
+      poll_frequency: '700',
     }),
     {
       url: 'https://nas.local:5001',
@@ -19,15 +19,16 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       password: '1234',
       otp_code: '123456',
       verify_ssl: false,
-      poll_frequency: 30,
+      poll_frequency: 900,
     },
   );
 });
 
-test('normalizeConfig only returns poll frequencies accepted by Gladys', () => {
-  assert.equal(normalizeConfig({ poll_frequency: '30' }).poll_frequency, 30);
-  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 60);
-  assert.equal(normalizeConfig({ poll_frequency: '3600' }).poll_frequency, 60);
+test('normalizeConfig only returns supported monitoring intervals', () => {
+  assert.equal(normalizeConfig({ poll_frequency: '300' }).poll_frequency, 300);
+  assert.equal(normalizeConfig({ poll_frequency: '900' }).poll_frequency, 900);
+  assert.equal(normalizeConfig({ poll_frequency: '3600' }).poll_frequency, 3600);
+  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 300);
 });
 
 test('validateConfig rejects incomplete or invalid connection details', () => {

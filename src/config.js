@@ -4,10 +4,10 @@ export const DEFAULT_CONFIG = {
   password: '',
   otp_code: '',
   verify_ssl: true,
-  poll_frequency: 60,
+  poll_frequency: 900,
 };
 
-const SUPPORTED_POLL_FREQUENCIES = [30, 60];
+const SUPPORTED_POLL_FREQUENCIES = [300, 900, 3600];
 
 function normalizeUrl(value) {
   const raw = String(value ?? '').trim();
