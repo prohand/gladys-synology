@@ -13,11 +13,21 @@ test('MFA device store persists a token only for the matching DSM account', asyn
   const account = { url: 'https://nas:5001', username: 'gladys' };
 
   assert.equal(await store.load(account), null);
-  await store.save(account, 'device-token');
+  await Promise.all([
+    store.save(account, 'device-token'),
+    new SynologyMfaDeviceStore(filePath).save(
+      { url: 'https://nas2:5001', username: 'backup' },
+      'second-token',
+    ),
+  ]);
   assert.equal(await store.load(account), 'device-token');
+  assert.equal(await store.load({ url: 'https://nas2:5001', username: 'backup' }), 'second-token');
   assert.equal(await store.load({ ...account, username: 'other' }), null);
 
   const persisted = JSON.parse(await readFile(filePath, 'utf8'));
-  assert.deepEqual(persisted, { ...account, device_id: 'device-token' });
-  assert.equal(Object.hasOwn(persisted, 'password'), false);
+  assert.deepEqual(persisted, [
+    { ...account, device_id: 'device-token' },
+    { url: 'https://nas2:5001', username: 'backup', device_id: 'second-token' },
+  ]);
+  assert.ok(persisted.every((record) => !Object.hasOwn(record, 'password')));
 });

@@ -20,13 +20,29 @@ La MFA est prise en charge avec les codes de vérification DSM (OTP). **Approuve
 - **Nom d'utilisateur / mot de passe** : identifiants du compte DSM dédié.
 - **Code OTP actuel (MFA)** : code actuel à 6 chiffres pour la première connexion MFA ou après révocation de l'appareil approuvé dans DSM. Il n'est plus transmis lorsque l'appareil mémorisé est accepté.
 - **Vérifier le certificat TLS** : laissez cette option activée avec un certificat de confiance. Ne la désactivez que pour un certificat local auto-signé, après avoir vérifié vous-même l'adresse du NAS.
-- **Intervalle de rafraîchissement** : 5 minutes, 15 minutes (recommandé et utilisé par défaut) ou 1 heure. Un intervalle modéré évite de remplir inutilement la base Gladys.
+- **NAS supplémentaires (JSON)** : liste facultative et secrète des autres connexions DSM. Chaque entrée accepte `url`, `username`, `password`, `otp_code` facultatif et `verify_ssl` facultatif. Exemple :
+
+  ```json
+  [
+    {
+      "url": "https://nas2:5001",
+      "username": "gladys",
+      "password": "secret",
+      "otp_code": "123456",
+      "verify_ssl": true
+    }
+  ]
+  ```
+
+- **Intervalle de rafraîchissement** : valeur saisie manuellement en secondes, entre 300 et 86400. La valeur recommandée et utilisée par défaut est 900 secondes (15 minutes). Un intervalle modéré évite de remplir inutilement la base Gladys.
 
 Cliquez sur **Tester la connexion DSM**. En cas de succès, le résultat indique le modèle du NAS, la version DSM et le nombre de volumes détectés. Lancez ensuite une recherche d'appareils dans Gladys.
 
 ## Appareils
 
-L'intégration crée un appareil pour le NAS et un appareil par volume de stockage. Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, puis chaque cycle met à jour en une seule fois les valeurs du système et des volumes. L'historique est conservé pour les taux d'utilisation, la température et l'état de santé ; les capacités et informations statiques ne créent pas d'historique redondant.
+L'intégration crée un appareil par NAS, un appareil par volume de stockage et, lorsqu'elles sont disponibles, un appareil par tâche Hyper Backup ou Active Backup. Une tâche de sauvegarde expose son état, son dernier résultat et la date de sa dernière sauvegarde. Les API de ces paquets DSM ne sont pas présentes sur tous les modèles et versions : leur absence ne bloque pas les métriques système et stockage.
+
+Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, puis chaque cycle met à jour en une seule fois les valeurs de tous les NAS. Le pourcentage d'occupation des volumes est arrondi à deux décimales. L'historique est conservé pour les taux d'utilisation, la température et l'état de santé ; les capacités et informations textuelles ne créent pas d'historique redondant.
 
 ## Dépannage
 
@@ -37,3 +53,4 @@ L'intégration crée un appareil pour le NAS et un appareil par volume de stocka
 - **DSM injoignable** : testez l'URL depuis l'hôte Gladys et vérifiez le pare-feu du NAS.
 - **Erreur de certificat** : installez un certificat de confiance dans DSM. Pour une installation privée auto-signée uniquement, la vérification peut être désactivée.
 - **Volume absent** : relancez une recherche après la création ou la suppression d'un volume.
+- **Tâches de sauvegarde absentes** : vérifiez que Hyper Backup ou Active Backup est installé, qu'au moins une tâche existe et que le compte DSM dédié peut ouvrir le paquet correspondant, puis relancez la recherche.

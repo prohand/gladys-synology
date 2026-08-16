@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { test } from 'node:test';
-import { DEFAULT_CONFIG } from '../src/config.js';
+import { DEFAULT_CONFIG, MAX_POLL_FREQUENCY, MIN_POLL_FREQUENCY } from '../src/config.js';
 
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
@@ -19,12 +19,13 @@ test('manifest configuration defaults stay in sync with code', () => {
   const fields = Object.fromEntries(manifest.config_schema.map((field) => [field.key, field]));
   assert.equal(fields.verify_ssl.default, DEFAULT_CONFIG.verify_ssl);
   assert.equal(Number(fields.poll_frequency.default), DEFAULT_CONFIG.poll_frequency);
-  assert.deepEqual(
-    fields.poll_frequency.options.map(({ value }) => Number(value)),
-    [300, 900, 3600],
-  );
+  assert.equal(fields.poll_frequency.type, 'number');
+  assert.equal(fields.poll_frequency.min, MIN_POLL_FREQUENCY);
+  assert.equal(fields.poll_frequency.max, MAX_POLL_FREQUENCY);
+  assert.equal(fields.poll_frequency.options, undefined);
   assert.equal(fields.password.type, 'secret');
   assert.equal(fields.otp_code.type, 'secret');
+  assert.equal(fields.additional_nas.type, 'secret');
   assert.equal(fields.otp_code.required, false);
   for (const key of ['url', 'username', 'password']) assert.equal(fields[key].required, true);
 });

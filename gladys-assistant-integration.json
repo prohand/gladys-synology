@@ -75,20 +75,31 @@
       "default": true
     },
     {
+      "key": "additional_nas",
+      "type": "secret",
+      "label": {
+        "en": "Additional NAS (JSON)",
+        "fr": "NAS supplémentaires (JSON)"
+      },
+      "description": {
+        "en": "Optional JSON array of additional DSM connections. Example: [{\"url\":\"https://nas2:5001\",\"username\":\"gladys\",\"password\":\"secret\",\"otp_code\":\"123456\",\"verify_ssl\":true}]",
+        "fr": "Liste JSON facultative de connexions DSM supplémentaires. Exemple : [{\"url\":\"https://nas2:5001\",\"username\":\"gladys\",\"password\":\"secret\",\"otp_code\":\"123456\",\"verify_ssl\":true}]"
+      },
+      "required": false
+    },
+    {
       "key": "poll_frequency",
-      "type": "select",
+      "type": "number",
       "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
       "description": {
-        "en": "How often the NAS metrics are saved. A moderate interval limits the growth of the Gladys database.",
-        "fr": "Fréquence d'enregistrement des métriques du NAS. Un intervalle modéré limite la croissance de la base Gladys."
+        "en": "Custom interval in seconds (300 to 86400). The default is 900 seconds. A moderate interval limits the growth of the Gladys database.",
+        "fr": "Intervalle personnalisé en secondes (300 à 86400). La valeur par défaut est 900 secondes. Un intervalle modéré limite la croissance de la base Gladys."
       },
       "required": false,
-      "default": "900",
-      "options": [
-        { "value": "300", "label": { "en": "5 minutes", "fr": "5 minutes" } },
-        { "value": "900", "label": { "en": "15 minutes", "fr": "15 minutes" } },
-        { "value": "3600", "label": { "en": "1 hour", "fr": "1 heure" } }
-      ]
+      "default": 900,
+      "min": 300,
+      "max": 86400,
+      "placeholder": { "en": "900", "fr": "900" }
     }
   ],
   "actions": [

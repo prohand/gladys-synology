@@ -4,10 +4,12 @@ export const DEFAULT_CONFIG = {
   password: '',
   otp_code: '',
   verify_ssl: true,
+  additional_nas: '',
   poll_frequency: 900,
 };
 
-const SUPPORTED_POLL_FREQUENCIES = [300, 900, 3600];
+export const MIN_POLL_FREQUENCY = 300;
+export const MAX_POLL_FREQUENCY = 86_400;
 
 function normalizeUrl(value) {
   const raw = String(value ?? '').trim();
@@ -18,8 +20,8 @@ function normalizeUrl(value) {
 
 export function normalizeConfig(raw = {}) {
   const requestedFrequency = Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency);
-  const pollFrequency = SUPPORTED_POLL_FREQUENCIES.includes(requestedFrequency)
-    ? requestedFrequency
+  const pollFrequency = Number.isFinite(requestedFrequency)
+    ? Math.min(MAX_POLL_FREQUENCY, Math.max(MIN_POLL_FREQUENCY, Math.round(requestedFrequency)))
     : DEFAULT_CONFIG.poll_frequency;
   return {
     ...DEFAULT_CONFIG,
@@ -29,8 +31,49 @@ export function normalizeConfig(raw = {}) {
     password: String(raw.password ?? ''),
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
+    additional_nas: String(raw.additional_nas ?? '').trim(),
     poll_frequency: pollFrequency,
   };
+}
+
+function connectionConfig(raw, pollFrequency) {
+  return {
+    url: normalizeUrl(raw.url),
+    username: String(raw.username ?? '').trim(),
+    password: String(raw.password ?? ''),
+    otp_code: String(raw.otp_code ?? '').trim(),
+    verify_ssl: raw.verify_ssl !== false,
+    poll_frequency: pollFrequency,
+  };
+}
+
+export function getNasConfigs(config) {
+  const connections = [connectionConfig(config, config.poll_frequency)];
+  if (!config.additional_nas) return connections;
+
+  let additional;
+  try {
+    additional = JSON.parse(config.additional_nas);
+  } catch {
+    throw new Error('Additional NAS configuration must be valid JSON.');
+  }
+  if (!Array.isArray(additional)) {
+    throw new Error('Additional NAS configuration must be a JSON array.');
+  }
+
+  additional.forEach((raw, index) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      throw new Error(`Additional NAS ${index + 1} must be a JSON object.`);
+    }
+    const connection = connectionConfig(raw, config.poll_frequency);
+    try {
+      validateConfig(connection);
+    } catch (error) {
+      throw new Error(`Additional NAS ${index + 1}: ${error.message}`, { cause: error });
+    }
+    connections.push(connection);
+  });
+  return connections;
 }
 
 export function validateConfig(config) {

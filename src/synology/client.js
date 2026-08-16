@@ -8,6 +8,7 @@ const REQUIRED_APIS = [
   'SYNO.Core.System.Utilization',
   'SYNO.Storage.CGI.Storage',
 ];
+const OPTIONAL_APIS = ['SYNO.Backup.Task', 'SYNO.ActiveBackup.Task'];
 const SESSION_ERROR_CODES = new Set([106, 107, 119]);
 const MFA_ERROR_CODES = new Set([403, 404, 406]);
 const MFA_DEVICE_NAME = 'Gladys Synology';
@@ -64,7 +65,7 @@ export class SynologyClient {
       api: 'SYNO.API.Info',
       version: '1',
       method: 'query',
-      query: REQUIRED_APIS.join(','),
+      query: [...REQUIRED_APIS, ...OPTIONAL_APIS].join(','),
     });
     if (!payload.success) throw apiError('SYNO.API.Info', payload.error?.code);
     this.apis = payload.data ?? {};
@@ -164,10 +165,46 @@ export class SynologyClient {
     return payload.data ?? {};
   }
 
+  async optionalCall(name, method, parameters = {}, options = {}) {
+    if (!this.apiInfo(name, false)) return null;
+    try {
+      return await this.call(name, method, parameters, { ...options, required: false });
+    } catch (error) {
+      // Backup packages expose private DSM APIs whose permissions and methods vary by version.
+      // Their absence must not disable the NAS system and storage monitoring.
+      if (error instanceof SynologyApiError && error.api === name) return null;
+      throw error;
+    }
+  }
+
+  async getHyperBackup() {
+    const list = await this.optionalCall('SYNO.Backup.Task', 'list', {}, { preferredVersion: 1 });
+    if (!list) return null;
+    const taskList = Array.isArray(list.task_list)
+      ? list.task_list
+      : Array.isArray(list.tasks)
+        ? list.tasks
+        : [];
+    const enriched = await Promise.all(
+      taskList.map(async (task) => {
+        const taskId = task.task_id ?? task.id;
+        if (taskId === undefined) return task;
+        const status = await this.optionalCall(
+          'SYNO.Backup.Task',
+          'status',
+          { task_id: String(taskId), additional: '["last_bkp_result","last_bkp_time"]' },
+          { preferredVersion: 1 },
+        );
+        return status ? { ...task, ...status } : task;
+      }),
+    );
+    return { ...list, task_list: enriched };
+  }
+
   async getSnapshot() {
     if (!this.apis) await this.discoverApis();
     if (!this.sid) await this.login();
-    const [system, utilization, storage] = await Promise.all([
+    const [system, utilization, storage, hyperBackup, activeBackup] = await Promise.all([
       this.call('SYNO.Core.System', 'info', {}, { preferredVersion: 3 }),
       this.call('SYNO.Core.System.Utilization', 'get', {}, { preferredVersion: 1 }),
       this.call(
@@ -176,7 +213,14 @@ export class SynologyClient {
         {},
         { preferredVersion: 1, required: false },
       ),
+      this.getHyperBackup(),
+      this.optionalCall(
+        'SYNO.ActiveBackup.Task',
+        'list',
+        { load_verify_status: 'true', load_versions: 'true' },
+        { preferredVersion: 1 },
+      ),
     ]);
-    return { system, utilization, storage };
+    return { system, utilization, storage, hyperBackup, activeBackup };
   }
 }

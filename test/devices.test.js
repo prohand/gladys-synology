@@ -54,6 +54,41 @@ test('discovery does not expose network traffic features', () => {
   assert.ok(featureIds.every((id) => !id.includes('network-')));
 });
 
+test('discovery does not expose the NAS uptime feature', () => {
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
+  const featureIds = devices.flatMap((device) =>
+    device.features.map((feature) => feature.external_id),
+  );
+  assert.ok(featureIds.every((id) => !id.endsWith(':uptime')));
+});
+
+test('backup tasks are discovered as text-only Gladys devices', () => {
+  const backupSnapshot = {
+    ...snapshot,
+    backups: [
+      {
+        id: '7',
+        provider: 'hyper-backup',
+        name: 'Cloud archive',
+        status: 'backupable',
+        result: 'success',
+        lastBackupAt: '2023-11-14T22:13:20.000Z',
+      },
+    ],
+  };
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', backupSnapshot);
+  const backupDevice = devices.find((device) => device.external_id.startsWith('synology-backup:'));
+  assert.match(backupDevice.name, /Hyper Backup.*Cloud archive/);
+  assert.ok(
+    backupDevice.features.every((feature) => feature.category === DEVICE_FEATURE_CATEGORIES.TEXT),
+  );
+  const states = buildStates(gladys, 'ABC123', backupSnapshot).filter((state) =>
+    state.device_feature_external_id.startsWith('synology-backup:'),
+  );
+  assert.equal(states.length, 3);
+  assert.ok(states.every((state) => typeof state.text === 'string'));
+});
+
 test('every discovered feature includes the numeric bounds required by Gladys', () => {
   const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
   for (const feature of devices.flatMap((device) => device.features)) {

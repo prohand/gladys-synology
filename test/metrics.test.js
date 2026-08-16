@@ -37,13 +37,65 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
     model: 'DS920+',
     dsmVersion: 'DSM 7.2.2',
     temperature: 42,
-    uptime: 12345,
     cpuUsage: 13,
     memoryUsage: 37,
   });
+  assert.deepEqual(snapshot.backups, []);
   assert.equal(snapshot.volumes[0].usagePercent, 25);
   assert.equal(snapshot.volumes[0].freeBytes, 750);
   assert.equal(snapshot.volumes[0].healthy, 1);
+});
+
+test('normalizeSnapshot rounds volume usage to two decimal places', () => {
+  const snapshot = normalizeSnapshot({
+    storage: { volumes: [{ total_size: 3, used_size: 1 }] },
+  });
+  assert.equal(snapshot.volumes[0].usagePercent, 33.33);
+});
+
+test('normalizeSnapshot exposes Hyper Backup and Active Backup task information', () => {
+  const snapshot = normalizeSnapshot({
+    hyperBackup: {
+      task_list: [
+        {
+          task_id: 7,
+          name: 'Cloud archive',
+          state: 'backupable',
+          last_bkp_result: 'success',
+          last_bkp_time: 1_700_000_000,
+        },
+      ],
+    },
+    activeBackup: {
+      tasks: [
+        {
+          task_id: 9,
+          task_name: 'Workstations',
+          status: 'idle',
+          versions: [{ status: 3, backup_time: 1_700_000_100 }],
+        },
+      ],
+    },
+  });
+
+  assert.deepEqual(snapshot.backups, [
+    {
+      id: '7',
+      provider: 'hyper-backup',
+      name: 'Cloud archive',
+      status: 'backupable',
+      result: 'success',
+      lastBackupAt: '2023-11-14T22:13:20.000Z',
+    },
+    {
+      id: '9',
+      provider: 'active-backup',
+      name: 'Workstations',
+      status: 'idle',
+      result: 'success',
+      lastBackupAt: '2023-11-14T22:15:00.000Z',
+    },
+  ]);
 });
 
 test('normalizeSnapshot tolerates missing optional storage API data', () => {

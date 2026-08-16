@@ -79,6 +79,51 @@ test('client retries once after an expired DSM session', async () => {
   assert.equal(systemCount, 2);
 });
 
+test('client loads optional Hyper Backup and Active Backup task APIs when available', async () => {
+  const apiData = {
+    'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
+    'SYNO.Core.System': { path: 'entry.cgi', minVersion: 1, maxVersion: 3 },
+    'SYNO.Core.System.Utilization': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    'SYNO.Storage.CGI.Storage': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    'SYNO.Backup.Task': { path: 'entry.cgi', minVersion: 1, maxVersion: 2 },
+    'SYNO.ActiveBackup.Task': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+  };
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas:5001', username: 'u', password: 'p' }),
+    {
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          assert.match(body.query, /SYNO\.Backup\.Task/);
+          assert.match(body.query, /SYNO\.ActiveBackup\.Task/);
+          return jsonResponse({ success: true, data: apiData });
+        }
+        if (body.api === 'SYNO.API.Auth') {
+          return jsonResponse({ success: true, data: { sid: 'sid' } });
+        }
+        if (body.api === 'SYNO.Backup.Task') {
+          return body.method === 'list'
+            ? jsonResponse({ success: true, data: { task_list: [{ task_id: 1 }] } })
+            : jsonResponse({
+                success: true,
+                data: { last_bkp_result: 'success', last_bkp_time: 1_700_000_000 },
+              });
+        }
+        if (body.api === 'SYNO.ActiveBackup.Task') {
+          assert.equal(body.load_versions, 'true');
+          return jsonResponse({ success: true, data: { tasks: [{ task_id: 2 }] } });
+        }
+        return jsonResponse({ success: true, data: {} });
+      },
+    },
+  );
+
+  const snapshot = await client.getSnapshot();
+  assert.equal(snapshot.hyperBackup.task_list[0].task_id, 1);
+  assert.equal(snapshot.hyperBackup.task_list[0].last_bkp_result, 'success');
+  assert.equal(snapshot.activeBackup.tasks[0].task_id, 2);
+});
+
 test('client reports DSM authentication errors without exposing the password', async () => {
   const client = new SynologyClient(
     normalizeConfig({ url: 'http://nas:5000', username: 'u', password: 'top-secret' }),

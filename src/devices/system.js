@@ -10,7 +10,6 @@ export const SYSTEM_FEATURE = {
   CPU: 'cpu-usage',
   MEMORY: 'memory-usage',
   TEMPERATURE: 'temperature',
-  UPTIME: 'uptime',
   DSM_VERSION: 'dsm-version',
 };
 
@@ -61,18 +60,6 @@ export function buildSystemDevice(gladys, nasId, nas) {
         keep_history: true,
       },
       {
-        name: 'Uptime',
-        external_id: ids.feature(SYSTEM_FEATURE.UPTIME),
-        category: DEVICE_FEATURE_CATEGORIES.DURATION,
-        type: DEVICE_FEATURE_TYPES.DURATION.INTEGER,
-        unit: DEVICE_FEATURE_UNITS.SECONDS,
-        min: 0,
-        max: 10 ** 10,
-        read_only: true,
-        has_feedback: false,
-        keep_history: false,
-      },
-      {
         name: 'DSM version',
         external_id: ids.feature(SYSTEM_FEATURE.DSM_VERSION),
         category: DEVICE_FEATURE_CATEGORIES.TEXT,
@@ -93,7 +80,6 @@ export function buildSystemStates(gladys, nasId, nas) {
     [SYSTEM_FEATURE.CPU, nas.cpuUsage],
     [SYSTEM_FEATURE.MEMORY, nas.memoryUsage],
     [SYSTEM_FEATURE.TEMPERATURE, nas.temperature],
-    [SYSTEM_FEATURE.UPTIME, nas.uptime],
   ];
   const states = numericValues
     .filter(([, state]) => state !== undefined)

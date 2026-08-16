@@ -1,6 +1,6 @@
 import { GladysIntegration, logger } from '@gladysassistant/integration-sdk';
 import { normalizeConfig } from './src/config.js';
-import { SynologyService } from './src/service.js';
+import { SynologyFleetService } from './src/fleet-service.js';
 
 const gladys = new GladysIntegration();
 let config = normalizeConfig();
@@ -24,7 +24,7 @@ async function initialize(rawConfig) {
   clearRefreshTimer();
   const previousService = service;
   config = normalizeConfig(rawConfig);
-  service = new SynologyService(config);
+  service = new SynologyFleetService(config);
   await previousService?.close();
 
   try {
@@ -75,10 +75,16 @@ gladys.onDeviceCreated(async () => {
 
 gladys.onAction('test_connection', async () => {
   await initialization;
-  const snapshot = await service.refresh();
+  const snapshots = await service.refresh();
+  const summary = snapshots
+    .map(
+      (snapshot) =>
+        `${snapshot.nas.model} (DSM ${snapshot.nas.dsmVersion || 'unknown'}, ${snapshot.volumes.length} volume(s), ${snapshot.backups.length} backup task(s))`,
+    )
+    .join(', ');
   return {
-    en: `${snapshot.nas.model} is reachable (DSM ${snapshot.nas.dsmVersion || 'unknown'}, ${snapshot.volumes.length} volume(s)).`,
-    fr: `${snapshot.nas.model} est joignable (DSM ${snapshot.nas.dsmVersion || 'inconnue'}, ${snapshot.volumes.length} volume(s)).`,
+    en: `${snapshots.length} NAS reachable: ${summary}.`,
+    fr: `${snapshots.length} NAS joignable(s) : ${summary}.`,
   };
 });
 
