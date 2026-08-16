@@ -1,0 +1,85 @@
+{
+  "manifest_version": 1,
+  "type": "device",
+  "name": "Synology DSM",
+  "description": {
+    "en": "Monitor a Synology NAS: CPU, memory, temperature, network traffic and storage volumes.",
+    "fr": "Supervisez un NAS Synology : processeur, mémoire, température, trafic réseau et volumes de stockage."
+  },
+  "version": "1.0.0",
+  "docker_image": "ghcr.io/prohand/gladys-synology:1.0.0",
+  "gladys_version": ">=4.86.0",
+  "cover_image": "https://raw.githubusercontent.com/prohand/gladys-synology/main/cover.png",
+  "categories": ["network"],
+  "transports": ["local"],
+  "config_schema": [
+    {
+      "key": "intro",
+      "type": "section",
+      "label": { "en": "Synology DSM connection", "fr": "Connexion à Synology DSM" },
+      "description": {
+        "en": "Use a dedicated, read-only DSM account. Gladys must be able to reach the NAS on your local network.",
+        "fr": "Utilisez un compte DSM dédié en lecture seule. Gladys doit pouvoir joindre le NAS sur votre réseau local."
+      },
+      "links": [
+        {
+          "url": "https://github.com/prohand/gladys-synology/blob/main/docs/en.md",
+          "label": { "en": "Setup guide", "fr": "Guide d'installation" }
+        }
+      ]
+    },
+    {
+      "key": "url",
+      "type": "string",
+      "label": { "en": "DSM URL", "fr": "URL DSM" },
+      "description": {
+        "en": "For example: https://192.168.1.20:5001",
+        "fr": "Par exemple : https://192.168.1.20:5001"
+      },
+      "required": true
+    },
+    {
+      "key": "username",
+      "type": "string",
+      "label": { "en": "Username", "fr": "Nom d'utilisateur" },
+      "required": true
+    },
+    {
+      "key": "password",
+      "type": "secret",
+      "label": { "en": "Password", "fr": "Mot de passe" },
+      "required": true
+    },
+    {
+      "key": "verify_ssl",
+      "type": "boolean",
+      "label": { "en": "Verify the TLS certificate", "fr": "Vérifier le certificat TLS" },
+      "description": {
+        "en": "Keep enabled unless DSM uses a self-signed certificate.",
+        "fr": "Laissez activé sauf si DSM utilise un certificat auto-signé."
+      },
+      "required": false,
+      "default": true
+    },
+    {
+      "key": "poll_frequency",
+      "type": "number",
+      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "description": {
+        "en": "How often the NAS metrics are refreshed.",
+        "fr": "Fréquence de rafraîchissement des métriques du NAS."
+      },
+      "required": false,
+      "default": 60,
+      "min": 30,
+      "max": 3600
+    }
+  ],
+  "actions": [
+    {
+      "key": "test_connection",
+      "label": { "en": "Test the DSM connection", "fr": "Tester la connexion DSM" },
+      "timeout_seconds": 30
+    }
+  ]
+}
