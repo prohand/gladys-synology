@@ -19,9 +19,9 @@ test('fleet service discovers and publishes states for multiple NAS connections'
     url: 'https://nas1',
     username: 'one',
     password: 'password-one',
-    additional_nas: JSON.stringify([
-      { url: 'https://nas2', username: 'two', password: 'password-two' },
-    ]),
+    nas_2_url: 'https://nas2',
+    nas_2_username: 'two',
+    nas_2_password: 'password-two',
   });
   const gladys = createFakeGladys();
   const fleet = new SynologyFleetService(config, {
@@ -58,9 +58,9 @@ test('fleet service keeps healthy NAS connections available when another one fai
     url: 'https://nas1',
     username: 'one',
     password: 'password-one',
-    additional_nas: JSON.stringify([
-      { url: 'https://nas2', username: 'two', password: 'password-two' },
-    ]),
+    nas_2_url: 'https://nas2',
+    nas_2_username: 'two',
+    nas_2_password: 'password-two',
   });
   const fleet = new SynologyFleetService(config, {
     clientFactory: (nasConfig) => ({

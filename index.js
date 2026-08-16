@@ -79,7 +79,7 @@ gladys.onAction('test_connection', async () => {
   const summary = snapshots
     .map(
       (snapshot) =>
-        `${snapshot.nas.model} (DSM ${snapshot.nas.dsmVersion || 'unknown'}, ${snapshot.volumes.length} volume(s), ${snapshot.backups.length} backup task(s))`,
+        `${snapshot.nas.model} (DSM ${snapshot.nas.dsmVersion || 'unknown'}, ${snapshot.volumes.length} volume(s), ${snapshot.disks.length} disk(s), ${snapshot.backups.length} backup task(s))`,
     )
     .join(', ');
   return {

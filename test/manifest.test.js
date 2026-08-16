@@ -25,7 +25,13 @@ test('manifest configuration defaults stay in sync with code', () => {
   assert.equal(fields.poll_frequency.options, undefined);
   assert.equal(fields.password.type, 'secret');
   assert.equal(fields.otp_code.type, 'secret');
-  assert.equal(fields.additional_nas.type, 'secret');
+  assert.equal(fields.additional_nas, undefined);
+  for (const slot of [2, 3, 4]) {
+    assert.equal(fields[`nas_${slot}_password`].type, 'secret');
+    assert.equal(fields[`nas_${slot}_otp_code`].type, 'secret');
+    assert.equal(fields[`nas_${slot}_url`].required, false);
+    assert.equal(fields[`nas_${slot}_verify_ssl`].default, true);
+  }
   assert.equal(fields.otp_code.required, false);
   for (const key of ['url', 'username', 'password']) assert.equal(fields[key].required, true);
 });

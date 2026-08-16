@@ -76,30 +76,80 @@ function normalizeVolumes(storage = {}) {
   );
 }
 
+function smartHealth(value) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const status = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (['normal', 'healthy', 'good', 'passed', 'pass', 'ok'].includes(status)) return 1;
+  if (
+    ['unknown', 'unsupported', 'not_supported', 'not_available', 'unavailable'].includes(status)
+  ) {
+    return undefined;
+  }
+  return 0;
+}
+
+function normalizeDisks(storage = {}) {
+  const candidates = storage.disks ?? storage.disk ?? storage.disk_info ?? [];
+  return arrayFrom(candidates).map((disk, index) => {
+    const smartStatus = scalar(
+      disk.smart_status,
+      disk.smartStatus,
+      disk.smart?.status,
+      disk.smart_status_info?.status,
+    );
+    return {
+      id: String(disk.id ?? disk.disk_id ?? disk.device ?? disk.name ?? `disk-${index + 1}`),
+      name: String(
+        disk.display_name ?? disk.name ?? disk.model ?? disk.device ?? `Drive ${index + 1}`,
+      ),
+      smartStatus: smartStatus === undefined ? undefined : String(smartStatus),
+      smartHealthy: smartHealth(smartStatus),
+    };
+  });
+}
+
 function normalizeBackupTask(provider, task, index) {
   const versions = arrayFrom(task.versions ?? task.version_list);
   const latestVersion = versions[0] ?? {};
+  const lastResult =
+    task.last_result && typeof task.last_result === 'object' ? task.last_result : {};
   const id = scalar(task.task_id, task.id, task.taskId, task.name, index + 1);
   const name = scalar(task.task_name, task.name, task.title, `${provider} ${index + 1}`);
   const status = scalar(task.status, task.state, task.task_status, latestVersion.status);
   const rawResult = scalar(
     task.last_bkp_result,
+    lastResult.status,
     task.last_result,
     task.last_status,
     task.result,
     latestVersion.result,
     latestVersion.status,
   );
-  const result = provider === 'active-backup' && Number(rawResult) === 3 ? 'success' : rawResult;
+  let result = rawResult;
+  if (provider === 'active-backup' && lastResult.status !== undefined) {
+    result =
+      { 2: 'success', 3: 'partial success', 4: 'failed', 5: 'cancelled' }[
+        Number(lastResult.status)
+      ] ?? rawResult;
+  } else if (provider === 'active-backup' && Number(latestVersion.status) === 3) {
+    result = 'success';
+  }
   const lastBackupAt = isoDate(
     scalar(
       task.last_bkp_time,
       task.last_backup_time,
       task.last_finish_time,
       task.end_time,
+      lastResult.time_end,
+      lastResult.time_start,
       latestVersion.backup_time,
       latestVersion.version_time,
       latestVersion.end_time,
+      latestVersion.time_end,
+      latestVersion.time_start,
       latestVersion.create_time,
     ),
   );
@@ -144,6 +194,7 @@ export function normalizeSnapshot(snapshot) {
       memoryUsage: finite(memory.real_usage, memory.usage),
     },
     volumes: normalizeVolumes(snapshot.storage ?? {}),
+    disks: normalizeDisks(snapshot.storage ?? {}),
     backups: [
       ...normalizeBackupTasks('hyper-backup', snapshot.hyperBackup),
       ...normalizeBackupTasks('active-backup', snapshot.activeBackup),

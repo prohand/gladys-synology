@@ -20,27 +20,14 @@ MFA is supported through DSM verification codes (OTP). **Approve sign-in** and h
 - **Username / password**: credentials of the dedicated DSM user.
 - **Current OTP code (MFA)**: a current 6-digit code for the first MFA login or after the DSM trusted device is revoked. It is not sent once the remembered device is accepted.
 - **Verify the TLS certificate**: keep enabled for a trusted certificate. Disable only for a self-signed local certificate after verifying the NAS address yourself.
-- **Additional NAS (JSON)**: optional secret list of other DSM connections. Each entry accepts `url`, `username`, `password`, optional `otp_code`, and optional `verify_ssl`. Example:
-
-  ```json
-  [
-    {
-      "url": "https://nas2:5001",
-      "username": "gladys",
-      "password": "secret",
-      "otp_code": "123456",
-      "verify_ssl": true
-    }
-  ]
-  ```
-
-- **Refresh interval**: manually entered in seconds, from 300 to 86400. The recommended default is 900 seconds (15 minutes). A moderate interval prevents unnecessary Gladys database growth.
+- **NAS 2, NAS 3 and NAS 4**: optional connections using the same URL, username, password, OTP and TLS fields as the primary NAS. Leave a NAS URL empty to ignore that slot. Every password and OTP is stored in a dedicated Gladys secret field and is never exposed in a JSON document.
+- **Refresh interval**: manually entered in seconds, from 60 to 86400. The recommended default is 900 seconds (15 minutes). A moderate interval prevents unnecessary Gladys database growth.
 
 Click **Test the DSM connection**. A successful result shows the NAS model, DSM version and number of detected volumes. Then scan for devices in Gladys.
 
 ## Devices
 
-The integration creates one device per NAS, one device for every storage volume and, when available, one device for every Hyper Backup or Active Backup task. A backup task exposes its status, latest result and latest backup time. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
+The integration creates one device per NAS, one device for every storage volume, one device for every internal disk and, when available, one device for every Hyper Backup or Active Backup task. Each disk exposes the exact SMART status reported by DSM and a binary SMART health indicator. A backup task exposes its status, latest result and latest backup time. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
 
 A first snapshot is sent immediately after a device is added, then every refresh updates all NAS values. Volume usage percentages are rounded to two decimal places. History is kept for utilization, temperature and health values; capacities and text information do not create redundant history.
 
@@ -54,3 +41,4 @@ A first snapshot is sent immediately after a device is added, then every refresh
 - **Certificate error**: install a trusted certificate in DSM. For a private, self-signed installation only, certificate verification can be disabled.
 - **A volume is missing**: rescan after creating or removing a volume.
 - **Backup tasks are missing**: verify that Hyper Backup or Active Backup is installed, that at least one task exists and that the dedicated DSM account can open the corresponding package, then scan again.
+- **A backup date has no value**: update the integration, save the connection again and wait for the next refresh. Active Backup details are queried task by task because its general task list does not always include version dates.

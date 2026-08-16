@@ -20,6 +20,10 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
       ],
     },
     storage: {
+      disks: [
+        { id: 'disk_1', name: 'Drive 1', model: 'WD40EFRX', smart_status: 'normal' },
+        { id: 'disk_2', name: 'Drive 2', model: 'WD40EFRX', smart_status: 'failing' },
+      ],
       volumes: [
         {
           id: 'volume_1',
@@ -41,6 +45,10 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
     memoryUsage: 37,
   });
   assert.deepEqual(snapshot.backups, []);
+  assert.deepEqual(snapshot.disks, [
+    { id: 'disk_1', name: 'Drive 1', smartStatus: 'normal', smartHealthy: 1 },
+    { id: 'disk_2', name: 'Drive 2', smartStatus: 'failing', smartHealthy: 0 },
+  ]);
   assert.equal(snapshot.volumes[0].usagePercent, 25);
   assert.equal(snapshot.volumes[0].freeBytes, 750);
   assert.equal(snapshot.volumes[0].healthy, 1);
@@ -72,7 +80,8 @@ test('normalizeSnapshot exposes Hyper Backup and Active Backup task information'
           task_id: 9,
           task_name: 'Workstations',
           status: 'idle',
-          versions: [{ status: 3, backup_time: 1_700_000_100 }],
+          last_result: { status: 2, time_end: 1_700_000_100 },
+          versions: [{ status: 3, time_end: 1_700_000_100 }],
         },
       ],
     },
@@ -98,8 +107,35 @@ test('normalizeSnapshot exposes Hyper Backup and Active Backup task information'
   ]);
 });
 
+test('normalizeSnapshot maps a partially successful Active Backup result', () => {
+  const snapshot = normalizeSnapshot({
+    activeBackup: {
+      tasks: [
+        {
+          task_id: 10,
+          task_name: 'Mail server',
+          last_result: { status: 3, time_start: 1_700_000_200 },
+        },
+      ],
+    },
+  });
+
+  assert.equal(snapshot.backups[0].result, 'partial success');
+  assert.equal(snapshot.backups[0].lastBackupAt, '2023-11-14T22:16:40.000Z');
+});
+
 test('normalizeSnapshot tolerates missing optional storage API data', () => {
-  assert.deepEqual(normalizeSnapshot({ system: {}, utilization: {}, storage: null }).volumes, []);
+  const snapshot = normalizeSnapshot({ system: {}, utilization: {}, storage: null });
+  assert.deepEqual(snapshot.volumes, []);
+  assert.deepEqual(snapshot.disks, []);
+});
+
+test('normalizeSnapshot does not claim an unknown SMART status is unhealthy', () => {
+  const snapshot = normalizeSnapshot({
+    storage: { disks: [{ id: 'disk_1', smart_status: 'not_supported' }] },
+  });
+  assert.equal(snapshot.disks[0].smartStatus, 'not_supported');
+  assert.equal(snapshot.disks[0].smartHealthy, undefined);
 });
 
 test('bytesToGigabytes rounds to two decimals', () => {

@@ -8,6 +8,7 @@ External [Gladys Assistant](https://gladysassistant.com/) integration for monito
 - System temperature
 - DSM version
 - Per-volume usage, used/free/total capacity and health
+- Per-disk SMART status and health
 - Hyper Backup and Active Backup task status, last result and last backup time
 
 Volumes are discovered dynamically. Metrics are read-only: this integration does not modify the NAS.
@@ -21,9 +22,9 @@ Volumes are discovered dynamically. Metrics are read-only: this integration does
 5. Install the integration and enter the primary DSM URL, username, password and a current OTP. After the first successful login, the trusted-device token is persisted in `/data`; the OTP field can be cleared.
 6. Use **Test the DSM connection**, then scan for devices. A first state snapshot is sent as soon as a discovered device is added.
 
-Metrics are saved every 15 minutes by default. The interval is entered manually in seconds, from 300 seconds to 86400 seconds, to limit Gladys database growth. Capacity totals, backup text information and the DSM version update their latest value without keeping redundant history.
+Metrics are saved every 15 minutes by default. The interval is entered manually in seconds, from 60 seconds to 86400 seconds, to limit Gladys database growth. Capacity totals, backup text information and the DSM version update their latest value without keeping redundant history.
 
-Additional NAS connections can be supplied through the secret JSON field. Every entry accepts `url`, `username`, `password`, optional `otp_code`, and optional `verify_ssl`. Hyper Backup and Active Backup devices are discovered only when their DSM packages expose the corresponding task APIs to the configured account.
+Up to four NAS can be configured with identical connection fields. NAS 2 to 4 are optional, and each password and OTP is stored in its own secret field instead of a visible JSON document. Hyper Backup and Active Backup devices are discovered only when their DSM packages expose the corresponding task APIs to the configured account.
 
 See [docs/en.md](docs/en.md) or [docs/fr.md](docs/fr.md) for the complete guide.
 

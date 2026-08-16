@@ -4,12 +4,27 @@ export const DEFAULT_CONFIG = {
   password: '',
   otp_code: '',
   verify_ssl: true,
-  additional_nas: '',
+  nas_2_url: '',
+  nas_2_username: '',
+  nas_2_password: '',
+  nas_2_otp_code: '',
+  nas_2_verify_ssl: true,
+  nas_3_url: '',
+  nas_3_username: '',
+  nas_3_password: '',
+  nas_3_otp_code: '',
+  nas_3_verify_ssl: true,
+  nas_4_url: '',
+  nas_4_username: '',
+  nas_4_password: '',
+  nas_4_otp_code: '',
+  nas_4_verify_ssl: true,
   poll_frequency: 900,
 };
 
-export const MIN_POLL_FREQUENCY = 300;
+export const MIN_POLL_FREQUENCY = 60;
 export const MAX_POLL_FREQUENCY = 86_400;
+export const ADDITIONAL_NAS_SLOTS = [2, 3, 4];
 
 function normalizeUrl(value) {
   const raw = String(value ?? '').trim();
@@ -23,17 +38,23 @@ export function normalizeConfig(raw = {}) {
   const pollFrequency = Number.isFinite(requestedFrequency)
     ? Math.min(MAX_POLL_FREQUENCY, Math.max(MIN_POLL_FREQUENCY, Math.round(requestedFrequency)))
     : DEFAULT_CONFIG.poll_frequency;
-  return {
+  const config = {
     ...DEFAULT_CONFIG,
-    ...raw,
     url: normalizeUrl(raw.url),
     username: String(raw.username ?? '').trim(),
     password: String(raw.password ?? ''),
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
-    additional_nas: String(raw.additional_nas ?? '').trim(),
     poll_frequency: pollFrequency,
   };
+  for (const slot of ADDITIONAL_NAS_SLOTS) {
+    config[`nas_${slot}_url`] = normalizeUrl(raw[`nas_${slot}_url`]);
+    config[`nas_${slot}_username`] = String(raw[`nas_${slot}_username`] ?? '').trim();
+    config[`nas_${slot}_password`] = String(raw[`nas_${slot}_password`] ?? '');
+    config[`nas_${slot}_otp_code`] = String(raw[`nas_${slot}_otp_code`] ?? '').trim();
+    config[`nas_${slot}_verify_ssl`] = raw[`nas_${slot}_verify_ssl`] !== false;
+  }
+  return config;
 }
 
 function connectionConfig(raw, pollFrequency) {
@@ -49,30 +70,23 @@ function connectionConfig(raw, pollFrequency) {
 
 export function getNasConfigs(config) {
   const connections = [connectionConfig(config, config.poll_frequency)];
-  if (!config.additional_nas) return connections;
-
-  let additional;
-  try {
-    additional = JSON.parse(config.additional_nas);
-  } catch {
-    throw new Error('Additional NAS configuration must be valid JSON.');
-  }
-  if (!Array.isArray(additional)) {
-    throw new Error('Additional NAS configuration must be a JSON array.');
-  }
-
-  additional.forEach((raw, index) => {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
-      throw new Error(`Additional NAS ${index + 1} must be a JSON object.`);
-    }
+  for (const slot of ADDITIONAL_NAS_SLOTS) {
+    const raw = {
+      url: config[`nas_${slot}_url`],
+      username: config[`nas_${slot}_username`],
+      password: config[`nas_${slot}_password`],
+      otp_code: config[`nas_${slot}_otp_code`],
+      verify_ssl: config[`nas_${slot}_verify_ssl`],
+    };
+    if (!raw.url && !raw.username && !raw.password && !raw.otp_code) continue;
     const connection = connectionConfig(raw, config.poll_frequency);
     try {
       validateConfig(connection);
     } catch (error) {
-      throw new Error(`Additional NAS ${index + 1}: ${error.message}`, { cause: error });
+      throw new Error(`NAS ${slot}: ${error.message}`, { cause: error });
     }
     connections.push(connection);
-  });
+  }
   return connections;
 }
 
