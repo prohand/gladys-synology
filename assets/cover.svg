@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
+  <title id="title">Synology pour Gladys Assistant</title>
+  <desc id="description">Illustration d'un NAS Synology relié à un tableau de supervision Gladys</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#101a38"/>
+      <stop offset="1" stop-color="#273f79"/>
+    </linearGradient>
+    <linearGradient id="nas" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="chart" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#42d3b0"/>
+      <stop offset="1" stop-color="#59a7ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%">
+      <feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="#050a18" flood-opacity=".35"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#background)"/>
+  <circle cx="1390" cy="80" r="270" fill="#588cf4" opacity=".10"/>
+  <circle cx="1450" cy="730" r="390" fill="#42d3b0" opacity=".08"/>
+  <path d="M0 760 C290 650 470 880 760 760 S1260 700 1600 800 V900 H0Z" fill="#091127" opacity=".4"/>
+
+  <g transform="translate(130 175)">
+    <rect width="780" height="530" rx="34" fill="#fff" opacity=".96" filter="url(#shadow)"/>
+    <rect width="780" height="74" rx="34" fill="#f1f5f9"/>
+    <rect y="42" width="780" height="32" fill="#f1f5f9"/>
+    <circle cx="38" cy="37" r="9" fill="#fb7185"/>
+    <circle cx="68" cy="37" r="9" fill="#fbbf24"/>
+    <circle cx="98" cy="37" r="9" fill="#42d3b0"/>
+    <text x="138" y="47" font-family="Arial, sans-serif" font-size="25" font-weight="700" fill="#26385f">Gladys Assistant</text>
+
+    <g transform="translate(42 115)">
+      <rect width="205" height="110" rx="18" fill="#edf4ff"/>
+      <text x="22" y="34" font-family="Arial, sans-serif" font-size="18" fill="#66738f">CPU</text>
+      <text x="22" y="82" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#26385f">24%</text>
+      <path d="M115 80 C140 72 145 38 165 51 S187 35 195 30" fill="none" stroke="#4d91f7" stroke-width="7" stroke-linecap="round"/>
+      <rect x="225" width="205" height="110" rx="18" fill="#ecfbf7"/>
+      <text x="247" y="34" font-family="Arial, sans-serif" font-size="18" fill="#66738f">RAM</text>
+      <text x="247" y="82" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#26385f">61%</text>
+      <circle cx="390" cy="59" r="27" fill="none" stroke="#cceee5" stroke-width="10"/>
+      <path d="M390 32 A27 27 0 1 1 364 66" fill="none" stroke="#42bfa0" stroke-width="10" stroke-linecap="round"/>
+      <rect x="450" width="245" height="110" rx="18" fill="#fff5ed"/>
+      <text x="472" y="34" font-family="Arial, sans-serif" font-size="18" fill="#66738f">Température</text>
+      <text x="472" y="82" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#26385f">39°C</text>
+      <path d="M644 24v47a21 21 0 1 0 18 0V24a9 9 0 0 0-18 0Z" fill="none" stroke="#fb8b55" stroke-width="8"/>
+    </g>
+
+    <g transform="translate(42 265)">
+      <text x="0" y="22" font-family="Arial, sans-serif" font-size="19" font-weight="700" fill="#26385f">Activité du NAS</text>
+      <path d="M0 170H695M0 122H695M0 74H695" stroke="#dce4ef" stroke-width="2"/>
+      <path d="M0 156 C55 130 78 142 118 109 S190 132 232 93 S304 111 350 65 S435 108 483 72 S559 85 604 45 S666 65 695 31" fill="none" stroke="url(#chart)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M0 156 C55 130 78 142 118 109 S190 132 232 93 S304 111 350 65 S435 108 483 72 S559 85 604 45 S666 65 695 31 V190 H0Z" fill="url(#chart)" opacity=".12"/>
+      <circle cx="695" cy="31" r="9" fill="#59a7ff" stroke="#fff" stroke-width="5"/>
+    </g>
+  </g>
+
+  <g transform="translate(1030 195)" filter="url(#shadow)">
+    <rect width="390" height="495" rx="42" fill="url(#nas)"/>
+    <rect x="28" y="30" width="334" height="82" rx="18" fill="#1a2745"/>
+    <text x="54" y="80" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#f8fafc">SYNOLOGY</text>
+    <circle cx="323" cy="70" r="9" fill="#42d3b0"/>
+    <g fill="#273654">
+      <rect x="37" y="143" width="148" height="272" rx="18"/>
+      <rect x="205" y="143" width="148" height="272" rx="18"/>
+    </g>
+    <g fill="#53617b">
+      <rect x="60" y="171" width="102" height="210" rx="10"/>
+      <rect x="228" y="171" width="102" height="210" rx="10"/>
+    </g>
+    <g fill="#42d3b0">
+      <circle cx="111" cy="356" r="9"/>
+      <circle cx="279" cy="356" r="9"/>
+    </g>
+    <rect x="44" y="443" width="126" height="13" rx="6" fill="#a9b4c3"/>
+    <circle cx="330" cy="450" r="12" fill="#59a7ff"/>
+  </g>
+
+  <g transform="translate(1120 706)">
+    <rect width="218" height="52" rx="26" fill="#42d3b0"/>
+    <path d="M30 26l11 11 22-24" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="79" y="34" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#10213d">SMART OK</text>
+  </g>
+
+  <text x="130" y="805" font-family="Arial, sans-serif" font-size="38" font-weight="700" fill="#fff">Synology pour Gladys</text>
+  <text x="130" y="850" font-family="Arial, sans-serif" font-size="23" fill="#cbd8f4">Surveillez la santé et les performances de votre NAS.</text>
+</svg>
