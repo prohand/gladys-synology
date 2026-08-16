@@ -28,7 +28,7 @@ test('normalizeConfig only returns supported monitoring intervals', () => {
   assert.equal(normalizeConfig({ poll_frequency: '300' }).poll_frequency, 300);
   assert.equal(normalizeConfig({ poll_frequency: '900' }).poll_frequency, 900);
   assert.equal(normalizeConfig({ poll_frequency: '3600' }).poll_frequency, 3600);
-  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 300);
+  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 900);
 });
 
 test('validateConfig rejects incomplete or invalid connection details', () => {

@@ -18,12 +18,8 @@ function normalizeUrl(value) {
 
 export function normalizeConfig(raw = {}) {
   const requestedFrequency = Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency);
-  const pollFrequency = Number.isFinite(requestedFrequency)
-    ? SUPPORTED_POLL_FREQUENCIES.reduce((closest, frequency) =>
-        Math.abs(frequency - requestedFrequency) < Math.abs(closest - requestedFrequency)
-          ? frequency
-          : closest,
-      )
+  const pollFrequency = SUPPORTED_POLL_FREQUENCIES.includes(requestedFrequency)
+    ? requestedFrequency
     : DEFAULT_CONFIG.poll_frequency;
   return {
     ...DEFAULT_CONFIG,
