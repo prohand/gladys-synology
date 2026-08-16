@@ -19,7 +19,7 @@ This integration does not currently submit DSM one-time passwords. Do not enforc
 - **DSM URL**: full local URL, for example `https://192.168.1.20:5001`.
 - **Username / password**: credentials of the dedicated DSM user.
 - **Verify the TLS certificate**: keep enabled for a trusted certificate. Disable only for a self-signed local certificate after verifying the NAS address yourself.
-- **Refresh interval**: between 30 and 3600 seconds.
+- **Refresh interval**: 30 or 60 seconds.
 
 Click **Test the DSM connection**. A successful result shows the NAS model, DSM version and number of detected volumes. Then scan for devices in Gladys.
 

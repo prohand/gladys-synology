@@ -18,7 +18,11 @@ test('manifest identifies a versioned Synology device integration', () => {
 test('manifest configuration defaults stay in sync with code', () => {
   const fields = Object.fromEntries(manifest.config_schema.map((field) => [field.key, field]));
   assert.equal(fields.verify_ssl.default, DEFAULT_CONFIG.verify_ssl);
-  assert.equal(fields.poll_frequency.default, DEFAULT_CONFIG.poll_frequency);
+  assert.equal(Number(fields.poll_frequency.default), DEFAULT_CONFIG.poll_frequency);
+  assert.deepEqual(
+    fields.poll_frequency.options.map(({ value }) => Number(value)),
+    [30, 60],
+  );
   assert.equal(fields.password.type, 'secret');
   for (const key of ['url', 'username', 'password']) assert.equal(fields[key].required, true);
 });

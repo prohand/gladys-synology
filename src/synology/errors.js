@@ -21,7 +21,7 @@ const DSM_ERROR_MESSAGES = new Map([
   [402, 'DSM permission denied'],
   [403, 'DSM two-factor authentication is required'],
   [404, 'DSM two-factor authentication failed'],
-  [406, 'DSM account has been disabled'],
+  [406, 'DSM one-time password authentication is enforced'],
   [407, 'DSM IP address is blocked'],
   [408, 'DSM password has expired'],
   [409, 'DSM password must be changed'],

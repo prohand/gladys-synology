@@ -63,16 +63,18 @@
     },
     {
       "key": "poll_frequency",
-      "type": "number",
+      "type": "select",
       "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
       "description": {
-        "en": "How often the NAS metrics are refreshed.",
-        "fr": "Fréquence de rafraîchissement des métriques du NAS."
+        "en": "How often the NAS metrics are refreshed. Gladys supports these predefined polling intervals.",
+        "fr": "Fréquence de rafraîchissement des métriques du NAS. Gladys prend en charge ces intervalles prédéfinis."
       },
       "required": false,
-      "default": 60,
-      "min": 30,
-      "max": 3600
+      "default": "60",
+      "options": [
+        { "value": "30", "label": { "en": "30 seconds", "fr": "30 secondes" } },
+        { "value": "60", "label": { "en": "60 seconds", "fr": "60 secondes" } }
+      ]
     }
   ],
   "actions": [

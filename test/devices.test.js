@@ -34,7 +34,7 @@ const snapshot = {
 test('discovery creates one NAS and one device per volume', () => {
   const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
   assert.equal(devices.length, 2);
-  assert.equal(devices[0].poll_frequency, 60);
+  assert.equal(devices[0].poll_frequency, 60_000);
   assert.equal(devices[1].poll_frequency, undefined);
   assert.equal(new Set(devices.map((device) => device.external_id)).size, 2);
 });

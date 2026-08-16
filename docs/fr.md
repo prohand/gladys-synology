@@ -19,7 +19,7 @@ Cette intégration ne transmet pas encore les mots de passe à usage unique de D
 - **URL DSM** : URL locale complète, par exemple `https://192.168.1.20:5001`.
 - **Nom d'utilisateur / mot de passe** : identifiants du compte DSM dédié.
 - **Vérifier le certificat TLS** : laissez cette option activée avec un certificat de confiance. Ne la désactivez que pour un certificat local auto-signé, après avoir vérifié vous-même l'adresse du NAS.
-- **Intervalle de rafraîchissement** : entre 30 et 3 600 secondes.
+- **Intervalle de rafraîchissement** : 30 ou 60 secondes.
 
 Cliquez sur **Tester la connexion DSM**. En cas de succès, le résultat indique le modèle du NAS, la version DSM et le nombre de volumes détectés. Lancez ensuite une recherche d'appareils dans Gladys.
 

@@ -6,6 +6,8 @@ export const DEFAULT_CONFIG = {
   poll_frequency: 60,
 };
 
+const SUPPORTED_POLL_FREQUENCIES = [30, 60];
+
 function normalizeUrl(value) {
   const raw = String(value ?? '').trim();
   if (!raw) return '';
@@ -15,6 +17,13 @@ function normalizeUrl(value) {
 
 export function normalizeConfig(raw = {}) {
   const requestedFrequency = Number(raw.poll_frequency ?? DEFAULT_CONFIG.poll_frequency);
+  const pollFrequency = Number.isFinite(requestedFrequency)
+    ? SUPPORTED_POLL_FREQUENCIES.reduce((closest, frequency) =>
+        Math.abs(frequency - requestedFrequency) < Math.abs(closest - requestedFrequency)
+          ? frequency
+          : closest,
+      )
+    : DEFAULT_CONFIG.poll_frequency;
   return {
     ...DEFAULT_CONFIG,
     ...raw,
@@ -22,9 +31,7 @@ export function normalizeConfig(raw = {}) {
     username: String(raw.username ?? '').trim(),
     password: String(raw.password ?? ''),
     verify_ssl: raw.verify_ssl !== false,
-    poll_frequency: Number.isFinite(requestedFrequency)
-      ? Math.min(3600, Math.max(30, Math.round(requestedFrequency)))
-      : DEFAULT_CONFIG.poll_frequency,
+    poll_frequency: pollFrequency,
   };
 }
 

@@ -10,7 +10,7 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       username: ' gladys ',
       password: 1234,
       verify_ssl: false,
-      poll_frequency: '10',
+      poll_frequency: '45',
     }),
     {
       url: 'https://nas.local:5001',
@@ -20,6 +20,12 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       poll_frequency: 30,
     },
   );
+});
+
+test('normalizeConfig only returns poll frequencies accepted by Gladys', () => {
+  assert.equal(normalizeConfig({ poll_frequency: '30' }).poll_frequency, 30);
+  assert.equal(normalizeConfig({ poll_frequency: '60' }).poll_frequency, 60);
+  assert.equal(normalizeConfig({ poll_frequency: '3600' }).poll_frequency, 60);
 });
 
 test('validateConfig rejects incomplete or invalid connection details', () => {

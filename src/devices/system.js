@@ -25,7 +25,8 @@ export function buildSystemDevice(gladys, nasId, nas, config) {
   return {
     name: nas.model || 'Synology NAS',
     external_id: ids.device,
-    poll_frequency: config.poll_frequency,
+    // The configuration is user-facing seconds; Gladys' device contract uses milliseconds.
+    poll_frequency: config.poll_frequency * 1000,
     features: [
       {
         name: 'CPU usage',
