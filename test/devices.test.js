@@ -49,6 +49,14 @@ test('discovery uses canonical Gladys categories for temperature, data and rates
   assert.ok(categories.includes(DEVICE_FEATURE_CATEGORIES.DATA));
 });
 
+test('every discovered feature includes the numeric bounds required by Gladys', () => {
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
+  for (const feature of devices.flatMap((device) => device.features)) {
+    assert.equal(Number.isFinite(feature.min), true, `${feature.external_id} min`);
+    assert.equal(Number.isFinite(feature.max), true, `${feature.external_id} max`);
+  }
+});
+
 test('states use the same stable feature IDs as discovery', () => {
   const devices = buildDiscoveredDevices(gladys, 'ABC123', snapshot, normalizeConfig());
   const featureIds = new Set(
@@ -57,6 +65,15 @@ test('states use the same stable feature IDs as discovery', () => {
   const states = buildStates(gladys, 'ABC123', snapshot);
   assert.ok(states.length > 0);
   for (const state of states) assert.ok(featureIds.has(state.device_feature_external_id));
+});
+
+test('DSM version is published through the Gladys text field', () => {
+  const states = buildStates(gladys, 'ABC123', snapshot);
+  const version = states.find((item) => item.device_feature_external_id.endsWith(':dsm-version'));
+  assert.deepEqual(version, {
+    device_feature_external_id: 'synology-nas:ABC123:dsm-version',
+    text: 'DSM 7.2.2',
+  });
 });
 
 test('undefined optional values are not published', () => {

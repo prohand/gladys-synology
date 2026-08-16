@@ -105,6 +105,8 @@ export function buildSystemDevice(gladys, nasId, nas, config) {
         external_id: ids.feature(SYSTEM_FEATURE.DSM_VERSION),
         category: DEVICE_FEATURE_CATEGORIES.TEXT,
         type: DEVICE_FEATURE_TYPES.TEXT.TEXT,
+        min: 0,
+        max: 0,
         read_only: true,
         has_feedback: false,
         keep_history: false,
@@ -115,16 +117,24 @@ export function buildSystemDevice(gladys, nasId, nas, config) {
 
 export function buildSystemStates(gladys, nasId, nas) {
   const ids = gladys.externalIds(DEVICE_TYPE, nasId);
-  const values = [
+  const numericValues = [
     [SYSTEM_FEATURE.CPU, nas.cpuUsage],
     [SYSTEM_FEATURE.MEMORY, nas.memoryUsage],
     [SYSTEM_FEATURE.TEMPERATURE, nas.temperature],
     [SYSTEM_FEATURE.RECEIVE_RATE, nas.receiveRate],
     [SYSTEM_FEATURE.TRANSMIT_RATE, nas.transmitRate],
     [SYSTEM_FEATURE.UPTIME, nas.uptime],
-    [SYSTEM_FEATURE.DSM_VERSION, nas.dsmVersion || undefined],
   ];
-  return values
+  const states = numericValues
     .filter(([, state]) => state !== undefined)
     .map(([key, state]) => ({ device_feature_external_id: ids.feature(key), state }));
+
+  if (nas.dsmVersion) {
+    states.push({
+      device_feature_external_id: ids.feature(SYSTEM_FEATURE.DSM_VERSION),
+      text: nas.dsmVersion,
+    });
+  }
+
+  return states;
 }
