@@ -101,3 +101,127 @@ test('client reports DSM authentication errors without exposing the password', a
     return true;
   });
 });
+
+test('client enrolls a remembered DSM device with the current OTP', async () => {
+  const loginCalls = [];
+  const saved = [];
+  const mfaDeviceStore = {
+    async load() {
+      return null;
+    },
+    async save(config, deviceId) {
+      saved.push({ config, deviceId });
+    },
+  };
+  const client = new SynologyClient(
+    normalizeConfig({
+      url: 'https://nas:5001',
+      username: 'gladys',
+      password: 'password',
+      otp_code: '123456',
+    }),
+    {
+      mfaDeviceStore,
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: { 'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 } },
+          });
+        }
+        loginCalls.push(body);
+        return jsonResponse({ success: true, data: { sid: 'sid', did: 'remembered-device' } });
+      },
+    },
+  );
+
+  await client.login();
+  assert.equal(loginCalls.length, 1);
+  assert.equal(loginCalls[0].version, '6');
+  assert.equal(loginCalls[0].otp_code, '123456');
+  assert.equal(loginCalls[0].enable_device_token, 'yes');
+  assert.equal(loginCalls[0].device_name, 'Gladys Synology');
+  assert.equal(loginCalls[0].device_id, undefined);
+  assert.equal(saved[0].deviceId, 'remembered-device');
+});
+
+test('client reuses a remembered DSM device without submitting the stale OTP', async () => {
+  let loginBody;
+  const client = new SynologyClient(
+    normalizeConfig({
+      url: 'https://nas:5001',
+      username: 'gladys',
+      password: 'password',
+      otp_code: '123456',
+    }),
+    {
+      mfaDeviceStore: {
+        async load() {
+          return 'remembered-device';
+        },
+        async save() {},
+      },
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: { 'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 } },
+          });
+        }
+        loginBody = body;
+        return jsonResponse({ success: true, data: { sid: 'sid' } });
+      },
+    },
+  );
+
+  await client.login();
+  assert.equal(loginBody.device_id, 'remembered-device');
+  assert.equal(loginBody.device_name, 'Gladys Synology');
+  assert.equal(loginBody.otp_code, undefined);
+  assert.equal(loginBody.enable_device_token, undefined);
+});
+
+test('client renews a revoked remembered device with a fresh OTP', async () => {
+  const loginCalls = [];
+  const saved = [];
+  const client = new SynologyClient(
+    normalizeConfig({
+      url: 'https://nas:5001',
+      username: 'gladys',
+      password: 'password',
+      otp_code: '654321',
+    }),
+    {
+      mfaDeviceStore: {
+        async load() {
+          return 'revoked-device';
+        },
+        async save(_config, deviceId) {
+          saved.push(deviceId);
+        },
+      },
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: { 'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 } },
+          });
+        }
+        loginCalls.push(body);
+        return loginCalls.length === 1
+          ? jsonResponse({ success: false, error: { code: 406 } })
+          : jsonResponse({ success: true, data: { sid: 'sid', did: 'renewed-device' } });
+      },
+    },
+  );
+
+  await client.login();
+  assert.equal(loginCalls.length, 2);
+  assert.equal(loginCalls[0].device_id, 'revoked-device');
+  assert.equal(loginCalls[1].otp_code, '654321');
+  assert.equal(loginCalls[1].enable_device_token, 'yes');
+  assert.deepEqual(saved, ['renewed-device']);
+});

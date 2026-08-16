@@ -1,4 +1,5 @@
 import { SynologyApiError, apiError } from './errors.js';
+import { SynologyMfaDeviceStore } from './mfa-device-store.js';
 import { Agent } from 'undici';
 
 const REQUIRED_APIS = [
@@ -8,17 +9,23 @@ const REQUIRED_APIS = [
   'SYNO.Storage.CGI.Storage',
 ];
 const SESSION_ERROR_CODES = new Set([106, 107, 119]);
+const MFA_ERROR_CODES = new Set([403, 404, 406]);
+const MFA_DEVICE_NAME = 'Gladys Synology';
 
 function clampVersion(info, preferred) {
   return Math.max(info.minVersion ?? 1, Math.min(preferred, info.maxVersion ?? preferred));
 }
 
 export class SynologyClient {
-  constructor(config, { fetchImpl = globalThis.fetch } = {}) {
+  constructor(
+    config,
+    { fetchImpl = globalThis.fetch, mfaDeviceStore = new SynologyMfaDeviceStore() } = {},
+  ) {
     this.config = config;
     this.fetch = fetchImpl;
     this.apis = null;
     this.sid = null;
+    this.mfaDeviceStore = mfaDeviceStore;
     this.dispatcher =
       config.url.startsWith('https://') && !config.verify_ssl
         ? new Agent({ connect: { rejectUnauthorized: false } })
@@ -75,18 +82,39 @@ export class SynologyClient {
   async login() {
     if (!this.apis) await this.discoverApis();
     const info = this.apiInfo('SYNO.API.Auth');
-    const payload = await this.request(info.path, {
+    const baseParameters = {
       api: 'SYNO.API.Auth',
-      version: String(clampVersion(info, 7)),
+      version: String(clampVersion(info, 6)),
       method: 'login',
       account: this.config.username,
       passwd: this.config.password,
       session: 'GladysSynology',
       format: 'sid',
+    };
+    const deviceId = await this.mfaDeviceStore.load(this.config);
+    const otpParameters = this.config.otp_code
+      ? {
+          otp_code: this.config.otp_code,
+          enable_device_token: 'yes',
+          device_name: MFA_DEVICE_NAME,
+        }
+      : {};
+    let payload = await this.request(info.path, {
+      ...baseParameters,
+      ...(deviceId ? { device_name: MFA_DEVICE_NAME, device_id: deviceId } : otpParameters),
     });
+    if (
+      !payload.success &&
+      deviceId &&
+      this.config.otp_code &&
+      MFA_ERROR_CODES.has(payload.error?.code)
+    ) {
+      payload = await this.request(info.path, { ...baseParameters, ...otpParameters });
+    }
     if (!payload.success) throw apiError('SYNO.API.Auth', payload.error?.code);
     this.sid = payload.data?.sid;
     if (!this.sid) throw new SynologyApiError('Synology DSM login returned no session ID');
+    if (payload.data?.did) await this.mfaDeviceStore.save(this.config, payload.data.did);
     return payload.data;
   }
 

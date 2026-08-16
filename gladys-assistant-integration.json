@@ -51,6 +51,19 @@
       "required": true
     },
     {
+      "key": "otp_code",
+      "type": "secret",
+      "label": {
+        "en": "Current OTP code (MFA)",
+        "fr": "Code OTP actuel (MFA)"
+      },
+      "description": {
+        "en": "Required only to trust this Gladys installation on the first MFA login, or after revoking the trusted device in DSM. Enter a current 6-digit verification code.",
+        "fr": "Requis uniquement pour approuver cette installation Gladys lors de la première connexion MFA, ou après révocation de l'appareil de confiance dans DSM. Saisissez un code de vérification actuel à 6 chiffres."
+      },
+      "required": false
+    },
+    {
       "key": "verify_ssl",
       "type": "boolean",
       "label": { "en": "Verify the TLS certificate", "fr": "Vérifier le certificat TLS" },

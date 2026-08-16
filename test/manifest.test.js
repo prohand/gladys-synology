@@ -24,6 +24,8 @@ test('manifest configuration defaults stay in sync with code', () => {
     [30, 60],
   );
   assert.equal(fields.password.type, 'secret');
+  assert.equal(fields.otp_code.type, 'secret');
+  assert.equal(fields.otp_code.required, false);
   for (const key of ['url', 'username', 'password']) assert.equal(fields[key].required, true);
 });
 

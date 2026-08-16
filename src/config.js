@@ -2,6 +2,7 @@ export const DEFAULT_CONFIG = {
   url: '',
   username: '',
   password: '',
+  otp_code: '',
   verify_ssl: true,
   poll_frequency: 60,
 };
@@ -30,6 +31,7 @@ export function normalizeConfig(raw = {}) {
     url: normalizeUrl(raw.url),
     username: String(raw.username ?? '').trim(),
     password: String(raw.password ?? ''),
+    otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
     poll_frequency: pollFrequency,
   };
@@ -39,6 +41,9 @@ export function validateConfig(config) {
   if (!config.url) throw new Error('The Synology DSM URL is required.');
   if (!config.username) throw new Error('The Synology DSM username is required.');
   if (!config.password) throw new Error('The Synology DSM password is required.');
+  if (config.otp_code && !/^\d{6}$/.test(config.otp_code)) {
+    throw new Error('The Synology DSM OTP code must contain exactly 6 digits.');
+  }
 
   let url;
   try {

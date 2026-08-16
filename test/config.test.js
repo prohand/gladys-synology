@@ -9,6 +9,7 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       url: ' nas.local:5001/// ',
       username: ' gladys ',
       password: 1234,
+      otp_code: ' 123456 ',
       verify_ssl: false,
       poll_frequency: '45',
     }),
@@ -16,6 +17,7 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       url: 'https://nas.local:5001',
       username: 'gladys',
       password: '1234',
+      otp_code: '123456',
       verify_ssl: false,
       poll_frequency: 30,
     },
@@ -33,6 +35,18 @@ test('validateConfig rejects incomplete or invalid connection details', () => {
   assert.throws(
     () => validateConfig(normalizeConfig({ url: 'ftp://nas', username: 'u', password: 'p' })),
     /HTTP or HTTPS/,
+  );
+  assert.throws(
+    () =>
+      validateConfig(
+        normalizeConfig({
+          url: 'https://nas',
+          username: 'u',
+          password: 'p',
+          otp_code: '12345',
+        }),
+      ),
+    /exactly 6 digits/,
   );
 });
 
