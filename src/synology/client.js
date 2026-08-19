@@ -9,8 +9,9 @@ const REQUIRED_APIS = [
   'SYNO.Storage.CGI.Storage',
 ];
 const OPTIONAL_APIS = ['SYNO.Backup.Task', 'SYNO.ActiveBackup.Task'];
-const SESSION_ERROR_CODES = new Set([106, 107, 119]);
-const MFA_ERROR_CODES = new Set([403, 404, 406]);
+const SESSION_ERROR_CODES = new Set([106, 107, 119, 498]);
+// DSM rejects a login for good with these codes: retrying cannot help.
+const CREDENTIAL_ERROR_CODES = new Set([400, 401, 402, 407, 408, 409, 410]);
 const MFA_DEVICE_NAME = 'Gladys Synology';
 
 function clampVersion(info, preferred) {
@@ -104,12 +105,10 @@ export class SynologyClient {
       ...baseParameters,
       ...(deviceId ? { device_name: MFA_DEVICE_NAME, device_id: deviceId } : otpParameters),
     });
-    if (
-      !payload.success &&
-      deviceId &&
-      this.config.otp_code &&
-      MFA_ERROR_CODES.has(payload.error?.code)
-    ) {
+    if (!payload.success && deviceId && !CREDENTIAL_ERROR_CODES.has(payload.error?.code)) {
+      // A DSM update, a reboot or a revoked trusted device invalidates the remembered
+      // device identifier. Retry a full login instead of failing the whole connection,
+      // so a stale identifier never keeps the integration offline.
       payload = await this.request(info.path, { ...baseParameters, ...otpParameters });
     }
     if (!payload.success) throw apiError('SYNO.API.Auth', payload.error?.code);

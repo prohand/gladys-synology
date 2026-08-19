@@ -1,16 +1,25 @@
 import { GladysIntegration, logger } from '@gladysassistant/integration-sdk';
+import { createBackoff } from './src/backoff.js';
 import { normalizeConfig } from './src/config.js';
 import { SynologyFleetService } from './src/fleet-service.js';
 
 const gladys = new GladysIntegration();
+const retryBackoff = createBackoff();
 let config = normalizeConfig();
 let service = null;
 let initialization = Promise.resolve();
 let refreshTimer = null;
+let retryTimer = null;
+let lastRawConfig = null;
 
 function clearRefreshTimer() {
   if (refreshTimer) clearInterval(refreshTimer);
   refreshTimer = null;
+}
+
+function clearRetryTimer() {
+  if (retryTimer) clearTimeout(retryTimer);
+  retryTimer = null;
 }
 
 function unavailableMessage(error) {
@@ -20,8 +29,23 @@ function unavailableMessage(error) {
   };
 }
 
+// A NAS reboot, a DSM update or a temporary network outage makes the first connection fail.
+// Retrying on our own keeps the integration self-healing instead of waiting for a manual restart.
+function scheduleInitializationRetry() {
+  clearRetryTimer();
+  const delay = retryBackoff.next();
+  logger.info(`Retrying the Synology DSM connection in ${Math.round(delay / 1000)}s`);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    initialization = initialize(lastRawConfig).catch(() => {});
+  }, delay);
+  retryTimer.unref?.();
+}
+
 async function initialize(rawConfig) {
   clearRefreshTimer();
+  clearRetryTimer();
+  lastRawConfig = rawConfig;
   const previousService = service;
   config = normalizeConfig(rawConfig);
   service = new SynologyFleetService(config);
@@ -32,6 +56,7 @@ async function initialize(rawConfig) {
     await gladys.publishDiscoveredDevices(devices);
     await service.publishStates(gladys);
     await gladys.setConnectionStatus(true);
+    retryBackoff.reset();
     refreshTimer = setInterval(() => {
       service
         .publishStates(gladys)
@@ -46,20 +71,29 @@ async function initialize(rawConfig) {
   } catch (error) {
     logger.error('Synology DSM initialization failed', error);
     await gladys.setConnectionStatus(false, unavailableMessage(error)).catch(() => {});
+    scheduleInitializationRetry();
     throw error;
   }
 }
 
-gladys.onScanRequest(async () => {
+// The readiness gate must never stay rejected: a failed initialization would otherwise
+// break every later handler until the integration is restarted.
+async function ready() {
   await initialization;
-  const devices = await service.discover(gladys);
+  if (!service) throw new Error('Synology DSM integration is not connected yet');
+  return service;
+}
+
+gladys.onScanRequest(async () => {
+  const currentService = await ready();
+  const devices = await currentService.discover(gladys);
   await gladys.publishDiscoveredDevices(devices);
 });
 
 gladys.onPoll(async () => {
-  await initialization;
+  const currentService = await ready();
   try {
-    await service.publishStates(gladys);
+    await currentService.publishStates(gladys);
     await gladys.setConnectionStatus(true);
   } catch (error) {
     logger.error('Synology DSM polling failed', error);
@@ -69,13 +103,13 @@ gladys.onPoll(async () => {
 });
 
 gladys.onDeviceCreated(async () => {
-  await initialization;
-  await service.publishStates(gladys, { force: true });
+  const currentService = await ready();
+  await currentService.publishStates(gladys, { force: true });
 });
 
 gladys.onAction('test_connection', async () => {
-  await initialization;
-  const snapshots = await service.refresh();
+  const currentService = await ready();
+  const snapshots = await currentService.refresh();
   const summary = snapshots
     .map(
       (snapshot) =>
@@ -90,18 +124,26 @@ gladys.onAction('test_connection', async () => {
 
 gladys.onConfigUpdated((newConfig) => {
   logger.info('Synology configuration updated');
-  initialization = initialize(newConfig);
-  return initialization;
+  retryBackoff.reset();
+  const run = initialize(newConfig);
+  initialization = run.catch(() => {});
+  return run;
 });
 
 gladys.on('connected', () => {
-  initialization = gladys.getConfig().then((currentConfig) => initialize(currentConfig));
-  initialization.catch(() => {});
+  retryBackoff.reset();
+  initialization = gladys
+    .getConfig()
+    .then((currentConfig) => initialize(currentConfig))
+    .catch((error) => {
+      logger.error('Synology DSM startup failed', error);
+    });
 });
 
 gladys.handleShutdown(async (signal) => {
   logger.info(`Received ${signal} -> graceful shutdown`);
   clearRefreshTimer();
+  clearRetryTimer();
   await service?.close();
 });
 

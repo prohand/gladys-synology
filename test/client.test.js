@@ -290,3 +290,114 @@ test('client renews a revoked remembered device with a fresh OTP', async () => {
   assert.equal(loginCalls[1].enable_device_token, 'yes');
   assert.deepEqual(saved, ['renewed-device']);
 });
+
+test('client signs in again when DSM rejects a remembered device after a NAS update', async () => {
+  const loginCalls = [];
+  const saved = [];
+  const client = new SynologyClient(
+    normalizeConfig({
+      url: 'https://nas:5001',
+      username: 'gladys',
+      password: 'password',
+      otp_code: '111222',
+    }),
+    {
+      mfaDeviceStore: {
+        async load() {
+          return 'stale-device';
+        },
+        async save(_config, deviceId) {
+          saved.push(deviceId);
+        },
+      },
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: { 'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 } },
+          });
+        }
+        loginCalls.push(body);
+        return loginCalls.length === 1
+          ? jsonResponse({ success: false, error: { code: 498 } })
+          : jsonResponse({ success: true, data: { sid: 'sid', did: 'fresh-device' } });
+      },
+    },
+  );
+
+  await client.login();
+  assert.equal(loginCalls.length, 2);
+  assert.equal(loginCalls[0].device_id, 'stale-device');
+  assert.equal(loginCalls[1].device_id, undefined);
+  assert.equal(loginCalls[1].otp_code, '111222');
+  assert.deepEqual(saved, ['fresh-device']);
+  assert.equal(client.sid, 'sid');
+});
+
+test('client does not retry a remembered device login when the credentials are refused', async () => {
+  const loginCalls = [];
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas:5001', username: 'gladys', password: 'password' }),
+    {
+      mfaDeviceStore: {
+        async load() {
+          return 'remembered-device';
+        },
+        async save() {},
+      },
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: { 'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 } },
+          });
+        }
+        loginCalls.push(body);
+        return jsonResponse({ success: false, error: { code: 400 } });
+      },
+    },
+  );
+
+  await assert.rejects(client.login(), /Invalid DSM credentials/);
+  assert.equal(loginCalls.length, 1);
+});
+
+test('client renews the DSM session when a call fails with error 498', async () => {
+  const calls = [];
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas:5001', username: 'gladys', password: 'password' }),
+    {
+      mfaDeviceStore: {
+        async load() {
+          return null;
+        },
+        async save() {},
+      },
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        calls.push(body);
+        if (body.api === 'SYNO.API.Info') {
+          return jsonResponse({
+            success: true,
+            data: {
+              'SYNO.API.Auth': { path: 'entry.cgi', minVersion: 3, maxVersion: 7 },
+              'SYNO.Core.System': { path: 'entry.cgi', minVersion: 1, maxVersion: 3 },
+            },
+          });
+        }
+        if (body.method === 'login') {
+          return jsonResponse({ success: true, data: { sid: `sid-${calls.length}` } });
+        }
+        return calls.filter((call) => call.api === 'SYNO.Core.System').length === 1
+          ? jsonResponse({ success: false, error: { code: 498 } })
+          : jsonResponse({ success: true, data: { model: 'DS920+' } });
+      },
+    },
+  );
+
+  const data = await client.call('SYNO.Core.System', 'info', {}, { preferredVersion: 3 });
+  assert.deepEqual(data, { model: 'DS920+' });
+  assert.equal(calls.filter((call) => call.method === 'login').length, 2);
+});
