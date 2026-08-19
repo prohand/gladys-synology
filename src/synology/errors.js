@@ -16,6 +16,7 @@ const DSM_ERROR_MESSAGES = new Map([
   [105, 'Insufficient DSM user privileges; add the account to the administrators group'],
   [106, 'DSM session timed out'],
   [107, 'DSM session was interrupted'],
+  [119, 'DSM session ID is no longer valid'],
   [400, 'Invalid DSM credentials'],
   [401, 'DSM account is disabled'],
   [402, 'DSM permission denied'],
@@ -29,6 +30,7 @@ const DSM_ERROR_MESSAGES = new Map([
   [408, 'DSM password has expired'],
   [409, 'DSM password must be changed'],
   [410, 'DSM password must be changed'],
+  [498, 'DSM rejected the saved login session; the integration signs in again on the next attempt'],
 ]);
 
 export function apiError(api, code) {

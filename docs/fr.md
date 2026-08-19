@@ -37,6 +37,7 @@ Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, 
 - **Code MFA requis / erreur 403 ou 406** : configurez OTP pour le compte DSM, saisissez un code actuel à 6 chiffres dans Gladys puis enregistrez. Les notifications d'approbation et les clés matérielles ne sont pas prises en charge par l'API DSM.
 - **Code MFA invalide ou expiré / erreur 404** : attendez le prochain code OTP et enregistrez-le avant son expiration.
 - **Droits insuffisants / erreur 105** : ajoutez le compte dédié au groupe DSM `administrators`. Le seul rôle délégué Surveillance du système ne suffit pas pour ces API.
+- **Connexion perdue après un redémarrage du NAS ou une mise à jour DSM / erreur 498** : rien à faire. DSM peut refuser la connexion mémorisée pendant son redémarrage ; l'intégration se reconnecte d'elle-même et réessaie toutes les 30 secondes, puis de plus en plus espacé jusqu'à 15 minutes, tant que le NAS ne répond pas.
 - **DSM injoignable** : testez l'URL depuis l'hôte Gladys et vérifiez le pare-feu du NAS.
 - **Erreur de certificat** : installez un certificat de confiance dans DSM. Pour une installation privée auto-signée uniquement, la vérification peut être désactivée.
 - **Volume absent** : relancez une recherche après la création ou la suppression d'un volume.

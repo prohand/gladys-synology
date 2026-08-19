@@ -37,6 +37,7 @@ A first snapshot is sent immediately after a device is added, then every refresh
 - **MFA code required / error 403 or 406**: configure OTP for the DSM account, enter a current 6-digit code in Gladys and save. Approval notifications and hardware keys are not supported by the DSM API.
 - **Invalid or expired MFA code / error 404**: wait for the next OTP and save it before it expires.
 - **Insufficient privileges / error 105**: add the dedicated account to the DSM `administrators` group. A delegated System monitoring role alone is not sufficient for these APIs.
+- **Connection lost after a NAS reboot or a DSM update / error 498**: nothing to do. DSM can refuse the remembered login while it restarts; the integration signs in again by itself and retries the connection every 30 seconds, then less often up to every 15 minutes, until the NAS answers.
 - **Unable to reach DSM**: test the URL from the Gladys host and verify the NAS firewall.
 - **Certificate error**: install a trusted certificate in DSM. For a private, self-signed installation only, certificate verification can be disabled.
 - **A volume is missing**: rescan after creating or removing a volume.
