@@ -27,9 +27,11 @@ Click **Test the DSM connection**. A successful result shows the NAS model, DSM 
 
 ## Devices
 
-The integration creates one device per NAS, one device for every storage volume, one device for every internal disk and, when available, one device for every Hyper Backup or Active Backup task. Each disk exposes the exact SMART status reported by DSM and a binary SMART health indicator. A backup task exposes its status, latest result and latest backup time. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
+The integration creates one device per NAS, one device for every storage volume, one device for every internal disk and, when available, one device for every Hyper Backup or Active Backup task. Each disk exposes the exact SMART status reported by DSM, a binary SMART health indicator and, when DSM reports it, its temperature. A backup task exposes its status, latest result and latest backup time. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
 
 A first snapshot is sent immediately after a device is added, then every refresh updates all NAS values. Volume usage percentages are rounded to two decimal places. History is kept for utilization, temperature and health values; capacities and text information do not create redundant history.
+
+The health indicators only take a value on a status DSM clearly reports as healthy or as a failure. During a maintenance operation (expansion, scrubbing, repair) or when SMART is unsupported, the previous value is kept instead of publishing a false alarm.
 
 ## Troubleshooting
 
@@ -39,6 +41,8 @@ A first snapshot is sent immediately after a device is added, then every refresh
 - **Insufficient privileges / error 105**: add the dedicated account to the DSM `administrators` group. A delegated System monitoring role alone is not sufficient for these APIs.
 - **Connection lost after a NAS reboot or a DSM update / error 498**: nothing to do. DSM can refuse the remembered login while it restarts; the integration signs in again by itself and retries the connection every 30 seconds, then less often up to every 15 minutes, until the NAS answers.
 - **Unable to reach DSM**: test the URL from the Gladys host and verify the NAS firewall.
+- **DSM did not answer in time**: the NAS accepted the connection but did not reply within 20 seconds. The refresh is abandoned and retried on the next cycle; check the NAS load and the network.
+- **A single NAS is unreachable in a multi-NAS setup**: the other NAS keep publishing their values and the Gladys configuration screen names the failing address. Only a failure of every NAS reports the integration as disconnected.
 - **Certificate error**: install a trusted certificate in DSM. For a private, self-signed installation only, certificate verification can be disabled.
 - **A volume is missing**: rescan after creating or removing a volume.
 - **Backup tasks are missing**: verify that Hyper Backup or Active Backup is installed, that at least one task exists and that the dedicated DSM account can open the corresponding package, then scan again.

@@ -1,6 +1,11 @@
+import { createLogger } from '@gladysassistant/integration-sdk';
 import { SynologyApiError, apiError } from './errors.js';
 import { SynologyMfaDeviceStore } from './mfa-device-store.js';
 import { Agent } from 'undici';
+
+const logger = createLogger({ name: 'synology' });
+
+export const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
 
 const REQUIRED_APIS = [
   'SYNO.API.Auth',
@@ -18,15 +23,25 @@ function clampVersion(info, preferred) {
   return Math.max(info.minVersion ?? 1, Math.min(preferred, info.maxVersion ?? preferred));
 }
 
+function isTimeout(error) {
+  return error?.name === 'TimeoutError' || error?.cause?.name === 'TimeoutError';
+}
+
 export class SynologyClient {
   constructor(
     config,
-    { fetchImpl = globalThis.fetch, mfaDeviceStore = new SynologyMfaDeviceStore() } = {},
+    {
+      fetchImpl = globalThis.fetch,
+      mfaDeviceStore = new SynologyMfaDeviceStore(),
+      requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+    } = {},
   ) {
     this.config = config;
     this.fetch = fetchImpl;
     this.apis = null;
     this.sid = null;
+    this.loginPromise = null;
+    this.requestTimeoutMs = requestTimeoutMs;
     this.mfaDeviceStore = mfaDeviceStore;
     this.dispatcher =
       config.url.startsWith('https://') && !config.verify_ssl
@@ -42,9 +57,16 @@ export class SynologyClient {
         method: 'POST',
         headers: { 'content-type': 'application/x-www-form-urlencoded' },
         body,
+        // A NAS that accepts the connection but never answers would otherwise keep the refresh
+        // promise pending forever, and every later poll would wait behind it.
+        signal: AbortSignal.timeout(this.requestTimeoutMs),
         ...(this.dispatcher ? { dispatcher: this.dispatcher } : {}),
       });
     } catch (cause) {
+      if (isTimeout(cause)) {
+        const seconds = Math.round(this.requestTimeoutMs / 1000);
+        throw new SynologyApiError(`Synology DSM did not answer within ${seconds}s`, { cause });
+      }
       throw new SynologyApiError('Unable to reach Synology DSM', { cause });
     }
 
@@ -81,7 +103,44 @@ export class SynologyClient {
     return info;
   }
 
+  // DSM blocks an IP address after a few failed logins, and a snapshot fires five API calls at
+  // once: without this, an expired session would trigger one login per in-flight call.
   async login() {
+    if (!this.loginPromise) {
+      this.loginPromise = this.performLogin().finally(() => {
+        this.loginPromise = null;
+      });
+    }
+    return this.loginPromise;
+  }
+
+  // Re-authenticate unless a concurrent call already replaced the session we were using.
+  async ensureSession(previousSid) {
+    if (this.sid && this.sid !== previousSid) return;
+    this.sid = null;
+    return this.login();
+  }
+
+  async loadTrustedDevice() {
+    try {
+      return await this.mfaDeviceStore.load(this.config);
+    } catch (error) {
+      // The remembered device only saves an OTP round-trip: an unreadable /data volume
+      // must never keep the integration from signing in.
+      logger.warn(`Unable to read the Synology trusted device: ${error.message}`);
+      return null;
+    }
+  }
+
+  async saveTrustedDevice(deviceId) {
+    try {
+      await this.mfaDeviceStore.save(this.config, deviceId);
+    } catch (error) {
+      logger.warn(`Unable to persist the Synology trusted device: ${error.message}`);
+    }
+  }
+
+  async performLogin() {
     if (!this.apis) await this.discoverApis();
     const info = this.apiInfo('SYNO.API.Auth');
     const baseParameters = {
@@ -93,7 +152,7 @@ export class SynologyClient {
       session: 'GladysSynology',
       format: 'sid',
     };
-    const deviceId = await this.mfaDeviceStore.load(this.config);
+    const deviceId = await this.loadTrustedDevice();
     const otpParameters = this.config.otp_code
       ? {
           otp_code: this.config.otp_code,
@@ -114,7 +173,7 @@ export class SynologyClient {
     if (!payload.success) throw apiError('SYNO.API.Auth', payload.error?.code);
     this.sid = payload.data?.sid;
     if (!this.sid) throw new SynologyApiError('Synology DSM login returned no session ID');
-    if (payload.data?.did) await this.mfaDeviceStore.save(this.config, payload.data.did);
+    if (payload.data?.did) await this.saveTrustedDevice(payload.data.did);
     return payload.data;
   }
 
@@ -154,10 +213,10 @@ export class SynologyClient {
         _sid: this.sid,
       });
 
+    const usedSid = this.sid;
     let payload = await invoke();
     if (!payload.success && SESSION_ERROR_CODES.has(payload.error?.code)) {
-      this.sid = null;
-      await this.login();
+      await this.ensureSession(usedSid);
       payload = await invoke();
     }
     if (!payload.success) throw apiError(name, payload.error?.code);

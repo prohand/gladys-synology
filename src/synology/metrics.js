@@ -11,9 +11,50 @@ function bytes(value) {
   return number === undefined ? undefined : number;
 }
 
-function normalizeStatus(value) {
-  const status = String(value ?? '').toLowerCase();
-  return ['normal', 'healthy', 'mounted', 'ready', 'good'].includes(status) ? 1 : 0;
+const HEALTHY_STATES = new Set([
+  'normal',
+  'healthy',
+  'mounted',
+  'ready',
+  'good',
+  'passed',
+  'pass',
+  'ok',
+  'online',
+]);
+const UNHEALTHY_STATES = new Set([
+  'abnormal',
+  'attention',
+  'bad',
+  'corrupt',
+  'corrupted',
+  'crashed',
+  'critical',
+  'damaged',
+  'danger',
+  'degrade',
+  'degraded',
+  'error',
+  'fail',
+  'failed',
+  'failing',
+  'offline',
+  'unmounted',
+  'warning',
+]);
+
+// DSM reports dozens of transient states (expanding, scrubbing, repairing, unsupported SMART...).
+// Only the two known lists produce a value: anything else keeps the previously published state
+// instead of raising a false alarm or a false all-clear.
+function healthState(value) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const status = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (HEALTHY_STATES.has(status)) return 1;
+  if (UNHEALTHY_STATES.has(status)) return 0;
+  return undefined;
 }
 
 function roundToTwoDecimals(value) {
@@ -66,7 +107,7 @@ function normalizeVolumes(storage = {}) {
         status: String(
           volume.status ?? volume.status_info?.status ?? volume.status_info ?? 'unknown',
         ),
-        healthy: normalizeStatus(volume.status ?? volume.status_info?.status ?? volume.status_info),
+        healthy: healthState(volume.status ?? volume.status_info?.status ?? volume.status_info),
         totalBytes: total,
         usedBytes: computedUsed,
         freeBytes: computedFree,
@@ -74,21 +115,6 @@ function normalizeVolumes(storage = {}) {
       };
     },
   );
-}
-
-function smartHealth(value) {
-  if (value === undefined || value === null || value === '') return undefined;
-  const status = String(value)
-    .trim()
-    .toLowerCase()
-    .replace(/[\s-]+/g, '_');
-  if (['normal', 'healthy', 'good', 'passed', 'pass', 'ok'].includes(status)) return 1;
-  if (
-    ['unknown', 'unsupported', 'not_supported', 'not_available', 'unavailable'].includes(status)
-  ) {
-    return undefined;
-  }
-  return 0;
 }
 
 function normalizeDisks(storage = {}) {
@@ -106,7 +132,8 @@ function normalizeDisks(storage = {}) {
         disk.display_name ?? disk.name ?? disk.model ?? disk.device ?? `Drive ${index + 1}`,
       ),
       smartStatus: smartStatus === undefined ? undefined : String(smartStatus),
-      smartHealthy: smartHealth(smartStatus),
+      smartHealthy: healthState(smartStatus),
+      temperature: finite(disk.temp, disk.temperature, disk.disk_temp),
     };
   });
 }

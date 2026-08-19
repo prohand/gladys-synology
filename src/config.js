@@ -1,3 +1,14 @@
+/**
+ * Raised when the integration configuration itself is wrong. The runtime reports it to Gladys
+ * but does not retry: only a new configuration can fix it.
+ */
+export class ConfigValidationError extends Error {
+  constructor(message, options) {
+    super(message, options);
+    this.name = 'ConfigValidationError';
+  }
+}
+
 export const DEFAULT_CONFIG = {
   url: '',
   username: '',
@@ -83,7 +94,7 @@ export function getNasConfigs(config) {
     try {
       validateConfig(connection);
     } catch (error) {
-      throw new Error(`NAS ${slot}: ${error.message}`, { cause: error });
+      throw new ConfigValidationError(`NAS ${slot}: ${error.message}`, { cause: error });
     }
     connections.push(connection);
   }
@@ -91,20 +102,20 @@ export function getNasConfigs(config) {
 }
 
 export function validateConfig(config) {
-  if (!config.url) throw new Error('The Synology DSM URL is required.');
-  if (!config.username) throw new Error('The Synology DSM username is required.');
-  if (!config.password) throw new Error('The Synology DSM password is required.');
+  if (!config.url) throw new ConfigValidationError('The Synology DSM URL is required.');
+  if (!config.username) throw new ConfigValidationError('The Synology DSM username is required.');
+  if (!config.password) throw new ConfigValidationError('The Synology DSM password is required.');
   if (config.otp_code && !/^\d{6}$/.test(config.otp_code)) {
-    throw new Error('The Synology DSM OTP code must contain exactly 6 digits.');
+    throw new ConfigValidationError('The Synology DSM OTP code must contain exactly 6 digits.');
   }
 
   let url;
   try {
     url = new URL(config.url);
   } catch {
-    throw new Error('The Synology DSM URL is invalid.');
+    throw new ConfigValidationError('The Synology DSM URL is invalid.');
   }
   if (!['http:', 'https:'].includes(url.protocol)) {
-    throw new Error('The Synology DSM URL must use HTTP or HTTPS.');
+    throw new ConfigValidationError('The Synology DSM URL must use HTTP or HTTPS.');
   }
 }

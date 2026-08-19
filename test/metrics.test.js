@@ -21,7 +21,7 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
     },
     storage: {
       disks: [
-        { id: 'disk_1', name: 'Drive 1', model: 'WD40EFRX', smart_status: 'normal' },
+        { id: 'disk_1', name: 'Drive 1', model: 'WD40EFRX', smart_status: 'normal', temp: 38 },
         { id: 'disk_2', name: 'Drive 2', model: 'WD40EFRX', smart_status: 'failing' },
       ],
       volumes: [
@@ -46,8 +46,14 @@ test('normalizeSnapshot converts DSM system, utilization and storage shapes', ()
   });
   assert.deepEqual(snapshot.backups, []);
   assert.deepEqual(snapshot.disks, [
-    { id: 'disk_1', name: 'Drive 1', smartStatus: 'normal', smartHealthy: 1 },
-    { id: 'disk_2', name: 'Drive 2', smartStatus: 'failing', smartHealthy: 0 },
+    { id: 'disk_1', name: 'Drive 1', smartStatus: 'normal', smartHealthy: 1, temperature: 38 },
+    {
+      id: 'disk_2',
+      name: 'Drive 2',
+      smartStatus: 'failing',
+      smartHealthy: 0,
+      temperature: undefined,
+    },
   ]);
   assert.equal(snapshot.volumes[0].usagePercent, 25);
   assert.equal(snapshot.volumes[0].freeBytes, 750);
@@ -136,6 +142,23 @@ test('normalizeSnapshot does not claim an unknown SMART status is unhealthy', ()
   });
   assert.equal(snapshot.disks[0].smartStatus, 'not_supported');
   assert.equal(snapshot.disks[0].smartHealthy, undefined);
+});
+
+test('normalizeSnapshot only judges volume health on known DSM statuses', () => {
+  const statuses = normalizeSnapshot({
+    storage: {
+      volumes: [
+        { id: 'v1', status: 'normal' },
+        { id: 'v2', status: 'crashed' },
+        { id: 'v3', status: 'attention' },
+        { id: 'v4', status: 'background_scrubbing' },
+        { id: 'v5', status: 'expanding' },
+      ],
+    },
+  }).volumes.map((volume) => volume.healthy);
+
+  // A maintenance state is neither healthy nor a failure: publishing 0 would raise a false alarm.
+  assert.deepEqual(statuses, [1, 0, 0, undefined, undefined]);
 });
 
 test('bytesToGigabytes rounds to two decimals', () => {

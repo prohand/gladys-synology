@@ -7,7 +7,7 @@ export class SynologyFleetService {
     this.services = getNasConfigs(config).map(
       (nasConfig) => new SynologyService(nasConfig, options),
     );
-    this.lastErrors = [];
+    this.lastFailures = [];
   }
 
   async run(method, ...args) {
@@ -17,10 +17,13 @@ export class SynologyFleetService {
     const values = settled
       .filter((result) => result.status === 'fulfilled')
       .map((result) => result.value);
-    this.lastErrors = settled
-      .filter((result) => result.status === 'rejected')
-      .map((result) => result.reason);
-    if (values.length === 0 && this.lastErrors.length > 0) throw this.lastErrors[0];
+    // A NAS that is down must not hide the ones that answered, but the caller still has to know
+    // about it: the failures stay readable until the next run.
+    this.lastFailures = settled
+      .map((result, index) => ({ result, service: this.services[index] }))
+      .filter(({ result }) => result.status === 'rejected')
+      .map(({ result, service }) => ({ url: service.config.url, error: result.reason }));
+    if (values.length === 0 && this.lastFailures.length > 0) throw this.lastFailures[0].error;
     return values;
   }
 

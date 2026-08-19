@@ -401,3 +401,95 @@ test('client renews the DSM session when a call fails with error 498', async () 
   assert.deepEqual(data, { model: 'DS920+' });
   assert.equal(calls.filter((call) => call.method === 'login').length, 2);
 });
+
+test('client fails fast when DSM accepts the connection but never answers', async () => {
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas', username: 'gladys', password: 'password' }),
+    {
+      requestTimeoutMs: 50,
+      // Mimics undici: the abort signal rejects the fetch with a TimeoutError cause. The extra
+      // timer stands for the pending socket, which alone keeps the event loop alive.
+      fetchImpl: (url, options) =>
+        new Promise((resolve, reject) => {
+          const pending = setTimeout(() => resolve(jsonResponse({ success: true })), 5_000);
+          options.signal.addEventListener('abort', () => {
+            clearTimeout(pending);
+            const error = new TypeError('fetch failed');
+            error.cause = options.signal.reason;
+            reject(error);
+          });
+        }),
+    },
+  );
+
+  await assert.rejects(client.discoverApis(), /Synology DSM did not answer within \ds/);
+});
+
+test('client sends a single login when concurrent calls hit an expired session', async () => {
+  let logins = 0;
+  let expired = true;
+  const apiData = {
+    'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
+    'SYNO.Core.System': { path: 'entry.cgi', minVersion: 1, maxVersion: 3 },
+    'SYNO.Core.System.Utilization': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    'SYNO.Storage.CGI.Storage': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+  };
+  const fetchImpl = async (url, options) => {
+    const body = Object.fromEntries(options.body.entries());
+    if (body.api === 'SYNO.API.Info') return jsonResponse({ success: true, data: apiData });
+    if (body.method === 'login') {
+      logins += 1;
+      await Promise.resolve();
+      return jsonResponse({ success: true, data: { sid: `session-${logins}` } });
+    }
+    if (expired && body._sid === 'session-1') {
+      return jsonResponse({ success: false, error: { code: 106 } });
+    }
+    return jsonResponse({ success: true, data: { ok: true } });
+  };
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas', username: 'gladys', password: 'password' }),
+    { fetchImpl },
+  );
+
+  await client.login();
+  expired = true;
+  await Promise.all([
+    client.call('SYNO.Core.System', 'info'),
+    client.call('SYNO.Core.System.Utilization', 'get'),
+    client.call('SYNO.Storage.CGI.Storage', 'load_info'),
+  ]);
+
+  // One login for the initial session, one shared by the three calls that found it expired.
+  assert.equal(logins, 2);
+  assert.equal(client.sid, 'session-2');
+});
+
+test('client signs in even when the trusted device store is unusable', async () => {
+  const fetchImpl = async (url, options) => {
+    const body = Object.fromEntries(options.body.entries());
+    if (body.api === 'SYNO.API.Info') {
+      return jsonResponse({
+        success: true,
+        data: { 'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 } },
+      });
+    }
+    return jsonResponse({ success: true, data: { sid: 'secret-session', did: 'device-token' } });
+  };
+  const mfaDeviceStore = {
+    async load() {
+      throw Object.assign(new Error('permission denied'), { code: 'EACCES' });
+    },
+    async save() {
+      throw Object.assign(new Error('read-only file system'), { code: 'EROFS' });
+    },
+  };
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas', username: 'gladys', password: 'password' }),
+    { fetchImpl, mfaDeviceStore },
+  );
+
+  const data = await client.login();
+  assert.equal(data.sid, 'secret-session');
+  assert.equal(client.sid, 'secret-session');
+});
