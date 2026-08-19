@@ -32,23 +32,31 @@ An external Gladys Assistant integration: a standalone Node process (ESM, no bui
 talks to Gladys over the `@gladysassistant/integration-sdk` websocket and to one to four Synology
 NAS over the DSM WebAPI. It is strictly read-only towards DSM.
 
-Data flows in one direction through four layers:
+Data flows in one direction through four layers (`index.js` is only three lines of SDK wiring):
 
-1. **`index.js`** — SDK wiring only. Registers `onScanRequest`, `onPoll`, `onDeviceCreated`,
-   `onAction('test_connection')`, `onConfigUpdated`, `connected` and `handleShutdown`; owns the
-   `setInterval` refresh loop, the `createBackoff()` reconnection retry, and the `ready()` gate.
-   `initialization` is deliberately kept as an _always-resolving_ promise (`.catch(() => {})`) so a
-   failed startup never poisons later handlers.
+1. **`src/runtime.js`** — all the orchestration. Registers `onScanRequest`, `onPoll`,
+   `onDeviceCreated`, `onAction('test_connection')`, `onConfigUpdated`, `connected` and
+   `handleShutdown`; owns the refresh loop, the `createBackoff()` reconnection retry, and the
+   `ready()` gate. `initialization` is deliberately kept as an _always-resolving_ promise
+   (`.catch(() => {})`) so a failed startup never poisons later handlers, and a
+   `ConfigValidationError` is reported to Gladys **without** scheduling a retry — only a new
+   configuration can fix it. Timers go through the injectable `scheduler`, which is what makes
+   `test/runtime.test.js` deterministic.
 2. **`src/fleet-service.js`** — fans every operation across the configured NAS with
-   `Promise.allSettled`; partial failures are collected in `lastErrors` and only rethrown when
-   _every_ NAS failed.
+   `Promise.allSettled`; partial failures are collected in `lastFailures` (`{ url, error }`) and
+   only rethrown when _every_ NAS failed. The runtime turns a non-empty `lastFailures` into a
+   _connected_ status carrying a message that names the failing NAS: one dead NAS out of four must
+   not report the whole integration as offline.
 3. **`src/service.js`** (one per NAS) — coalesces concurrent refreshes into a single
-   `inFlightRefresh`, throttles `publishStates` to `poll_frequency` unless `{ force: true }`, and
-   derives `nasId` from the DSM serial (falling back to the URL hostname).
+   `inFlightRefresh`, throttles `publishStates` to `poll_frequency * PUBLISH_THROTTLE_RATIO`
+   unless `{ force: true }`, and derives `nasId` from the DSM serial (falling back to the URL
+   hostname).
 4. **`src/synology/client.js`** — DSM protocol: `SYNO.API.Info` discovery, version clamping between
-   each API's `minVersion`/`maxVersion`, POST-only requests (credentials never in a URL), session
-   re-login on codes 106/107/119/498, and `optionalCall()` which downgrades a missing or forbidden
-   backup API to `null` instead of breaking system monitoring.
+   each API's `minVersion`/`maxVersion`, POST-only requests (credentials never in a URL), a
+   `requestTimeoutMs` abort on every request (a NAS that never answers would otherwise freeze the
+   refresh promise forever), session re-login on codes 106/107/119/498 coalesced through
+   `loginPromise` (DSM blocks an IP after a few failed logins), and `optionalCall()` which
+   downgrades a missing or forbidden backup API to `null` instead of breaking system monitoring.
 
 `src/synology/metrics.js` turns raw DSM payloads into a stable snapshot shape
 (`{ nas, volumes, disks, backups }`), absorbing the field-name variation across DSM versions —
@@ -63,7 +71,10 @@ both a `build*Device` and a `build*States` function keyed by the same feature co
   (`nasId`, `nasId:volumeId`, `nasId:diskId`, `nasId:provider:taskId`). Changing a device type
   string, a platform-ID shape or a feature key orphans every existing device in users' databases.
 - **Undefined means "do not publish".** Normalizers return `undefined` for missing values and the
-  state builders filter them out; never substitute `0` or `''`.
+  state builders filter them out; never substitute `0` or `''`. `healthState()` follows the same
+  rule: only DSM statuses in the explicit healthy/unhealthy lists produce `1`/`0`, so a
+  maintenance state (`expanding`, `scrubbing`…) keeps the last published value instead of raising
+  a false alarm.
 - **`keep_history: false`** on capacities, DSM version and backup text features keeps the Gladys
   database small — keep it that way for slow-moving values.
 - **Secrets.** Password and OTP go in the POST body only, are never logged, and each NAS slot has
@@ -84,7 +95,12 @@ per-NAS connection objects. Adding a config field means touching both, and
 ### Testing
 
 `node:test` + `node:assert/strict`, no framework. Everything is tested through injection rather
-than network mocks: `new SynologyClient(config, { fetchImpl })` for DSM payloads,
-`new SynologyService(config, { clientFactory, now })` for timing, and
-`test/helpers/fakeGladys.js` for the SDK surface (`externalIds`, `publishStates`). New DSM
-payload shapes belong in `test/metrics.test.js`; new device features in `test/devices.test.js`.
+than network mocks: `new SynologyClient(config, { fetchImpl, requestTimeoutMs, mfaDeviceStore })`
+for DSM payloads, `new SynologyService(config, { clientFactory, now })` for timing,
+`createRuntime(gladys, { serviceFactory, backoff, scheduler })` for the orchestration, and
+`test/helpers/fakeGladys.js` for the SDK surface (`createFakeGladys` for device builders,
+`createFakeGladysIntegration` + `createFakeScheduler` for the runtime). New DSM payload shapes
+belong in `test/metrics.test.js`; new device features in `test/devices.test.js`.
+
+CI runs the suite on Node 20 (the `engines` floor) and Node 24 (the Docker image), so avoid APIs
+that only exist in the newer one.

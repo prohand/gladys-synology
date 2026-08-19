@@ -6,6 +6,10 @@ import { normalizeSnapshot } from './synology/metrics.js';
 
 const logger = createLogger({ name: 'synology' });
 
+// A refresh timer can fire a few milliseconds early; without this tolerance the throttle would
+// reject that cycle and the next publication would land a full interval later.
+export const PUBLISH_THROTTLE_RATIO = 0.95;
+
 export class SynologyService {
   constructor(
     config,
@@ -50,7 +54,7 @@ export class SynologyService {
     if (
       !force &&
       this.lastPublishedAt !== null &&
-      now - this.lastPublishedAt < this.config.poll_frequency * 1000
+      now - this.lastPublishedAt < this.config.poll_frequency * 1000 * PUBLISH_THROTTLE_RATIO
     ) {
       return this.snapshot;
     }

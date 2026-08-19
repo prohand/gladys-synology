@@ -90,3 +90,37 @@ test('service throttles scheduled publications and allows a forced refresh', asy
   await service.publishStates(gladys, { force: true });
   assert.equal(gladys.published.length, firstBatchSize * 2);
 });
+
+test('a refresh timer firing a few milliseconds early still publishes', async () => {
+  let now = 1_000_000;
+  let snapshots = 0;
+  const service = new SynologyService(
+    normalizeConfig({
+      url: 'https://nas',
+      username: 'u',
+      password: 'p',
+      poll_frequency: 900,
+    }),
+    {
+      clientFactory: () => ({
+        async getSnapshot() {
+          snapshots += 1;
+          return rawSnapshot();
+        },
+        async close() {},
+      }),
+      now: () => now,
+    },
+  );
+  const gladys = createFakeGladys();
+
+  await service.publishStates(gladys);
+  now += 900 * 1000 - 5;
+  await service.publishStates(gladys);
+  assert.equal(snapshots, 2);
+
+  // Well inside the interval, the throttle still protects the Gladys database.
+  now += 60 * 1000;
+  await service.publishStates(gladys);
+  assert.equal(snapshots, 2);
+});

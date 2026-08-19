@@ -8,7 +8,13 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    name: Lint & test
+    name: Lint & test (Node ${{ matrix.node-version }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # The lower bound is the one declared in package.json engines, the upper one is the
+        # version shipped in the Docker image.
+        node-version: [20, 24]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - name: Install dependencies

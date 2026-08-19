@@ -74,5 +74,5 @@ test('fleet service keeps healthy NAS connections available when another one fai
 
   const devices = await fleet.discover(createFakeGladys());
   assert.equal(devices.length, 1);
-  assert.equal(fleet.lastErrors.length, 1);
+  assert.equal(fleet.lastFailures.length, 1);
 });

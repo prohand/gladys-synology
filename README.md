@@ -8,7 +8,7 @@ External [Gladys Assistant](https://gladysassistant.com/) integration for monito
 - System temperature
 - DSM version
 - Per-volume usage, used/free/total capacity and health
-- Per-disk SMART status and health
+- Per-disk SMART status, health and temperature
 - Hyper Backup and Active Backup task status, last result and last backup time
 
 Volumes are discovered dynamically. Metrics are read-only: this integration does not modify the NAS.

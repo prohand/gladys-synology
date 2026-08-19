@@ -27,9 +27,11 @@ Cliquez sur **Tester la connexion DSM**. En cas de succès, le résultat indique
 
 ## Appareils
 
-L'intégration crée un appareil par NAS, un appareil par volume de stockage, un appareil par disque interne et, lorsqu'elles sont disponibles, un appareil par tâche Hyper Backup ou Active Backup. Chaque disque expose l'état SMART exact renvoyé par DSM ainsi qu'un indicateur binaire de bonne santé SMART. Une tâche de sauvegarde expose son état, son dernier résultat et la date de sa dernière sauvegarde. Les API de ces paquets DSM ne sont pas présentes sur tous les modèles et versions : leur absence ne bloque pas les métriques système et stockage.
+L'intégration crée un appareil par NAS, un appareil par volume de stockage, un appareil par disque interne et, lorsqu'elles sont disponibles, un appareil par tâche Hyper Backup ou Active Backup. Chaque disque expose l'état SMART exact renvoyé par DSM, un indicateur binaire de bonne santé SMART et, lorsque DSM la communique, sa température. Une tâche de sauvegarde expose son état, son dernier résultat et la date de sa dernière sauvegarde. Les API de ces paquets DSM ne sont pas présentes sur tous les modèles et versions : leur absence ne bloque pas les métriques système et stockage.
 
 Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, puis chaque cycle met à jour en une seule fois les valeurs de tous les NAS. Le pourcentage d'occupation des volumes est arrondi à deux décimales. L'historique est conservé pour les taux d'utilisation, la température et l'état de santé ; les capacités et informations textuelles ne créent pas d'historique redondant.
+
+Les indicateurs de bonne santé ne prennent une valeur que sur un état clairement signalé par DSM comme sain ou comme une panne. Pendant une opération de maintenance (extension, vérification, réparation) ou lorsque SMART n'est pas pris en charge, la valeur précédente est conservée plutôt que de déclencher une fausse alerte.
 
 ## Dépannage
 
@@ -39,6 +41,8 @@ Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, 
 - **Droits insuffisants / erreur 105** : ajoutez le compte dédié au groupe DSM `administrators`. Le seul rôle délégué Surveillance du système ne suffit pas pour ces API.
 - **Connexion perdue après un redémarrage du NAS ou une mise à jour DSM / erreur 498** : rien à faire. DSM peut refuser la connexion mémorisée pendant son redémarrage ; l'intégration se reconnecte d'elle-même et réessaie toutes les 30 secondes, puis de plus en plus espacé jusqu'à 15 minutes, tant que le NAS ne répond pas.
 - **DSM injoignable** : testez l'URL depuis l'hôte Gladys et vérifiez le pare-feu du NAS.
+- **DSM n'a pas répondu à temps** : le NAS a accepté la connexion mais n'a rien renvoyé en 20 secondes. Le cycle est abandonné puis réessayé au suivant ; vérifiez la charge du NAS et le réseau.
+- **Un seul NAS injoignable dans une configuration multi-NAS** : les autres NAS continuent de publier leurs valeurs et l'écran de configuration Gladys indique l'adresse en défaut. Seule une panne de tous les NAS signale l'intégration comme déconnectée.
 - **Erreur de certificat** : installez un certificat de confiance dans DSM. Pour une installation privée auto-signée uniquement, la vérification peut être désactivée.
 - **Volume absent** : relancez une recherche après la création ou la suppression d'un volume.
 - **Tâches de sauvegarde absentes** : vérifiez que Hyper Backup ou Active Backup est installé, qu'au moins une tâche existe et que le compte DSM dédié peut ouvrir le paquet correspondant, puis relancez la recherche.
