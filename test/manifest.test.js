@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
 import { test } from 'node:test';
 import { DEFAULT_CONFIG, MAX_POLL_FREQUENCY, MIN_POLL_FREQUENCY } from '../src/config.js';
+import { DATE_FORMATS } from '../src/date-format.js';
 
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
@@ -23,6 +24,17 @@ test('manifest configuration defaults stay in sync with code', () => {
   assert.equal(fields.poll_frequency.min, MIN_POLL_FREQUENCY);
   assert.equal(fields.poll_frequency.max, MAX_POLL_FREQUENCY);
   assert.equal(fields.poll_frequency.options, undefined);
+  assert.equal(fields.date_format.type, 'select');
+  assert.equal(fields.date_format.default, DEFAULT_CONFIG.date_format);
+  assert.equal(fields.date_format.required, false);
+  assert.deepEqual(
+    fields.date_format.options.map((option) => option.value),
+    DATE_FORMATS,
+  );
+  assert.ok(
+    fields.date_format.options.every((option) => option.label.en && option.label.fr),
+    'every date format option is bilingual',
+  );
   assert.equal(fields.password.type, 'secret');
   assert.equal(fields.otp_code.type, 'secret');
   assert.equal(fields.additional_nas, undefined);

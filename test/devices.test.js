@@ -87,6 +87,36 @@ test('backup tasks are discovered as text-only Gladys devices', () => {
   );
   assert.equal(states.length, 3);
   assert.ok(states.every((state) => typeof state.text === 'string'));
+  assert.equal(
+    states.find((state) => state.device_feature_external_id.endsWith(':last-backup')).text,
+    '2023-11-14T22:13:20.000Z',
+  );
+});
+
+test('backup dates follow the configured date format', () => {
+  process.env.TZ = 'UTC';
+  const backupSnapshot = {
+    ...snapshot,
+    backups: [
+      {
+        id: '7',
+        provider: 'hyper-backup',
+        name: 'Cloud archive',
+        status: 'backupable',
+        result: 'success',
+        lastBackupAt: '2023-11-14T22:13:20.000Z',
+      },
+    ],
+  };
+  const lastBackup = (options) =>
+    buildStates(gladys, 'ABC123', backupSnapshot, options).find((state) =>
+      state.device_feature_external_id.endsWith(':last-backup'),
+    ).text;
+  assert.equal(lastBackup({ dateFormat: 'european' }), '14/11/2023 22:13');
+  assert.equal(lastBackup({ dateFormat: 'us' }), '11/14/2023 10:13 PM');
+  assert.equal(lastBackup({ dateFormat: 'iso_local' }), '2023-11-14 22:13');
+  // An unknown format must not blank out a date already published.
+  assert.equal(lastBackup({ dateFormat: 'nonsense' }), '2023-11-14T22:13:20.000Z');
 });
 
 test('disk SMART status is discovered as text and binary health features', () => {

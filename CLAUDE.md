@@ -88,8 +88,10 @@ both a `build*Device` and a `build*States` function keyed by the same feature co
 `gladys-assistant-integration.json` is the store manifest (config schema, actions, cover image).
 `src/config.js` mirrors it: `DEFAULT_CONFIG`, poll-frequency clamping to
 `[MIN_POLL_FREQUENCY, MAX_POLL_FREQUENCY]`, URL normalization (adds `https://`, strips trailing
-slashes) and `getNasConfigs()` which expands the flat `nas_2_*`/`nas_3_*`/`nas_4_*` fields into
-per-NAS connection objects. Adding a config field means touching both, and
+slashes), `date_format` narrowed to the `DATE_FORMATS` offered by the manifest `select` field
+(`src/date-format.js`, `iso` is the historical default and must stay it) and `getNasConfigs()`
+which expands the flat `nas_2_*`/`nas_3_*`/`nas_4_*` fields into per-NAS connection objects
+(display settings are integration-wide and copied into each of them). Adding a config field means touching both, and
 `test/manifest.test.js` enforces the defaults, the `secret` types and the cover-image constraints.
 
 ### Testing
