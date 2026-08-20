@@ -60,7 +60,9 @@ export class SynologyService {
     }
 
     const snapshot = await this.refresh();
-    const states = buildStates(gladys, this.nasId, snapshot);
+    const states = buildStates(gladys, this.nasId, snapshot, {
+      dateFormat: this.config.date_format,
+    });
     if (states.length > 0) await gladys.publishStates(states);
     this.lastPublishedAt = now;
     logger.info(`Published ${states.length} Synology monitoring values`);

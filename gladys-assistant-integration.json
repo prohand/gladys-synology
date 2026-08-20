@@ -285,6 +285,50 @@
         "en": "900",
         "fr": "900"
       }
+    },
+    {
+      "key": "date_format",
+      "type": "select",
+      "label": {
+        "en": "Date format",
+        "fr": "Format de date"
+      },
+      "description": {
+        "en": "Format used for the backup dates published to Gladys. Every format except ISO 8601 shows the local time of the integration container.",
+        "fr": "Format utilisé pour les dates de sauvegarde publiées dans Gladys. Tous les formats sauf ISO 8601 affichent l'heure locale du conteneur de l'intégration."
+      },
+      "required": false,
+      "default": "iso",
+      "options": [
+        {
+          "value": "iso",
+          "label": {
+            "en": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z",
+            "fr": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z"
+          }
+        },
+        {
+          "value": "iso_local",
+          "label": {
+            "en": "YYYY-MM-DD HH:mm — 2026-08-20 15:08",
+            "fr": "AAAA-MM-JJ HH:mm — 2026-08-20 15:08"
+          }
+        },
+        {
+          "value": "european",
+          "label": {
+            "en": "DD/MM/YYYY HH:mm — 20/08/2026 15:08",
+            "fr": "JJ/MM/AAAA HH:mm — 20/08/2026 15:08"
+          }
+        },
+        {
+          "value": "us",
+          "label": {
+            "en": "MM/DD/YYYY hh:mm AM/PM — 08/20/2026 03:08 PM",
+            "fr": "MM/JJ/AAAA hh:mm AM/PM — 08/20/2026 03:08 PM"
+          }
+        }
+      ]
     }
   ],
   "actions": [

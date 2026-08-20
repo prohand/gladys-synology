@@ -1,4 +1,5 @@
 import { DEVICE_FEATURE_CATEGORIES, DEVICE_FEATURE_TYPES } from '@gladysassistant/integration-sdk';
+import { formatDate } from '../date-format.js';
 
 const DEVICE_TYPE = 'synology-backup';
 
@@ -40,12 +41,12 @@ export function buildBackupDevice(gladys, nasId, nas, backup) {
   };
 }
 
-export function buildBackupStates(gladys, nasId, backup) {
+export function buildBackupStates(gladys, nasId, backup, { dateFormat } = {}) {
   const ids = gladys.externalIds(DEVICE_TYPE, backupPlatformId(nasId, backup));
   const values = [
     [BACKUP_FEATURE.STATUS, backup.status],
     [BACKUP_FEATURE.RESULT, backup.result],
-    [BACKUP_FEATURE.LAST_BACKUP, backup.lastBackupAt],
+    [BACKUP_FEATURE.LAST_BACKUP, formatDate(backup.lastBackupAt, dateFormat)],
   ];
   return values
     .filter(([, text]) => text !== undefined && text !== '')

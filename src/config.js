@@ -1,3 +1,5 @@
+import { DEFAULT_DATE_FORMAT, normalizeDateFormat } from './date-format.js';
+
 /**
  * Raised when the integration configuration itself is wrong. The runtime reports it to Gladys
  * but does not retry: only a new configuration can fix it.
@@ -31,6 +33,7 @@ export const DEFAULT_CONFIG = {
   nas_4_otp_code: '',
   nas_4_verify_ssl: true,
   poll_frequency: 900,
+  date_format: DEFAULT_DATE_FORMAT,
 };
 
 export const MIN_POLL_FREQUENCY = 60;
@@ -57,6 +60,7 @@ export function normalizeConfig(raw = {}) {
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
     poll_frequency: pollFrequency,
+    date_format: normalizeDateFormat(raw.date_format),
   };
   for (const slot of ADDITIONAL_NAS_SLOTS) {
     config[`nas_${slot}_url`] = normalizeUrl(raw[`nas_${slot}_url`]);
@@ -68,7 +72,7 @@ export function normalizeConfig(raw = {}) {
   return config;
 }
 
-function connectionConfig(raw, pollFrequency) {
+function connectionConfig(raw, { pollFrequency, dateFormat }) {
   return {
     url: normalizeUrl(raw.url),
     username: String(raw.username ?? '').trim(),
@@ -76,11 +80,14 @@ function connectionConfig(raw, pollFrequency) {
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
     poll_frequency: pollFrequency,
+    date_format: normalizeDateFormat(dateFormat),
   };
 }
 
 export function getNasConfigs(config) {
-  const connections = [connectionConfig(config, config.poll_frequency)];
+  // Display settings are integration-wide: every NAS publishes its dates the same way.
+  const shared = { pollFrequency: config.poll_frequency, dateFormat: config.date_format };
+  const connections = [connectionConfig(config, shared)];
   for (const slot of ADDITIONAL_NAS_SLOTS) {
     const raw = {
       url: config[`nas_${slot}_url`],
@@ -90,7 +97,7 @@ export function getNasConfigs(config) {
       verify_ssl: config[`nas_${slot}_verify_ssl`],
     };
     if (!raw.url && !raw.username && !raw.password && !raw.otp_code) continue;
-    const connection = connectionConfig(raw, config.poll_frequency);
+    const connection = connectionConfig(raw, shared);
     try {
       validateConfig(connection);
     } catch (error) {

@@ -14,11 +14,13 @@ export function buildDiscoveredDevices(gladys, nasId, snapshot) {
   ];
 }
 
-export function buildStates(gladys, nasId, snapshot) {
+export function buildStates(gladys, nasId, snapshot, options = {}) {
   return [
     ...buildSystemStates(gladys, nasId, snapshot.nas),
     ...snapshot.volumes.flatMap((volume) => buildVolumeStates(gladys, nasId, volume)),
     ...(snapshot.disks ?? []).flatMap((disk) => buildDiskStates(gladys, nasId, disk)),
-    ...(snapshot.backups ?? []).flatMap((backup) => buildBackupStates(gladys, nasId, backup)),
+    ...(snapshot.backups ?? []).flatMap((backup) =>
+      buildBackupStates(gladys, nasId, backup, options),
+    ),
   ];
 }
