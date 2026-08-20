@@ -1,6 +1,6 @@
 {
   "name": "gladys-synology",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "private": true,
   "description": "Synology DSM monitoring integration for Gladys Assistant.",
   "type": "module",
