@@ -40,6 +40,24 @@ export class SynologyFleetService {
     return this.run('refresh');
   }
 
+  /**
+   * The NAS behind a device external_id chosen in Gladys (any of its devices: the NAS itself, a
+   * volume, a disk or a backup task), with the matching snapshot entry. Without an id, the first
+   * NAS that already answered stands in, so a widget or a scene card works out of the box on a
+   * single-NAS setup. `null` when the id belongs to no known device.
+   */
+  resolve(gladys, externalId) {
+    if (!externalId) {
+      const service = this.services.find((candidate) => candidate.snapshot) ?? this.services[0];
+      return service ? { service, kind: 'nas', item: service.snapshot?.nas } : null;
+    }
+    for (const service of this.services) {
+      const device = service.findDevice(gladys, externalId);
+      if (device) return { service, ...device };
+    }
+    return null;
+  }
+
   async close() {
     await Promise.allSettled(this.services.map((service) => service.close()));
   }

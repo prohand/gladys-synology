@@ -8,7 +8,7 @@
   },
   "version": "1.0.4",
   "docker_image": "ghcr.io/prohand/gladys-synology:1.0.4",
-  "gladys_version": ">=4.86.0",
+  "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-synology/main/cover.png",
   "categories": ["network"],
   "transports": ["local"],
@@ -339,6 +339,871 @@
         "fr": "Tester la connexion DSM"
       },
       "timeout_seconds": 30
+    }
+  ],
+  "widgets": [
+    {
+      "key": "nas_overview",
+      "label": {
+        "en": "Synology NAS",
+        "fr": "NAS Synology"
+      },
+      "description": {
+        "en": "Load, temperature, volumes, disks and backups of one NAS, with the load history.",
+        "fr": "Charge, température, volumes, disques et sauvegardes d'un NAS, avec l'historique de la charge."
+      },
+      "icon": "server",
+      "settings": [
+        {
+          "key": "nas",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Any device of the NAS to show. Leave empty for the first NAS.",
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS."
+          },
+          "required": false
+        },
+        {
+          "key": "chart_interval",
+          "type": "select",
+          "label": {
+            "en": "Load history",
+            "fr": "Historique de la charge"
+          },
+          "description": {
+            "en": "Shown once the NAS device is added to Gladys.",
+            "fr": "Affiché une fois l'appareil NAS ajouté à Gladys."
+          },
+          "options": [
+            {
+              "value": "last-day",
+              "label": {
+                "en": "Last 24 hours",
+                "fr": "Dernières 24 heures"
+              }
+            },
+            {
+              "value": "last-three-days",
+              "label": {
+                "en": "Last 3 days",
+                "fr": "3 derniers jours"
+              }
+            },
+            {
+              "value": "last-week",
+              "label": {
+                "en": "Last week",
+                "fr": "Dernière semaine"
+              }
+            },
+            {
+              "value": "last-month",
+              "label": {
+                "en": "Last month",
+                "fr": "Dernier mois"
+              }
+            }
+          ],
+          "required": false,
+          "default": "last-day"
+        }
+      ]
+    },
+    {
+      "key": "storage",
+      "label": {
+        "en": "Synology storage",
+        "fr": "Stockage Synology"
+      },
+      "description": {
+        "en": "Usage of each volume, free space, SMART status and temperature of each disk.",
+        "fr": "Occupation de chaque volume, espace libre, état SMART et température de chaque disque."
+      },
+      "icon": "hard-drive",
+      "settings": [
+        {
+          "key": "nas",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Any device of the NAS to show. Leave empty for the first NAS.",
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS."
+          },
+          "required": false
+        }
+      ]
+    },
+    {
+      "key": "backups",
+      "label": {
+        "en": "Synology backups",
+        "fr": "Sauvegardes Synology"
+      },
+      "description": {
+        "en": "Hyper Backup and Active Backup tasks with their last result, failures first.",
+        "fr": "Tâches Hyper Backup et Active Backup avec leur dernier résultat, échecs en premier."
+      },
+      "icon": "archive",
+      "settings": [
+        {
+          "key": "nas",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Any device of the NAS to show. Leave empty to show every NAS.",
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour afficher tous les NAS."
+          },
+          "required": false
+        },
+        {
+          "key": "tasks",
+          "type": "select",
+          "label": {
+            "en": "Tasks shown",
+            "fr": "Tâches affichées"
+          },
+          "options": [
+            {
+              "value": "all",
+              "label": {
+                "en": "All tasks",
+                "fr": "Toutes les tâches"
+              }
+            },
+            {
+              "value": "problems",
+              "label": {
+                "en": "Failed or partial only",
+                "fr": "En échec ou partielles uniquement"
+              }
+            }
+          ],
+          "required": false,
+          "default": "all"
+        }
+      ]
+    }
+  ],
+  "scene_triggers": [
+    {
+      "key": "nas_unreachable",
+      "label": {
+        "en": "A Synology NAS stops answering",
+        "fr": "Un NAS Synology ne répond plus"
+      },
+      "description": {
+        "en": "Fires once when a NAS that was answering fails a refresh.",
+        "fr": "Se déclenche une fois quand un NAS qui répondait échoue à un rafraîchissement."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Choose the NAS device. Leave empty for any NAS.",
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "label": {
+            "en": "DSM URL",
+            "fr": "URL DSM"
+          }
+        },
+        {
+          "key": "error",
+          "type": "string",
+          "label": {
+            "en": "Error",
+            "fr": "Erreur"
+          }
+        }
+      ]
+    },
+    {
+      "key": "nas_reachable",
+      "label": {
+        "en": "A Synology NAS answers again",
+        "fr": "Un NAS Synology répond à nouveau"
+      },
+      "description": {
+        "en": "Fires once when a NAS reported unreachable answers again.",
+        "fr": "Se déclenche une fois quand un NAS signalé injoignable répond à nouveau."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Choose the NAS device. Leave empty for any NAS.",
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "url",
+          "type": "string",
+          "label": {
+            "en": "DSM URL",
+            "fr": "URL DSM"
+          }
+        },
+        {
+          "key": "offline_minutes",
+          "type": "number",
+          "label": {
+            "en": "Unreachable for (min)",
+            "fr": "Injoignable pendant (min)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "volume_unhealthy",
+      "label": {
+        "en": "A Synology volume is degraded",
+        "fr": "Un volume Synology est dégradé"
+      },
+      "description": {
+        "en": "Fires once when DSM reports a healthy volume as degraded, crashed or in error.",
+        "fr": "Se déclenche une fois quand DSM signale un volume sain comme dégradé, planté ou en erreur."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Volume",
+            "fr": "Volume"
+          },
+          "description": {
+            "en": "Choose a volume. Leave empty for any volume.",
+            "fr": "Choisissez un volume. Laissez vide pour n'importe quel volume."
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "volume_name",
+          "type": "string",
+          "label": {
+            "en": "Volume name",
+            "fr": "Nom du volume"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "DSM status",
+            "fr": "État DSM"
+          }
+        },
+        {
+          "key": "usage_percent",
+          "type": "number",
+          "label": {
+            "en": "Usage (%)",
+            "fr": "Occupation (%)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "disk_unhealthy",
+      "label": {
+        "en": "A Synology disk is failing",
+        "fr": "Un disque Synology est défaillant"
+      },
+      "description": {
+        "en": "Fires once when the SMART status of a healthy disk turns to a failure.",
+        "fr": "Se déclenche une fois quand l'état SMART d'un disque sain passe en défaut."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Disk",
+            "fr": "Disque"
+          },
+          "description": {
+            "en": "Choose a disk. Leave empty for any disk.",
+            "fr": "Choisissez un disque. Laissez vide pour n'importe quel disque."
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "disk_name",
+          "type": "string",
+          "label": {
+            "en": "Disk name",
+            "fr": "Nom du disque"
+          }
+        },
+        {
+          "key": "smart_status",
+          "type": "string",
+          "label": {
+            "en": "SMART status",
+            "fr": "État SMART"
+          }
+        },
+        {
+          "key": "temperature",
+          "type": "number",
+          "label": {
+            "en": "Temperature (°C)",
+            "fr": "Température (°C)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "backup_finished",
+      "label": {
+        "en": "A Synology backup finished",
+        "fr": "Une sauvegarde Synology est terminée"
+      },
+      "description": {
+        "en": "Fires once per backup run, when a new result is read from Hyper Backup or Active Backup.",
+        "fr": "Se déclenche une fois par sauvegarde, quand un nouveau résultat est lu dans Hyper Backup ou Active Backup."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Backup task",
+            "fr": "Tâche de sauvegarde"
+          },
+          "description": {
+            "en": "Choose a backup task. Leave empty for any task.",
+            "fr": "Choisissez une tâche de sauvegarde. Laissez vide pour n'importe quelle tâche."
+          },
+          "required": false
+        },
+        {
+          "key": "provider",
+          "type": "select",
+          "label": {
+            "en": "Package",
+            "fr": "Paquet"
+          },
+          "description": {
+            "en": "Leave empty for both.",
+            "fr": "Laissez vide pour les deux."
+          },
+          "options": [
+            {
+              "value": "hyper-backup",
+              "label": {
+                "en": "Hyper Backup",
+                "fr": "Hyper Backup"
+              }
+            },
+            {
+              "value": "active-backup",
+              "label": {
+                "en": "Active Backup",
+                "fr": "Active Backup"
+              }
+            }
+          ],
+          "required": false
+        },
+        {
+          "key": "outcome",
+          "type": "multi_select",
+          "label": {
+            "en": "Result",
+            "fr": "Résultat"
+          },
+          "description": {
+            "en": "Leave empty for any result.",
+            "fr": "Laissez vide pour tous les résultats."
+          },
+          "options": [
+            {
+              "value": "success",
+              "label": {
+                "en": "Success",
+                "fr": "Réussie"
+              }
+            },
+            {
+              "value": "partial",
+              "label": {
+                "en": "Partial success",
+                "fr": "Réussite partielle"
+              }
+            },
+            {
+              "value": "failure",
+              "label": {
+                "en": "Failure or cancelled",
+                "fr": "Échec ou annulée"
+              }
+            }
+          ],
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "task_name",
+          "type": "string",
+          "label": {
+            "en": "Task name",
+            "fr": "Nom de la tâche"
+          }
+        },
+        {
+          "key": "provider_name",
+          "type": "string",
+          "label": {
+            "en": "Package",
+            "fr": "Paquet"
+          }
+        },
+        {
+          "key": "result",
+          "type": "string",
+          "label": {
+            "en": "Result reported by DSM",
+            "fr": "Résultat renvoyé par DSM"
+          }
+        },
+        {
+          "key": "outcome",
+          "type": "string",
+          "label": {
+            "en": "Result (success, partial or failure)",
+            "fr": "Résultat (success, partial ou failure)"
+          }
+        },
+        {
+          "key": "last_backup",
+          "type": "string",
+          "label": {
+            "en": "Backup date",
+            "fr": "Date de la sauvegarde"
+          }
+        }
+      ]
+    },
+    {
+      "key": "dsm_updated",
+      "label": {
+        "en": "DSM was updated",
+        "fr": "DSM a été mis à jour"
+      },
+      "description": {
+        "en": "Fires once when a NAS reports a new DSM version.",
+        "fr": "Se déclenche une fois quand un NAS signale une nouvelle version de DSM."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Choose the NAS device. Leave empty for any NAS.",
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+          },
+          "required": false
+        }
+      ],
+      "variables": [
+        {
+          "key": "nas_name",
+          "type": "string",
+          "label": {
+            "en": "NAS model",
+            "fr": "Modèle du NAS"
+          }
+        },
+        {
+          "key": "previous_version",
+          "type": "string",
+          "label": {
+            "en": "Previous version",
+            "fr": "Version précédente"
+          }
+        },
+        {
+          "key": "version",
+          "type": "string",
+          "label": {
+            "en": "New version",
+            "fr": "Nouvelle version"
+          }
+        }
+      ]
+    }
+  ],
+  "scene_actions": [
+    {
+      "key": "get_nas_status",
+      "label": {
+        "en": "Get the state of a Synology NAS",
+        "fr": "Récupérer l'état d'un NAS Synology"
+      },
+      "description": {
+        "en": "Reads the NAS now: load, temperature and the number of problems. An unreachable NAS answers \"reachable: no\".",
+        "fr": "Interroge le NAS maintenant : charge, température et nombre de problèmes. Un NAS injoignable répond « joignable : non »."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "NAS",
+            "fr": "NAS"
+          },
+          "description": {
+            "en": "Any device of the NAS. Leave empty for the first NAS.",
+            "fr": "N'importe quel appareil du NAS. Laissez vide pour le premier NAS."
+          },
+          "required": false
+        }
+      ],
+      "outputs": [
+        {
+          "key": "reachable",
+          "type": "boolean",
+          "label": {
+            "en": "Reachable",
+            "fr": "Joignable"
+          }
+        },
+        {
+          "key": "model",
+          "type": "string",
+          "label": {
+            "en": "Model",
+            "fr": "Modèle"
+          }
+        },
+        {
+          "key": "dsm_version",
+          "type": "string",
+          "label": {
+            "en": "DSM version",
+            "fr": "Version DSM"
+          }
+        },
+        {
+          "key": "cpu_usage",
+          "type": "number",
+          "label": {
+            "en": "CPU usage (%)",
+            "fr": "Utilisation CPU (%)"
+          }
+        },
+        {
+          "key": "memory_usage",
+          "type": "number",
+          "label": {
+            "en": "Memory usage (%)",
+            "fr": "Utilisation mémoire (%)"
+          }
+        },
+        {
+          "key": "temperature",
+          "type": "number",
+          "label": {
+            "en": "System temperature (°C)",
+            "fr": "Température système (°C)"
+          }
+        },
+        {
+          "key": "unhealthy_volumes",
+          "type": "number",
+          "label": {
+            "en": "Degraded volumes",
+            "fr": "Volumes dégradés"
+          }
+        },
+        {
+          "key": "unhealthy_disks",
+          "type": "number",
+          "label": {
+            "en": "Failing disks",
+            "fr": "Disques défaillants"
+          }
+        },
+        {
+          "key": "failed_backups",
+          "type": "number",
+          "label": {
+            "en": "Failed backups",
+            "fr": "Sauvegardes en échec"
+          }
+        },
+        {
+          "key": "problems",
+          "type": "string",
+          "label": {
+            "en": "Problems found",
+            "fr": "Problèmes détectés"
+          }
+        }
+      ]
+    },
+    {
+      "key": "get_volume_status",
+      "label": {
+        "en": "Get the state of a Synology volume",
+        "fr": "Récupérer l'état d'un volume Synology"
+      },
+      "description": {
+        "en": "Reads the volume now: health and used space.",
+        "fr": "Interroge le volume maintenant : santé et espace occupé."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Volume",
+            "fr": "Volume"
+          },
+          "description": {
+            "en": "One of the volumes added to Gladys.",
+            "fr": "Un des volumes ajoutés à Gladys."
+          },
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "key": "volume_name",
+          "type": "string",
+          "label": {
+            "en": "Volume name",
+            "fr": "Nom du volume"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "DSM status",
+            "fr": "État DSM"
+          }
+        },
+        {
+          "key": "healthy",
+          "type": "boolean",
+          "label": {
+            "en": "Healthy",
+            "fr": "Sain"
+          }
+        },
+        {
+          "key": "usage_percent",
+          "type": "number",
+          "label": {
+            "en": "Usage (%)",
+            "fr": "Occupation (%)"
+          }
+        },
+        {
+          "key": "used_gb",
+          "type": "number",
+          "label": {
+            "en": "Used space (GB)",
+            "fr": "Espace utilisé (Go)"
+          }
+        },
+        {
+          "key": "free_gb",
+          "type": "number",
+          "label": {
+            "en": "Free space (GB)",
+            "fr": "Espace libre (Go)"
+          }
+        },
+        {
+          "key": "total_gb",
+          "type": "number",
+          "label": {
+            "en": "Total space (GB)",
+            "fr": "Espace total (Go)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "get_backup_status",
+      "label": {
+        "en": "Get the state of a Synology backup",
+        "fr": "Récupérer l'état d'une sauvegarde Synology"
+      },
+      "description": {
+        "en": "Reads the backup task now: last result and how long ago it ran.",
+        "fr": "Interroge la tâche de sauvegarde maintenant : dernier résultat et ancienneté."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": {
+            "en": "Backup task",
+            "fr": "Tâche de sauvegarde"
+          },
+          "description": {
+            "en": "One of the backup tasks added to Gladys.",
+            "fr": "Une des tâches de sauvegarde ajoutées à Gladys."
+          },
+          "required": true
+        }
+      ],
+      "outputs": [
+        {
+          "key": "task_name",
+          "type": "string",
+          "label": {
+            "en": "Task name",
+            "fr": "Nom de la tâche"
+          }
+        },
+        {
+          "key": "provider_name",
+          "type": "string",
+          "label": {
+            "en": "Package",
+            "fr": "Paquet"
+          }
+        },
+        {
+          "key": "status",
+          "type": "string",
+          "label": {
+            "en": "Status",
+            "fr": "État"
+          }
+        },
+        {
+          "key": "result",
+          "type": "string",
+          "label": {
+            "en": "Result reported by DSM",
+            "fr": "Résultat renvoyé par DSM"
+          }
+        },
+        {
+          "key": "outcome",
+          "type": "string",
+          "label": {
+            "en": "Result (success, partial or failure)",
+            "fr": "Résultat (success, partial ou failure)"
+          }
+        },
+        {
+          "key": "last_backup",
+          "type": "string",
+          "label": {
+            "en": "Last backup",
+            "fr": "Dernière sauvegarde"
+          }
+        },
+        {
+          "key": "hours_since_last_backup",
+          "type": "number",
+          "label": {
+            "en": "Hours since the last backup",
+            "fr": "Heures depuis la dernière sauvegarde"
+          }
+        }
+      ]
     }
   ]
 }

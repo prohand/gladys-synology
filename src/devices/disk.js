@@ -26,8 +26,12 @@ function textFeature(ids, name, key) {
   };
 }
 
+export function diskExternalIds(gladys, nasId, diskId) {
+  return gladys.externalIds(DEVICE_TYPE, `${nasId}:${diskId}`);
+}
+
 export function buildDiskDevice(gladys, nasId, disk) {
-  const ids = gladys.externalIds(DEVICE_TYPE, `${nasId}:${disk.id}`);
+  const ids = diskExternalIds(gladys, nasId, disk.id);
   return {
     name: `Synology ${disk.name}`,
     external_id: ids.device,
@@ -61,7 +65,7 @@ export function buildDiskDevice(gladys, nasId, disk) {
 }
 
 export function buildDiskStates(gladys, nasId, disk) {
-  const ids = gladys.externalIds(DEVICE_TYPE, `${nasId}:${disk.id}`);
+  const ids = diskExternalIds(gladys, nasId, disk.id);
   const states = [];
   if (disk.smartStatus !== undefined && disk.smartStatus !== '') {
     states.push({

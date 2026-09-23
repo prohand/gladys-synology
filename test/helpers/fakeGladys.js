@@ -1,13 +1,20 @@
 export function createFakeGladys() {
   const published = [];
+  const sceneEvents = [];
   return {
     published,
+    sceneEvents,
+    devices: [],
     externalIds(type, platformId) {
       const device = `${type}:${platformId}`;
       return { device, feature: (key) => `${device}:${key}` };
     },
     async publishStates(states) {
       published.push(...states);
+    },
+    async publishSceneEvent(key, data) {
+      sceneEvents.push({ key, data });
+      return { success: true };
     },
   };
 }
@@ -29,8 +36,18 @@ export function createFakeGladysIntegration({ config = {} } = {}) {
     onScanRequest: (handler) => (handlers.scan = handler),
     onPoll: (handler) => (handlers.poll = handler),
     onDeviceCreated: (handler) => (handlers.deviceCreated = handler),
+    widgetRefreshes: [],
     onAction(key, handler) {
       handlers[`action:${key}`] = handler;
+    },
+    onSceneAction(key, handler) {
+      handlers[`scene:${key}`] = handler;
+    },
+    onWidgetGet(key, handler) {
+      handlers[`widget:${key}`] = handler;
+    },
+    requestWidgetRefresh(key) {
+      this.widgetRefreshes.push(key);
     },
     onConfigUpdated: (handler) => (handlers.configUpdated = handler),
     handleShutdown: (handler) => (handlers.shutdown = handler),

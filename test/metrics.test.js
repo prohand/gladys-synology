@@ -100,6 +100,7 @@ test('normalizeSnapshot exposes Hyper Backup and Active Backup task information'
       name: 'Cloud archive',
       status: 'backupable',
       result: 'success',
+      outcome: 'success',
       lastBackupAt: '2023-11-14T22:13:20.000Z',
     },
     {
@@ -108,6 +109,7 @@ test('normalizeSnapshot exposes Hyper Backup and Active Backup task information'
       name: 'Workstations',
       status: 'idle',
       result: 'success',
+      outcome: 'success',
       lastBackupAt: '2023-11-14T22:15:00.000Z',
     },
   ]);
@@ -127,7 +129,30 @@ test('normalizeSnapshot maps a partially successful Active Backup result', () =>
   });
 
   assert.equal(snapshot.backups[0].result, 'partial success');
+  assert.equal(snapshot.backups[0].outcome, 'partial');
   assert.equal(snapshot.backups[0].lastBackupAt, '2023-11-14T22:16:40.000Z');
+});
+
+test('normalizeSnapshot only gives an outcome to a finished backup', () => {
+  const outcomes = normalizeSnapshot({
+    hyperBackup: {
+      task_list: ['done', 'failed', 'cancel', 'backingup', 'none', undefined].map(
+        (result, index) => ({ task_id: index, last_bkp_result: result }),
+      ),
+    },
+    activeBackup: { tasks: [{ task_id: 1, last_result: { status: 4 } }] },
+  }).backups.map((backup) => backup.outcome);
+
+  // A running backup has no outcome yet: a scene must not be told it finished.
+  assert.deepEqual(outcomes, [
+    'success',
+    'failure',
+    'failure',
+    undefined,
+    undefined,
+    undefined,
+    'failure',
+  ]);
 });
 
 test('normalizeSnapshot tolerates missing optional storage API data', () => {

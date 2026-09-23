@@ -64,6 +64,23 @@ this is where the defensive `??` chains belong, not in the device builders. `src
 then map that snapshot to Gladys devices and states; each module owns one device type and exports
 both a `build*Device` and a `build*States` function keyed by the same feature constants.
 
+### Gladys 5.1 widgets and scenes
+
+Keys live in `WIDGET` (`src/widgets/index.js`), `SCENE_TRIGGER` (`src/scene-events.js`) and
+`SCENE_ACTION` (`src/scene-actions.js`); `test/manifest.test.js` keeps them, the event data keys
+and the action outputs in sync with the manifest — a published key is never renamed.
+
+- **Widgets** are built from the snapshots already in memory (never a DSM call: the core waits
+  15 s at most) and the runtime calls `requestWidgetRefresh` after every refresh cycle. Their
+  `nas` setting takes _any_ device of a NAS; `fleet.resolve()` maps it back through
+  `findDevice()`, which rebuilds the external IDs instead of parsing them.
+- **Scene events** come from one `SceneEventTracker` per NAS, fed only by `publishStates` (the
+  monitoring loop): the first reading is a reference, health fires on a clear 1 → 0 transition
+  only, a backup fires once per finished run (`outcome` set by `metrics.js`). Scene actions call
+  `refresh()`, which never publishes events, so a scene cannot loop through the integration.
+- **Scene actions** re-read DSM and return scalars only; an unreachable NAS is an output
+  (`reachable: false`), a wrong device kind is a thrown error.
+
 ### Conventions that matter
 
 - **External IDs are a contract.** `gladys.externalIds(type, platformId)` builds them from

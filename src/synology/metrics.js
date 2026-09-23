@@ -57,6 +57,42 @@ function healthState(value) {
   return undefined;
 }
 
+const BACKUP_SUCCESS_RESULTS = new Set([
+  'success',
+  'succeeded',
+  'done',
+  'ok',
+  'completed',
+  'finished',
+]);
+const BACKUP_PARTIAL_RESULTS = new Set(['partial', 'partial_success', 'partially_completed']);
+const BACKUP_FAILURE_RESULTS = new Set([
+  'fail',
+  'failed',
+  'failure',
+  'error',
+  'cancel',
+  'cancelled',
+  'canceled',
+  'aborted',
+  'interrupted',
+  'timeout',
+]);
+
+// Same rule as healthState(): a running or unknown result ("backingup", "waiting"...) has no
+// outcome, so a scene is never told a backup finished while it is still in progress.
+function backupOutcome(value) {
+  if (value === undefined || value === null || value === '') return undefined;
+  const result = String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]+/g, '_');
+  if (BACKUP_SUCCESS_RESULTS.has(result)) return 'success';
+  if (BACKUP_PARTIAL_RESULTS.has(result)) return 'partial';
+  if (BACKUP_FAILURE_RESULTS.has(result)) return 'failure';
+  return undefined;
+}
+
 function roundToTwoDecimals(value) {
   return value === undefined ? undefined : Math.round(value * 100) / 100;
 }
@@ -186,6 +222,7 @@ function normalizeBackupTask(provider, task, index) {
     name: String(name),
     status: status === undefined ? undefined : String(status),
     result: result === undefined ? undefined : String(result),
+    outcome: backupOutcome(result),
     lastBackupAt,
   };
 }

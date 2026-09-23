@@ -13,6 +13,12 @@ External [Gladys Assistant](https://gladysassistant.com/) integration for monito
 
 Volumes are discovered dynamically. Metrics are read-only: this integration does not modify the NAS.
 
+## Gladys 5.1 widgets and scenes
+
+- Dashboard widgets: **Synology NAS** (load, temperature, volumes, disks and backups summary, load history), **Synology storage** (volume gauges, disk SMART and temperature) and **Synology backups** (tasks with their last result, failures first).
+- Scene triggers: NAS unreachable / reachable again, volume degraded, disk failing, backup finished (filter by package and result), DSM updated.
+- Scene actions: get the state of a NAS, a volume or a backup task, with values usable by the following actions.
+
 ## Setup
 
 1. Create a dedicated DSM user and add it to the `administrators` group. DSM requires this group for the system-utilization and storage WebAPIs used here.

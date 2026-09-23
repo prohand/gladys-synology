@@ -1,6 +1,7 @@
 import { createLogger } from '@gladysassistant/integration-sdk';
 import { validateConfig } from './config.js';
-import { buildDiscoveredDevices, buildStates } from './devices/index.js';
+import { buildDiscoveredDevices, buildStates, findDevice } from './devices/index.js';
+import { SceneEventTracker } from './scene-events.js';
 import { SynologyClient } from './synology/client.js';
 import { normalizeSnapshot } from './synology/metrics.js';
 
@@ -22,6 +23,8 @@ export class SynologyService {
     this.snapshot = null;
     this.inFlightRefresh = null;
     this.lastPublishedAt = null;
+    this.lastError = null;
+    this.sceneEvents = new SceneEventTracker({ now });
   }
 
   get nasId() {
@@ -35,7 +38,12 @@ export class SynologyService {
         .then((snapshot) => normalizeSnapshot(snapshot))
         .then((snapshot) => {
           this.snapshot = snapshot;
+          this.lastError = null;
           return snapshot;
+        })
+        .catch((error) => {
+          this.lastError = error;
+          throw error;
         })
         .finally(() => {
           this.inFlightRefresh = null;
@@ -59,14 +67,50 @@ export class SynologyService {
       return this.snapshot;
     }
 
-    const snapshot = await this.refresh();
+    let snapshot;
+    try {
+      snapshot = await this.refresh();
+    } catch (error) {
+      await this.publishSceneEvents(
+        gladys,
+        this.sceneEvents.observeFailure(gladys, this.eventContext(), this.snapshot, error),
+      );
+      throw error;
+    }
     const states = buildStates(gladys, this.nasId, snapshot, {
       dateFormat: this.config.date_format,
     });
     if (states.length > 0) await gladys.publishStates(states);
     this.lastPublishedAt = now;
     logger.info(`Published ${states.length} Synology monitoring values`);
+    // Events are only derived from this monitoring loop, never from a refresh requested by a
+    // scene action: a scene bound to an event must not be able to loop through the integration.
+    await this.publishSceneEvents(
+      gladys,
+      this.sceneEvents.observe(gladys, this.eventContext(), snapshot),
+    );
     return snapshot;
+  }
+
+  eventContext() {
+    return { nasId: this.nasId, url: this.config.url, dateFormat: this.config.date_format };
+  }
+
+  // A refused event (Gladys restarting, rate limit) must never break the state publication.
+  async publishSceneEvents(gladys, events) {
+    for (const { key, data } of events) {
+      try {
+        await gladys.publishSceneEvent(key, data);
+        logger.info(`Scene event ${key} published`);
+      } catch (error) {
+        logger.warn(`Unable to publish the ${key} scene event: ${error.message}`);
+      }
+    }
+  }
+
+  /** The snapshot entry behind a device external_id of this NAS, or `null`. */
+  findDevice(gladys, externalId) {
+    return findDevice(gladys, this.nasId, this.snapshot, externalId);
   }
 
   async close() {
