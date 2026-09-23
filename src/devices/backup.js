@@ -13,6 +13,14 @@ function backupPlatformId(nasId, backup) {
   return `${nasId}:${backup.provider}:${backup.id}`;
 }
 
+export function backupExternalIds(gladys, nasId, backup) {
+  return gladys.externalIds(DEVICE_TYPE, backupPlatformId(nasId, backup));
+}
+
+export function backupProviderName(provider) {
+  return provider === 'hyper-backup' ? 'Hyper Backup' : 'Active Backup';
+}
+
 function textFeature(ids, name, key) {
   return {
     name,
@@ -28,10 +36,9 @@ function textFeature(ids, name, key) {
 }
 
 export function buildBackupDevice(gladys, nasId, nas, backup) {
-  const ids = gladys.externalIds(DEVICE_TYPE, backupPlatformId(nasId, backup));
-  const providerName = backup.provider === 'hyper-backup' ? 'Hyper Backup' : 'Active Backup';
+  const ids = backupExternalIds(gladys, nasId, backup);
   return {
-    name: `${nas.model || nasId} - ${providerName} - ${backup.name}`,
+    name: `${nas.model || nasId} - ${backupProviderName(backup.provider)} - ${backup.name}`,
     external_id: ids.device,
     features: [
       textFeature(ids, 'Status', BACKUP_FEATURE.STATUS),
@@ -42,7 +49,7 @@ export function buildBackupDevice(gladys, nasId, nas, backup) {
 }
 
 export function buildBackupStates(gladys, nasId, backup, { dateFormat } = {}) {
-  const ids = gladys.externalIds(DEVICE_TYPE, backupPlatformId(nasId, backup));
+  const ids = backupExternalIds(gladys, nasId, backup);
   const values = [
     [BACKUP_FEATURE.STATUS, backup.status],
     [BACKUP_FEATURE.RESULT, backup.result],

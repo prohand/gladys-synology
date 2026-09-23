@@ -13,12 +13,12 @@ export const SYSTEM_FEATURE = {
   DSM_VERSION: 'dsm-version',
 };
 
-export function systemDeviceExternalId(gladys, nasId) {
-  return gladys.externalIds(DEVICE_TYPE, nasId).device;
+export function systemExternalIds(gladys, nasId) {
+  return gladys.externalIds(DEVICE_TYPE, nasId);
 }
 
 export function buildSystemDevice(gladys, nasId, nas) {
-  const ids = gladys.externalIds(DEVICE_TYPE, nasId);
+  const ids = systemExternalIds(gladys, nasId);
   return {
     name: nas.model || 'Synology NAS',
     external_id: ids.device,
@@ -75,7 +75,7 @@ export function buildSystemDevice(gladys, nasId, nas) {
 }
 
 export function buildSystemStates(gladys, nasId, nas) {
-  const ids = gladys.externalIds(DEVICE_TYPE, nasId);
+  const ids = systemExternalIds(gladys, nasId);
   const numericValues = [
     [SYSTEM_FEATURE.CPU, nas.cpuUsage],
     [SYSTEM_FEATURE.MEMORY, nas.memoryUsage],

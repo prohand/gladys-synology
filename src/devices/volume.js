@@ -19,8 +19,12 @@ function volumePlatformId(nasId, volumeId) {
   return `${nasId}:${volumeId}`;
 }
 
+export function volumeExternalIds(gladys, nasId, volumeId) {
+  return gladys.externalIds(DEVICE_TYPE, volumePlatformId(nasId, volumeId));
+}
+
 export function buildVolumeDevice(gladys, nasId, volume) {
-  const ids = gladys.externalIds(DEVICE_TYPE, volumePlatformId(nasId, volume.id));
+  const ids = volumeExternalIds(gladys, nasId, volume.id);
   const sizeFeature = (name, key) => ({
     name,
     external_id: ids.feature(key),
@@ -68,7 +72,7 @@ export function buildVolumeDevice(gladys, nasId, volume) {
 }
 
 export function buildVolumeStates(gladys, nasId, volume) {
-  const ids = gladys.externalIds(DEVICE_TYPE, volumePlatformId(nasId, volume.id));
+  const ids = volumeExternalIds(gladys, nasId, volume.id);
   const values = [
     [VOLUME_FEATURE.USAGE, volume.usagePercent],
     [VOLUME_FEATURE.USED, bytesToGigabytes(volume.usedBytes)],

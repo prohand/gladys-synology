@@ -2,6 +2,8 @@ import { logger } from '@gladysassistant/integration-sdk';
 import { createBackoff } from './backoff.js';
 import { ConfigValidationError, normalizeConfig } from './config.js';
 import { SynologyFleetService } from './fleet-service.js';
+import { getBackupStatus, getNasStatus, getVolumeStatus, SCENE_ACTION } from './scene-actions.js';
+import { buildWidgetContent, WIDGET } from './widgets/index.js';
 
 const defaultScheduler = { setTimeout, clearTimeout, setInterval, clearInterval };
 
@@ -74,6 +76,18 @@ export function createRuntime(
     return gladys.setConnectionStatus(true, degradedMessage(failures));
   }
 
+  // Widgets are pulled from the snapshots in memory: after a refresh cycle, ask Gladys to pull
+  // them again instead of waiting for their TTL. Rate-limited by the core, dropped while offline.
+  function refreshWidgets() {
+    for (const key of Object.values(WIDGET)) {
+      try {
+        gladys.requestWidgetRefresh(key);
+      } catch (error) {
+        logger.warn(`Unable to refresh the ${key} widget: ${error.message}`);
+      }
+    }
+  }
+
   async function reportUnavailable(error) {
     await gladys.setConnectionStatus(false, unavailableMessage(error)).catch(() => {});
   }
@@ -117,6 +131,7 @@ export function createRuntime(
       await gladys.publishDiscoveredDevices(devices);
       await service.publishStates(gladys);
       await reportStatus();
+      refreshWidgets();
       backoff.reset();
       refreshTimer = scheduler.setInterval(() => {
         service
@@ -125,7 +140,8 @@ export function createRuntime(
           .catch(async (error) => {
             logger.error('Synology DSM scheduled refresh failed', error);
             await reportUnavailable(error);
-          });
+          })
+          .finally(() => refreshWidgets());
       }, config.poll_frequency * 1000);
       refreshTimer.unref?.();
       logger.info(`Synology DSM initialized with ${devices.length} device(s)`);
@@ -161,6 +177,8 @@ export function createRuntime(
       logger.error('Synology DSM polling failed', error);
       await reportUnavailable(error);
       throw error;
+    } finally {
+      refreshWidgets();
     }
   });
 
@@ -191,6 +209,29 @@ export function createRuntime(
       fr: `${snapshots.length} NAS joignable(s) : ${summary}.${unreachable.fr}`,
     };
   });
+
+  const sceneActions = {
+    [SCENE_ACTION.NAS_STATUS]: getNasStatus,
+    [SCENE_ACTION.VOLUME_STATUS]: getVolumeStatus,
+    [SCENE_ACTION.BACKUP_STATUS]: getBackupStatus,
+  };
+  for (const [key, run] of Object.entries(sceneActions)) {
+    gladys.onSceneAction(key, async (fields) => run(await ready(), gladys, fields));
+  }
+
+  // No `ready()` here: a widget must answer within 15 s, while a first connection to an
+  // unreachable NAS can take longer. The content explains the situation instead.
+  for (const key of Object.values(WIDGET)) {
+    gladys.onWidgetGet(key, async ({ settings, units } = {}) =>
+      buildWidgetContent(key, {
+        gladys,
+        fleet: service,
+        settings,
+        units,
+        pollFrequency: config.poll_frequency,
+      }),
+    );
+  }
 
   gladys.onConfigUpdated((newConfig) => {
     logger.info('Synology configuration updated');

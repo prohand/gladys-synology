@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ConfigValidationError } from '../src/config.js';
 import { createRuntime } from '../src/runtime.js';
+import { SCENE_ACTION } from '../src/scene-actions.js';
+import { WIDGET } from '../src/widgets/index.js';
 import { createFakeGladysIntegration, createFakeScheduler } from './helpers/fakeGladys.js';
+import { createFleet, rawDsmSnapshot } from './helpers/fleet.js';
 
 const VALID_CONFIG = { url: 'https://nas', username: 'gladys', password: 'password' };
 
@@ -188,4 +191,38 @@ test('the connection test reports both reachable and unreachable NAS', async () 
   assert.match(message.en, /^1 NAS reachable: DS920\+ \(DSM 7\.2\.2, 1 volume\(s\), 2 disk\(s\)/);
   assert.match(message.en, /1 NAS unreachable: https:\/\/nas2\./);
   assert.match(message.fr, /1 NAS injoignable\(s\) : https:\/\/nas2\./);
+});
+
+test('widgets answer at once and are refreshed after every refresh cycle', async () => {
+  const fleet = createFleet([[rawDsmSnapshot()]]);
+  const { gladys, scheduler, runtime } = createRuntimeUnderTest({ serviceFactory: () => fleet });
+
+  // Before any configuration, the widget explains itself instead of waiting for DSM.
+  const early = await gladys.handlers['widget:nas_overview']({ settings: {} });
+  assert.match(early.components[0].text.en, /not connected/);
+
+  await runtime.initialize({ ...VALID_CONFIG, poll_frequency: 120 });
+  assert.deepEqual(gladys.widgetRefreshes, Object.values(WIDGET));
+
+  const content = await gladys.handlers['widget:storage']({ settings: {}, units: 'metric' });
+  assert.equal(content.ttl_seconds, 120);
+  assert.equal(content.components[0].text.en, 'DS920+ storage');
+
+  scheduler.intervals[0].callback();
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(gladys.widgetRefreshes.length, 2 * Object.values(WIDGET).length);
+});
+
+test('scene actions wait for the initialization and reach the chosen device', async () => {
+  const fleet = createFleet([[rawDsmSnapshot()]]);
+  const { gladys } = createRuntimeUnderTest({ serviceFactory: () => fleet });
+
+  gladys.emit('connected');
+  const outputs = await gladys.handlers[`scene:${SCENE_ACTION.VOLUME_STATUS}`]({
+    device: 'synology-volume:ABC123:volume_1',
+  });
+  assert.equal(outputs.volume_name, 'Volume 1');
+  for (const key of Object.values(SCENE_ACTION)) {
+    assert.equal(typeof gladys.handlers[`scene:${key}`], 'function', key);
+  }
 });
