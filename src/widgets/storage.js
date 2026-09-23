@@ -66,7 +66,8 @@ export function buildStorageContent({ service, units, pollFrequency }) {
     components.push({
       type: 'gauge',
       label: truncate(volume.name, 24),
-      value: volume.usagePercent,
+      // Whole percent: the core centres the number inside the arc, "69.29" overflows onto it.
+      value: Math.round(volume.usagePercent),
       min: 0,
       max: 100,
       unit: '%',

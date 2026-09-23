@@ -103,6 +103,23 @@ test('the storage card shows a gauge per volume and the SMART state of each disk
   );
 });
 
+test('the storage gauge shows a whole percent so the number fits inside the arc', async () => {
+  const raw = rawDsmSnapshot();
+  raw.storage.volumes = [
+    {
+      id: 'volume_2',
+      display_name: 'volume_2',
+      status: 'normal',
+      size: { total: 10000, used: 6929 },
+    },
+  ];
+  const fleet = await readyFleet([[raw]]);
+  assert.deepEqual(
+    ofType(content(WIDGET.STORAGE, fleet), 'gauge').map((gauge) => gauge.value),
+    [69],
+  );
+});
+
 test('the backups card lists failures first and can hide the successful tasks', async () => {
   const fleet = await readyFleet();
   const result = content(WIDGET.BACKUPS, fleet);
