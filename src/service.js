@@ -11,6 +11,11 @@ const logger = createLogger({ name: 'synology' });
 // reject that cycle and the next publication would land a full interval later.
 export const PUBLISH_THROTTLE_RATIO = 0.95;
 
+// The host API takes at most 100 states per request, and the SDK refuses a bigger batch outright.
+// A NAS with a dozen disks, a few volumes and its backup tasks goes past it: sent in one call, not a
+// single value of that NAS was ever published.
+export const MAX_STATES_PER_REQUEST = 100;
+
 export class SynologyService {
   constructor(
     config,
@@ -80,7 +85,9 @@ export class SynologyService {
     const states = buildStates(gladys, this.nasId, snapshot, {
       dateFormat: this.config.date_format,
     });
-    if (states.length > 0) await gladys.publishStates(states);
+    for (let start = 0; start < states.length; start += MAX_STATES_PER_REQUEST) {
+      await gladys.publishStates(states.slice(start, start + MAX_STATES_PER_REQUEST));
+    }
     this.lastPublishedAt = now;
     logger.info(`Published ${states.length} Synology monitoring values`);
     // Events are only derived from this monitoring loop, never from a refresh requested by a
