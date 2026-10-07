@@ -10,6 +10,10 @@ export function createFakeGladys() {
       return { device, feature: (key) => `${device}:${key}` };
     },
     async publishStates(states) {
+      // Same guard as the SDK: a batch over 100 states is refused before it leaves.
+      if (states.length > 100) {
+        throw new Error('publishStates: maximum 100 states per request');
+      }
       published.push(...states);
     },
     async publishSceneEvent(key, data) {

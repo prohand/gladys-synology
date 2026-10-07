@@ -124,3 +124,27 @@ test('a refresh timer firing a few milliseconds early still publishes', async ()
   await service.publishStates(gladys);
   assert.equal(snapshots, 2);
 });
+
+test('service splits a large NAS into batches the host API accepts', async () => {
+  const gladys = createFakeGladys();
+  const disks = Array.from({ length: 40 }, (_, index) => ({
+    id: `disk_${index + 1}`,
+    name: `Drive ${index + 1}`,
+    smart_status: 'normal',
+    temp: 35,
+  }));
+  const service = new SynologyService(
+    normalizeConfig({ url: 'https://nas', username: 'u', password: 'p' }),
+    {
+      clientFactory: () => ({
+        async getSnapshot() {
+          return { ...rawSnapshot(), storage: { volumes: [], disks } };
+        },
+        async close() {},
+      }),
+    },
+  );
+
+  await service.publishStates(gladys);
+  assert.ok(gladys.published.length > 100);
+});
