@@ -36,7 +36,7 @@ See [docs/en.md](docs/en.md) or [docs/fr.md](docs/fr.md) for the complete guide.
 
 ## Development
 
-Requires Node.js 20 or later.
+Requires Node.js 22.19 or later.
 
 ```sh
 npm ci
