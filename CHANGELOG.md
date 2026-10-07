@@ -6,6 +6,10 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-07
+
+- Maintenance release, no functional change.
+
 ## [2.1.0] - 2026-10-06
 
 ### Added
@@ -74,7 +78,8 @@ First public release.
 - Publish Synology metrics reliably
 - Migrate fast polling to safe default
 
-[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/prohand/gladys-synology/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/prohand/gladys-synology/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/prohand/gladys-synology/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/prohand/gladys-synology/compare/v1.0.4...v2.0.0
