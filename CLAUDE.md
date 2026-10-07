@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```sh
-npm ci                 # install (Node.js >= 20; CI and Docker use Node 24)
+npm ci                 # install (Node.js >= 22.19; CI and Docker use Node 24)
 npm test               # node --test, runs every test/*.test.js
 npm run lint           # eslint .
 npm run format:check   # prettier --check . (CI fails on unformatted files)
@@ -121,5 +121,5 @@ for DSM payloads, `new SynologyService(config, { clientFactory, now })` for timi
 `createFakeGladysIntegration` + `createFakeScheduler` for the runtime). New DSM payload shapes
 belong in `test/metrics.test.js`; new device features in `test/devices.test.js`.
 
-CI runs the suite on Node 20 (the `engines` floor) and Node 24 (the Docker image), so avoid APIs
+CI runs the suite on Node 22 (the `engines` floor, set by undici 8) and Node 24 (the Docker image), so avoid APIs
 that only exist in the newer one.
