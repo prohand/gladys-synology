@@ -6,8 +6,8 @@
     "en": "Monitor Synology NAS system metrics, storage volumes, disk SMART health and backups.",
     "fr": "Supervisez les métriques système, volumes, états SMART des disques et sauvegardes d'un NAS Synology."
   },
-  "version": "2.2.0",
-  "docker_image": "ghcr.io/prohand/gladys-synology:2.2.0",
+  "version": "2.3.0",
+  "docker_image": "ghcr.io/prohand/gladys-synology:2.3.0",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-synology/main/cover.png",
   "categories": ["network"],
