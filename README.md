@@ -49,7 +49,7 @@ The repository keeps the structure and release workflows of the official JavaScr
 
 ## Security
 
-The password and OTP are submitted to DSM in a POST body and are never logged. The remembered MFA device identifier is stored in the integration's private `/data` volume. Keep TLS certificate verification enabled whenever possible. The dedicated account must belong to `administrators` because of a DSM API limitation, but it should be denied access to every shared folder and application. Restrict DSM access to the Gladys host with the NAS firewall.
+The password and OTP are submitted to DSM in a POST body and are never logged. The remembered MFA device identifier is stored in the integration's private `/data` volume. Keep TLS certificate verification enabled whenever possible; for a self-signed certificate, pin its SHA-256 fingerprint rather than disabling the check, which would let anyone intercepting the local traffic receive the DSM password. The dedicated account must belong to `administrators` because of a DSM API limitation, but it should be denied access to every shared folder and application. Restrict DSM access to the Gladys host with the NAS firewall.
 
 ## License
 

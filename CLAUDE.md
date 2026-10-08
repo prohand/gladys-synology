@@ -57,6 +57,10 @@ Data flows in one direction through four layers (`index.js` is only three lines 
    refresh promise forever), session re-login on codes 106/107/119/498 coalesced through
    `loginPromise` (DSM blocks an IP after a few failed logins), and `optionalCall()` which
    downgrades a missing or forbidden backup API to `null` instead of breaking system monitoring.
+   `fetch` and the `Agent` MUST come from the same `undici` package (never Node's global `fetch`
+   with an undici `Agent`: 2.2.0 broke every self-signed NAS that way), and a pinned certificate
+   fingerprint is checked in the connector, before any request leaves. `test/client-tls.test.js`
+   runs the real client against a self-signed HTTPS server to keep it so.
 
 `src/synology/metrics.js` turns raw DSM payloads into a stable snapshot shape
 (`{ nas, volumes, disks, backups }`), absorbing the field-name variation across DSM versions —

@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { normalizeConfig } from '../src/config.js';
-import { SynologyClient } from '../src/synology/client.js';
+import {
+  BACKUP_TASK_CONCURRENCY,
+  SynologyClient,
+  mapWithConcurrency,
+} from '../src/synology/client.js';
 
 function jsonResponse(payload, status = 200) {
   return { ok: status >= 200 && status < 300, status, json: async () => payload };
@@ -492,4 +496,55 @@ test('client signs in even when the trusted device store is unusable', async () 
   const data = await client.login();
   assert.equal(data.sid, 'secret-session');
   assert.equal(client.sid, 'secret-session');
+});
+
+test('mapWithConcurrency keeps the order and never exceeds its limit', async () => {
+  let running = 0;
+  let peak = 0;
+  const results = await mapWithConcurrency([5, 1, 4, 2, 3, 0], 2, async (value) => {
+    running += 1;
+    peak = Math.max(peak, running);
+    await new Promise((resolve) => setTimeout(resolve, value));
+    running -= 1;
+    return value * 10;
+  });
+  assert.deepEqual(results, [50, 10, 40, 20, 30, 0]);
+  assert.equal(peak, 2);
+  assert.deepEqual(await mapWithConcurrency([], 4, async () => 1), []);
+});
+
+test('client reads the status of many backup tasks a few at a time', async () => {
+  const taskCount = 12;
+  let running = 0;
+  let peak = 0;
+  const apiData = {
+    'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
+    'SYNO.Backup.Task': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+  };
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas:5001', username: 'u', password: 'p' }),
+    {
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') return jsonResponse({ success: true, data: apiData });
+        if (body.api === 'SYNO.API.Auth')
+          return jsonResponse({ success: true, data: { sid: 's' } });
+        if (body.method === 'list') {
+          const task_list = Array.from({ length: taskCount }, (_, index) => ({ task_id: index }));
+          return jsonResponse({ success: true, data: { task_list } });
+        }
+        running += 1;
+        peak = Math.max(peak, running);
+        await new Promise((resolve) => setTimeout(resolve, 2));
+        running -= 1;
+        return jsonResponse({ success: true, data: { last_bkp_result: `done-${body.task_id}` } });
+      },
+    },
+  );
+
+  await client.discoverApis();
+  const hyperBackup = await client.getHyperBackup();
+  assert.equal(hyperBackup.task_list.length, taskCount);
+  assert.equal(hyperBackup.task_list[7].last_bkp_result, 'done-7');
+  assert.equal(peak, BACKUP_TASK_CONCURRENCY);
 });
