@@ -37,6 +37,26 @@ jobs:
       - name: Run tests
         run: npm test
 
+  docker:
+    # Builds the image on every pull request without pushing it, so a broken Dockerfile (or a
+    # dependency that no longer installs with `npm ci --omit=dev`) shows up before the release.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    name: Docker build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build the image (not pushed)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64
+          push: false
+
   store:
     # The store indexer's own admission checks (manifest schema, version
     # couplings, cover, image). Pull requests only: a release commit reaches main
