@@ -148,3 +148,39 @@ test('service splits a large NAS into batches the host API accepts', async () =>
   await service.publishStates(gladys);
   assert.ok(gladys.published.length > 100);
 });
+
+test('service replays a recent snapshot instead of reading DSM again', async () => {
+  let now = 1_000;
+  let requests = 0;
+  const gladys = createFakeGladys();
+  const service = new SynologyService(
+    normalizeConfig({ url: 'https://nas', username: 'u', password: 'p' }),
+    {
+      now: () => now,
+      clientFactory: () => ({
+        async getSnapshot() {
+          requests += 1;
+          return rawSnapshot();
+        },
+        async close() {},
+      }),
+    },
+  );
+
+  await service.publishStates(gladys);
+  const perPublication = gladys.published.length;
+  const events = gladys.sceneEvents.length;
+
+  // Devices added one after the other from the Discovery screen.
+  now += 5_000;
+  await service.publishStates(gladys, { force: true, maxSnapshotAgeMs: 30_000 });
+  now += 5_000;
+  await service.publishStates(gladys, { force: true, maxSnapshotAgeMs: 30_000 });
+  assert.equal(requests, 1, 'the snapshot read 10 s ago is reused');
+  assert.equal(gladys.published.length, 3 * perPublication);
+  assert.equal(gladys.sceneEvents.length, events, 'a replay reads nothing new, so fires nothing');
+
+  now += 30_000;
+  await service.publishStates(gladys, { force: true, maxSnapshotAgeMs: 30_000 });
+  assert.equal(requests, 2, 'an older snapshot is read again');
+});
