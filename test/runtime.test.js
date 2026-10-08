@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ConfigValidationError } from '../src/config.js';
-import { createRuntime } from '../src/runtime.js';
+import { createRuntime, DEVICE_CREATED_SNAPSHOT_MAX_AGE_MS } from '../src/runtime.js';
 import { SCENE_ACTION } from '../src/scene-actions.js';
 import { WIDGET } from '../src/widgets/index.js';
 import { createFakeGladysIntegration, createFakeScheduler } from './helpers/fakeGladys.js';
@@ -225,4 +225,61 @@ test('scene actions wait for the initialization and reach the chosen device', as
   for (const key of Object.values(SCENE_ACTION)) {
     assert.equal(typeof gladys.handlers[`scene:${key}`], 'function', key);
   }
+});
+
+test('overlapping initializations run one after the other and leave a single refresh timer', async () => {
+  const fleets = [];
+  let releaseFirst;
+  const firstDiscovery = new Promise((resolve) => (releaseFirst = resolve));
+  const { gladys, scheduler } = createRuntimeUnderTest({
+    serviceFactory: () => {
+      const fleet = createFakeFleet();
+      const index = fleets.length;
+      fleet.discover = async () => {
+        fleet.discovering = true;
+        if (index === 0) await firstDiscovery;
+        fleet.discovering = false;
+        return [{ external_id: `synology-nas:${index}` }];
+      };
+      fleet.close = async () => {
+        // Closing a fleet in the middle of its discovery broke the connection it was using.
+        assert.equal(fleet.discovering, false, `fleet ${index} closed while still in use`);
+        fleet.closed += 1;
+      };
+      fleets.push(fleet);
+      return fleet;
+    },
+  });
+
+  // A reconnection and a Save arrive together.
+  gladys.emit('connected');
+  const saved = gladys.handlers.configUpdated({ ...VALID_CONFIG, poll_frequency: 300 });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(fleets.length, 1, 'the second initialization waits for the first one');
+
+  releaseFirst();
+  await saved;
+
+  assert.equal(fleets.length, 2);
+  assert.equal(fleets[0].closed, 1);
+  const active = scheduler.intervals.filter((timer) => !timer.cleared);
+  assert.equal(active.length, 1, 'every replaced refresh timer is cleared');
+  assert.equal(active[0].delay, 300_000);
+});
+
+test('adding devices replays a recent snapshot instead of reading DSM for each one', async () => {
+  const fleet = createFakeFleet();
+  const options = [];
+  fleet.publishStates = async (_gladys, publishOptions) => {
+    options.push(publishOptions);
+  };
+  const { gladys, runtime } = createRuntimeUnderTest({ serviceFactory: () => fleet });
+
+  await runtime.initialize(VALID_CONFIG);
+  await gladys.handlers.deviceCreated();
+
+  assert.deepEqual(options.at(-1), {
+    force: true,
+    maxSnapshotAgeMs: DEVICE_CREATED_SNAPSHOT_MAX_AGE_MS,
+  });
 });

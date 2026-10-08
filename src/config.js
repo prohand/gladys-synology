@@ -17,21 +17,25 @@ export const DEFAULT_CONFIG = {
   password: '',
   otp_code: '',
   verify_ssl: true,
+  cert_fingerprint: '',
   nas_2_url: '',
   nas_2_username: '',
   nas_2_password: '',
   nas_2_otp_code: '',
   nas_2_verify_ssl: true,
+  nas_2_cert_fingerprint: '',
   nas_3_url: '',
   nas_3_username: '',
   nas_3_password: '',
   nas_3_otp_code: '',
   nas_3_verify_ssl: true,
+  nas_3_cert_fingerprint: '',
   nas_4_url: '',
   nas_4_username: '',
   nas_4_password: '',
   nas_4_otp_code: '',
   nas_4_verify_ssl: true,
+  nas_4_cert_fingerprint: '',
   poll_frequency: 900,
   date_format: DEFAULT_DATE_FORMAT,
 };
@@ -39,6 +43,14 @@ export const DEFAULT_CONFIG = {
 export const MIN_POLL_FREQUENCY = 60;
 export const MAX_POLL_FREQUENCY = 86_400;
 export const ADDITIONAL_NAS_SLOTS = [2, 3, 4];
+
+// Browsers print the SHA-256 fingerprint with colons, openssl in upper case, some tools with
+// spaces: keep only the hex digits so any of them can be pasted as is.
+function normalizeFingerprint(value) {
+  return String(value ?? '')
+    .replace(/[\s:]/g, '')
+    .toLowerCase();
+}
 
 function normalizeUrl(value) {
   const raw = String(value ?? '').trim();
@@ -59,6 +71,7 @@ export function normalizeConfig(raw = {}) {
     password: String(raw.password ?? ''),
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
+    cert_fingerprint: normalizeFingerprint(raw.cert_fingerprint),
     poll_frequency: pollFrequency,
     date_format: normalizeDateFormat(raw.date_format),
   };
@@ -68,6 +81,9 @@ export function normalizeConfig(raw = {}) {
     config[`nas_${slot}_password`] = String(raw[`nas_${slot}_password`] ?? '');
     config[`nas_${slot}_otp_code`] = String(raw[`nas_${slot}_otp_code`] ?? '').trim();
     config[`nas_${slot}_verify_ssl`] = raw[`nas_${slot}_verify_ssl`] !== false;
+    config[`nas_${slot}_cert_fingerprint`] = normalizeFingerprint(
+      raw[`nas_${slot}_cert_fingerprint`],
+    );
   }
   return config;
 }
@@ -79,6 +95,7 @@ function connectionConfig(raw, { pollFrequency, dateFormat }) {
     password: String(raw.password ?? ''),
     otp_code: String(raw.otp_code ?? '').trim(),
     verify_ssl: raw.verify_ssl !== false,
+    cert_fingerprint: normalizeFingerprint(raw.cert_fingerprint),
     poll_frequency: pollFrequency,
     date_format: normalizeDateFormat(dateFormat),
   };
@@ -95,6 +112,7 @@ export function getNasConfigs(config) {
       password: config[`nas_${slot}_password`],
       otp_code: config[`nas_${slot}_otp_code`],
       verify_ssl: config[`nas_${slot}_verify_ssl`],
+      cert_fingerprint: config[`nas_${slot}_cert_fingerprint`],
     };
     if (!raw.url && !raw.username && !raw.password && !raw.otp_code) continue;
     const connection = connectionConfig(raw, shared);
@@ -124,5 +142,16 @@ export function validateConfig(config) {
   }
   if (!['http:', 'https:'].includes(url.protocol)) {
     throw new ConfigValidationError('The Synology DSM URL must use HTTP or HTTPS.');
+  }
+  if (config.cert_fingerprint) {
+    if (!/^[0-9a-f]{64}$/.test(config.cert_fingerprint)) {
+      throw new ConfigValidationError(
+        'The certificate fingerprint must be a SHA-256 fingerprint (64 hexadecimal characters).',
+      );
+    }
+    // Silently ignoring it would let the user believe the connection is pinned.
+    if (url.protocol !== 'https:') {
+      throw new ConfigValidationError('A certificate fingerprint needs an HTTPS URL.');
+    }
   }
 }

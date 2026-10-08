@@ -1,7 +1,11 @@
 import { createLogger } from '@gladysassistant/integration-sdk';
 import { SynologyApiError, apiError } from './errors.js';
 import { SynologyMfaDeviceStore } from './mfa-device-store.js';
-import { Agent } from 'undici';
+// fetch and Agent MUST come from the same undici package: Node's global fetch runs on the undici
+// bundled with Node (6.x on Node 22, 7.x on Node 24), which rejects a dispatcher built by undici 8
+// with "UND_ERR_INVALID_ARG invalid onRequestStart method": every self-signed NAS went offline in
+// 2.2.0.
+import { Agent, buildConnector, fetch as undiciFetch } from 'undici';
 
 const logger = createLogger({ name: 'synology' });
 
@@ -18,6 +22,18 @@ const SESSION_ERROR_CODES = new Set([106, 107, 119, 498]);
 // DSM rejects a login for good with these codes: retrying cannot help.
 const CREDENTIAL_ERROR_CODES = new Set([400, 401, 402, 407, 408, 409, 410]);
 const MFA_DEVICE_NAME = 'Gladys Synology';
+// DSM backup packages answer one call per task. A NAS with dozens of tasks would otherwise open
+// dozens of requests at once against a box that is also serving its users.
+export const BACKUP_TASK_CONCURRENCY = 4;
+export const CERTIFICATE_MISMATCH_CODE = 'ERR_SYNOLOGY_CERTIFICATE_MISMATCH';
+const CERTIFICATE_ERROR_CODES = new Set([
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'CERT_HAS_EXPIRED',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+]);
 
 function clampVersion(info, preferred) {
   return Math.max(info.minVersion ?? 1, Math.min(preferred, info.maxVersion ?? preferred));
@@ -27,11 +43,59 @@ function isTimeout(error) {
   return error?.name === 'TimeoutError' || error?.cause?.name === 'TimeoutError';
 }
 
+function causeCode(error) {
+  return error?.cause?.code ?? error?.code;
+}
+
+/** Runs `worker` over `items` with at most `limit` calls in flight, keeping the input order. */
+export async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length);
+  let next = 0;
+  const lane = async () => {
+    while (next < items.length) {
+      const index = next;
+      next += 1;
+      results[index] = await worker(items[index], index);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, lane));
+  return results;
+}
+
+/**
+ * The dispatcher for a NAS whose certificate the system CAs cannot vouch for. With a pinned
+ * fingerprint, the TLS handshake still skips the CA check (a self-signed DSM certificate would fail
+ * it) but the connection is dropped right after the handshake unless the certificate is exactly
+ * the pinned one — before the first byte of any request, so the password never reaches an
+ * impostor. `checkServerIdentity` cannot do this: Node only calls it when the CA check succeeded.
+ */
+function certificateDispatcher(fingerprint) {
+  if (!fingerprint) return new Agent({ connect: { rejectUnauthorized: false } });
+  const connect = buildConnector({ rejectUnauthorized: false });
+  return new Agent({
+    connect(options, callback) {
+      connect(options, (error, socket) => {
+        if (error) return callback(error);
+        const presented = socket.getPeerCertificate?.()?.fingerprint256 ?? '';
+        if (presented.replace(/:/g, '').toLowerCase() === fingerprint) {
+          return callback(null, socket);
+        }
+        socket.destroy();
+        const mismatch = new Error(
+          `The certificate presented by ${options.hostname} does not match the pinned SHA-256 fingerprint`,
+        );
+        mismatch.code = CERTIFICATE_MISMATCH_CODE;
+        return callback(mismatch);
+      });
+    },
+  });
+}
+
 export class SynologyClient {
   constructor(
     config,
     {
-      fetchImpl = globalThis.fetch,
+      fetchImpl = undiciFetch,
       mfaDeviceStore = new SynologyMfaDeviceStore(),
       requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
     } = {},
@@ -43,9 +107,10 @@ export class SynologyClient {
     this.loginPromise = null;
     this.requestTimeoutMs = requestTimeoutMs;
     this.mfaDeviceStore = mfaDeviceStore;
+    const fingerprint = config.cert_fingerprint || '';
     this.dispatcher =
-      config.url.startsWith('https://') && !config.verify_ssl
-        ? new Agent({ connect: { rejectUnauthorized: false } })
+      config.url.startsWith('https://') && (fingerprint || !config.verify_ssl)
+        ? certificateDispatcher(fingerprint)
         : null;
   }
 
@@ -66,6 +131,19 @@ export class SynologyClient {
       if (isTimeout(cause)) {
         const seconds = Math.round(this.requestTimeoutMs / 1000);
         throw new SynologyApiError(`Synology DSM did not answer within ${seconds}s`, { cause });
+      }
+      const code = causeCode(cause);
+      if (code === CERTIFICATE_MISMATCH_CODE) {
+        throw new SynologyApiError(
+          'Synology DSM certificate does not match the pinned SHA-256 fingerprint: connection refused before signing in',
+          { cause },
+        );
+      }
+      if (CERTIFICATE_ERROR_CODES.has(code)) {
+        throw new SynologyApiError(
+          `Synology DSM certificate rejected (${code}): pin its SHA-256 fingerprint or disable the certificate check`,
+          { cause },
+        );
       }
       throw new SynologyApiError('Unable to reach Synology DSM', { cause });
     }
@@ -243,19 +321,17 @@ export class SynologyClient {
       : Array.isArray(list.tasks)
         ? list.tasks
         : [];
-    const enriched = await Promise.all(
-      taskList.map(async (task) => {
-        const taskId = task.task_id ?? task.id;
-        if (taskId === undefined) return task;
-        const status = await this.optionalCall(
-          'SYNO.Backup.Task',
-          'status',
-          { task_id: String(taskId), additional: '["last_bkp_result","last_bkp_time"]' },
-          { preferredVersion: 1 },
-        );
-        return status ? { ...task, ...status } : task;
-      }),
-    );
+    const enriched = await mapWithConcurrency(taskList, BACKUP_TASK_CONCURRENCY, async (task) => {
+      const taskId = task.task_id ?? task.id;
+      if (taskId === undefined) return task;
+      const status = await this.optionalCall(
+        'SYNO.Backup.Task',
+        'status',
+        { task_id: String(taskId), additional: '["last_bkp_result","last_bkp_time"]' },
+        { preferredVersion: 1 },
+      );
+      return status ? { ...task, ...status } : task;
+    });
     return { ...list, task_list: enriched };
   }
 
@@ -272,24 +348,22 @@ export class SynologyClient {
       : Array.isArray(list.task_list)
         ? list.task_list
         : [];
-    const enriched = await Promise.all(
-      tasks.map(async (task) => {
-        const taskId = task.task_id ?? task.id;
-        if (taskId === undefined) return task;
-        const detail = await this.optionalCall(
-          'SYNO.ActiveBackup.Task',
-          'list',
-          {
-            load_verify_status: 'true',
-            load_versions: 'true',
-            filter: JSON.stringify({ task_id: taskId, data_formats: [1, 4] }),
-          },
-          { preferredVersion: 1 },
-        );
-        const detailedTask = detail?.tasks?.[0] ?? detail?.task_list?.[0];
-        return detailedTask ? { ...task, ...detailedTask } : task;
-      }),
-    );
+    const enriched = await mapWithConcurrency(tasks, BACKUP_TASK_CONCURRENCY, async (task) => {
+      const taskId = task.task_id ?? task.id;
+      if (taskId === undefined) return task;
+      const detail = await this.optionalCall(
+        'SYNO.ActiveBackup.Task',
+        'list',
+        {
+          load_verify_status: 'true',
+          load_versions: 'true',
+          filter: JSON.stringify({ task_id: taskId, data_formats: [1, 4] }),
+        },
+        { preferredVersion: 1 },
+      );
+      const detailedTask = detail?.tasks?.[0] ?? detail?.task_list?.[0];
+      return detailedTask ? { ...task, ...detailedTask } : task;
+    });
     return {
       ...list,
       tasks: enriched,

@@ -93,6 +93,23 @@
       "default": true
     },
     {
+      "key": "cert_fingerprint",
+      "type": "string",
+      "label": {
+        "en": "Pinned certificate fingerprint (SHA-256)",
+        "fr": "Empreinte du certificat épinglé (SHA-256)"
+      },
+      "description": {
+        "en": "Optional, for a self-signed certificate. When filled in, the NAS is only accepted if its certificate has exactly this SHA-256 fingerprint (the password is never sent otherwise), whatever the setting above.",
+        "fr": "Facultatif, pour un certificat auto-signé. Une fois renseignée, le NAS n'est accepté que si son certificat a exactement cette empreinte SHA-256 (sinon le mot de passe n'est jamais envoyé), quel que soit le réglage ci-dessus."
+      },
+      "placeholder": {
+        "en": "AB:CD:EF:… (64 hexadecimal characters)",
+        "fr": "AB:CD:EF:… (64 caractères hexadécimaux)"
+      },
+      "required": false
+    },
+    {
       "key": "nas_2_section",
       "type": "section",
       "label": {
@@ -149,6 +166,15 @@
       },
       "required": false,
       "default": true
+    },
+    {
+      "key": "nas_2_cert_fingerprint",
+      "type": "string",
+      "label": {
+        "en": "NAS 2 — Pinned certificate fingerprint (SHA-256)",
+        "fr": "NAS 2 — Empreinte du certificat épinglé (SHA-256)"
+      },
+      "required": false
     },
     {
       "key": "nas_3_section",
@@ -209,6 +235,15 @@
       "default": true
     },
     {
+      "key": "nas_3_cert_fingerprint",
+      "type": "string",
+      "label": {
+        "en": "NAS 3 — Pinned certificate fingerprint (SHA-256)",
+        "fr": "NAS 3 — Empreinte du certificat épinglé (SHA-256)"
+      },
+      "required": false
+    },
+    {
       "key": "nas_4_section",
       "type": "section",
       "label": {
@@ -265,6 +300,15 @@
       },
       "required": false,
       "default": true
+    },
+    {
+      "key": "nas_4_cert_fingerprint",
+      "type": "string",
+      "label": {
+        "en": "NAS 4 — Pinned certificate fingerprint (SHA-256)",
+        "fr": "NAS 4 — Empreinte du certificat épinglé (SHA-256)"
+      },
+      "required": false
     },
     {
       "key": "poll_frequency",

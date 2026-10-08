@@ -58,6 +58,17 @@ test('manifest configuration defaults stay in sync with code', () => {
     assert.equal(fields[`nas_${slot}_verify_ssl`].default, true);
   }
   assert.equal(fields.otp_code.required, false);
+  // The pin is optional and not secret: a certificate fingerprint is public by nature.
+  for (const key of [
+    'cert_fingerprint',
+    'nas_2_cert_fingerprint',
+    'nas_3_cert_fingerprint',
+    'nas_4_cert_fingerprint',
+  ]) {
+    assert.equal(fields[key]?.type, 'string', key);
+    assert.equal(fields[key].required, false, key);
+    assert.equal(DEFAULT_CONFIG[key], '', key);
+  }
   for (const key of ['url', 'username', 'password']) assert.equal(fields[key].required, true);
 });
 

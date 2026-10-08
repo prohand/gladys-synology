@@ -28,6 +28,7 @@ export class SynologyService {
     this.snapshot = null;
     this.inFlightRefresh = null;
     this.lastPublishedAt = null;
+    this.lastRefreshAt = null;
     this.lastError = null;
     this.sceneEvents = new SceneEventTracker({ now });
   }
@@ -43,6 +44,7 @@ export class SynologyService {
         .then((snapshot) => normalizeSnapshot(snapshot))
         .then((snapshot) => {
           this.snapshot = snapshot;
+          this.lastRefreshAt = this.now();
           this.lastError = null;
           return snapshot;
         })
@@ -62,13 +64,30 @@ export class SynologyService {
     return buildDiscoveredDevices(gladys, this.nasId, snapshot);
   }
 
-  async publishStates(gladys, { force = false } = {}) {
+  /**
+   * Publishes the states of this NAS. `maxSnapshotAgeMs` lets a caller accept the snapshot already
+   * in memory when it is younger than that: adding several devices from the Discovery screen fires
+   * one `onDeviceCreated` each, and each one used to cost a full round of DSM calls for the very
+   * values the previous one had just read. Such a replay fires no scene event (nothing new was read)
+   * and leaves the refresh schedule alone.
+   */
+  async publishStates(gladys, { force = false, maxSnapshotAgeMs = 0 } = {}) {
     const now = this.now();
     if (
       !force &&
       this.lastPublishedAt !== null &&
       now - this.lastPublishedAt < this.config.poll_frequency * 1000 * PUBLISH_THROTTLE_RATIO
     ) {
+      return this.snapshot;
+    }
+    if (
+      maxSnapshotAgeMs > 0 &&
+      this.snapshot &&
+      !this.inFlightRefresh &&
+      this.lastRefreshAt !== null &&
+      now - this.lastRefreshAt < maxSnapshotAgeMs
+    ) {
+      await this.sendStates(gladys, this.snapshot);
       return this.snapshot;
     }
 
@@ -82,14 +101,8 @@ export class SynologyService {
       );
       throw error;
     }
-    const states = buildStates(gladys, this.nasId, snapshot, {
-      dateFormat: this.config.date_format,
-    });
-    for (let start = 0; start < states.length; start += MAX_STATES_PER_REQUEST) {
-      await gladys.publishStates(states.slice(start, start + MAX_STATES_PER_REQUEST));
-    }
+    await this.sendStates(gladys, snapshot);
     this.lastPublishedAt = now;
-    logger.info(`Published ${states.length} Synology monitoring values`);
     // Events are only derived from this monitoring loop, never from a refresh requested by a
     // scene action: a scene bound to an event must not be able to loop through the integration.
     await this.publishSceneEvents(
@@ -97,6 +110,16 @@ export class SynologyService {
       this.sceneEvents.observe(gladys, this.eventContext(), snapshot),
     );
     return snapshot;
+  }
+
+  async sendStates(gladys, snapshot) {
+    const states = buildStates(gladys, this.nasId, snapshot, {
+      dateFormat: this.config.date_format,
+    });
+    for (let start = 0; start < states.length; start += MAX_STATES_PER_REQUEST) {
+      await gladys.publishStates(states.slice(start, start + MAX_STATES_PER_REQUEST));
+    }
+    logger.info(`Published ${states.length} Synology monitoring values`);
   }
 
   eventContext() {

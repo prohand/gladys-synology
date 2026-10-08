@@ -7,6 +7,10 @@ import { buildWidgetContent, WIDGET } from './widgets/index.js';
 
 const defaultScheduler = { setTimeout, clearTimeout, setInterval, clearInterval };
 
+// A snapshot this young is replayed when a device is added instead of reading DSM again: adding a
+// whole NAS from the Discovery screen creates one device per volume, disk and backup task.
+export const DEVICE_CREATED_SNAPSHOT_MAX_AGE_MS = 30_000;
+
 function unavailableMessage(error) {
   return {
     en: `Unable to monitor Synology DSM: ${error.message}`,
@@ -42,6 +46,7 @@ export function createRuntime(
 ) {
   let config = normalizeConfig();
   let service = null;
+  // Tail of the initialization queue; never rejects (see `ready()`).
   let initialization = Promise.resolve();
   let refreshTimer = null;
   let retryTimer = null;
@@ -100,12 +105,26 @@ export function createRuntime(
     logger.info(`Retrying the Synology DSM connection in ${Math.round(delay / 1000)}s`);
     retryTimer = scheduler.setTimeout(() => {
       retryTimer = null;
-      initialization = initialize(lastRawConfig).catch(() => {});
+      initialize(lastRawConfig).catch(() => {});
     }, delay);
     retryTimer.unref?.();
   }
 
-  async function initialize(rawConfig) {
+  // Initializations run one after the other. `connected` and `onConfigUpdated` routinely arrive
+  // together (a Save right after a reconnection): run concurrently, the second one closed the fleet
+  // the first was still discovering with, and both armed a refresh interval while only the last one
+  // could ever be cleared — a leaked timer polling a closed connection forever.
+  function enqueue(task) {
+    const run = initialization.then(task);
+    initialization = run.catch(() => {});
+    return run;
+  }
+
+  function initialize(rawConfig) {
+    return enqueue(() => performInitialize(rawConfig));
+  }
+
+  async function performInitialize(rawConfig) {
     clearRefreshTimer();
     clearRetryTimer();
     lastRawConfig = rawConfig;
@@ -133,11 +152,16 @@ export function createRuntime(
       await reportStatus();
       refreshWidgets();
       backoff.reset();
+      const refreshed = service;
+      clearRefreshTimer();
       refreshTimer = scheduler.setInterval(() => {
-        service
+        refreshed
           .publishStates(gladys)
-          .then(() => reportStatus())
+          .then(() => (service === refreshed ? reportStatus() : undefined))
           .catch(async (error) => {
+            // A cycle still running on a fleet a new configuration replaced must not report the
+            // new one as offline.
+            if (service !== refreshed) return;
             logger.error('Synology DSM scheduled refresh failed', error);
             await reportUnavailable(error);
           })
@@ -184,7 +208,10 @@ export function createRuntime(
 
   gladys.onDeviceCreated(async () => {
     const currentService = await ready();
-    await currentService.publishStates(gladys, { force: true });
+    await currentService.publishStates(gladys, {
+      force: true,
+      maxSnapshotAgeMs: DEVICE_CREATED_SNAPSHOT_MAX_AGE_MS,
+    });
   });
 
   gladys.onAction('test_connection', async () => {
@@ -236,19 +263,16 @@ export function createRuntime(
   gladys.onConfigUpdated((newConfig) => {
     logger.info('Synology configuration updated');
     backoff.reset();
-    const run = initialize(newConfig);
-    initialization = run.catch(() => {});
-    return run;
+    return initialize(newConfig);
   });
 
   gladys.on('connected', () => {
     backoff.reset();
-    initialization = gladys
-      .getConfig()
-      .then((currentConfig) => initialize(currentConfig))
-      .catch((error) => {
-        logger.error('Synology DSM startup failed', error);
-      });
+    // Read the configuration inside the queue, so a Save handled meanwhile is not overwritten by
+    // the older configuration this read would return.
+    enqueue(async () => performInitialize(await gladys.getConfig())).catch((error) => {
+      logger.error('Synology DSM startup failed', error);
+    });
   });
 
   gladys.handleShutdown(async (signal) => {

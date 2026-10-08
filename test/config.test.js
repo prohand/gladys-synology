@@ -27,21 +27,25 @@ test('normalizeConfig applies stable defaults and normalizes types', () => {
       password: '1234',
       otp_code: '123456',
       verify_ssl: false,
+      cert_fingerprint: '',
       nas_2_url: '',
       nas_2_username: '',
       nas_2_password: '',
       nas_2_otp_code: '',
       nas_2_verify_ssl: true,
+      nas_2_cert_fingerprint: '',
       nas_3_url: '',
       nas_3_username: '',
       nas_3_password: '',
       nas_3_otp_code: '',
       nas_3_verify_ssl: true,
+      nas_3_cert_fingerprint: '',
       nas_4_url: '',
       nas_4_username: '',
       nas_4_password: '',
       nas_4_otp_code: '',
       nas_4_verify_ssl: true,
+      nas_4_cert_fingerprint: '',
       poll_frequency: 700,
       date_format: 'european',
     },
@@ -123,5 +127,59 @@ test('validateConfig accepts a complete DSM configuration', () => {
     validateConfig(
       normalizeConfig({ url: 'https://nas.local:5001', username: 'u', password: 'p' }),
     ),
+  );
+});
+
+const FINGERPRINT = 'ab'.repeat(32);
+
+test('certificate fingerprints are normalized and handed to every NAS connection', () => {
+  const config = normalizeConfig({
+    url: 'https://nas1:5001',
+    username: 'u',
+    password: 'p',
+    // As a browser shows it: upper case, colon separated.
+    cert_fingerprint: ` ${FINGERPRINT.toUpperCase().match(/../g).join(':')} `,
+    nas_2_url: 'nas2:5001',
+    nas_2_username: 'u',
+    nas_2_password: 'p',
+    nas_2_cert_fingerprint: FINGERPRINT.match(/.{8}/g).join(' '),
+  });
+  const connections = getNasConfigs(config);
+  assert.equal(connections[0].cert_fingerprint, FINGERPRINT);
+  assert.equal(connections[1].cert_fingerprint, FINGERPRINT);
+});
+
+test('validateConfig rejects a malformed fingerprint or one pinned on plain HTTP', () => {
+  const base = { username: 'u', password: 'p' };
+  assert.throws(
+    () =>
+      validateConfig(
+        normalizeConfig({ ...base, url: 'https://nas', cert_fingerprint: 'ab:cd:ef' }),
+      ),
+    /SHA-256 fingerprint \(64 hexadecimal characters\)/,
+  );
+  assert.throws(
+    () =>
+      validateConfig(
+        normalizeConfig({ ...base, url: 'http://nas:5000', cert_fingerprint: FINGERPRINT }),
+      ),
+    /needs an HTTPS URL/,
+  );
+  assert.throws(
+    () =>
+      getNasConfigs(
+        normalizeConfig({
+          ...base,
+          url: 'https://nas',
+          nas_3_url: 'https://nas3',
+          nas_3_username: 'u',
+          nas_3_password: 'p',
+          nas_3_cert_fingerprint: 'not-hex',
+        }),
+      ),
+    /NAS 3: The certificate fingerprint/,
+  );
+  assert.doesNotThrow(() =>
+    validateConfig(normalizeConfig({ ...base, url: 'https://nas', cert_fingerprint: FINGERPRINT })),
   );
 });
