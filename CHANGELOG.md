@@ -6,9 +6,43 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- A NAS with a self-signed certificate and the certificate check disabled was unreachable since
+  2.2.0 (`fetch failed`, `UND_ERR_INVALID_ARG invalid onRequestStart method`): the DSM client now
+  takes `fetch` and its connection agent from the same undici package.
+- A reconnection and a configuration save arriving together no longer run two initializations at
+  once: the first connection is no longer closed while in use, and no refresh timer is left behind.
+- Adding several devices from the Discovery screen no longer reads the whole NAS once per device:
+  a snapshot younger than 30 seconds is replayed.
+- A certificate error now says so (`certificate rejected`) instead of a bare "Unable to reach
+  Synology DSM".
+
+### Changed
+
+- The status of the backup tasks is read at most 4 tasks at a time.
+- Docker image: `dumb-init` runs as PID 1 so the shutdown signal reaches the integration, the npm
+  cache is cleaned, and the unneeded `chown` layer is gone.
+- An unhandled promise rejection is logged instead of stopping the container.
+
+### Security
+
+- New optional **pinned certificate fingerprint (SHA-256)** per NAS: a self-signed certificate is
+  accepted only if it matches, and the connection is dropped before the password is sent
+  otherwise. The documentation now explains the man-in-the-middle risk of disabling the
+  certificate check.
+
 ## [2.2.0] - 2026-10-07
 
-- Maintenance release, no functional change.
+### Fixed
+
+- A NAS with many disks, volumes and backup tasks published nothing at all: its states are now
+  sent in batches of 100, the most the Gladys API accepts per request.
+
+### Changed
+
+- undici updated to 8.11 and Node.js 22.19 or later required (Node 20 is end-of-life; the Docker
+  image runs Node 24).
 
 ## [2.1.0] - 2026-10-06
 
