@@ -1,10 +1,10 @@
-FROM node:24-alpine AS dependencies
+FROM node:26-alpine AS dependencies
 
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-FROM node:24-alpine
+FROM node:26-alpine
 
 # dumb-init as PID 1: Node does not reap zombies nor get the kernel's default signal handling
 # there, so SIGTERM from the Gladys supervisor would not reach the graceful shutdown reliably.
