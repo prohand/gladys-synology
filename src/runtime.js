@@ -15,6 +15,8 @@ function unavailableMessage(error) {
   return {
     en: `Unable to monitor Synology DSM: ${error.message}`,
     fr: `Impossible de superviser Synology DSM : ${error.message}`,
+    de: `Synology DSM kann nicht überwacht werden: ${error.message}`,
+    es: `No se puede supervisar Synology DSM: ${error.message}`,
   };
 }
 
@@ -29,7 +31,27 @@ function degradedMessage(failures) {
   return {
     en: `${failures.length} Synology NAS unreachable: ${detail}`,
     fr: `${failures.length} NAS Synology injoignable(s) : ${detail}`,
+    de: `${failures.length} Synology-NAS nicht erreichbar: ${detail}`,
+    es: `${failures.length} NAS Synology inaccesible(s): ${detail}`,
   };
+}
+
+// Words of the "Test the DSM connection" summary, per language the Configuration screen shows.
+const SUMMARY_WORDS = {
+  en: { volumes: 'volume(s)', disks: 'disk(s)', backups: 'backup task(s)' },
+  fr: { volumes: 'volume(s)', disks: 'disque(s)', backups: 'tâche(s) de sauvegarde' },
+  de: { volumes: 'Volume(s)', disks: 'Festplatte(n)', backups: 'Backup-Aufgabe(n)' },
+  es: { volumes: 'volumen(es)', disks: 'disco(s)', backups: 'tarea(s) de copia de seguridad' },
+};
+
+function snapshotSummary(snapshots, language) {
+  const words = SUMMARY_WORDS[language];
+  return snapshots
+    .map(
+      (snapshot) =>
+        `${snapshot.nas.model} (${dsmLabel(snapshot.nas.dsmVersion)}, ${snapshot.volumes.length} ${words.volumes}, ${snapshot.disks.length} ${words.disks}, ${snapshot.backups.length} ${words.backups})`,
+    )
+    .join(', ');
 }
 
 /**
@@ -217,23 +239,22 @@ export function createRuntime(
   gladys.onAction('test_connection', async () => {
     const currentService = await ready();
     const snapshots = await currentService.refresh();
-    const summary = snapshots
-      .map(
-        (snapshot) =>
-          `${snapshot.nas.model} (${dsmLabel(snapshot.nas.dsmVersion)}, ${snapshot.volumes.length} volume(s), ${snapshot.disks.length} disk(s), ${snapshot.backups.length} backup task(s))`,
-      )
-      .join(', ');
     const failures = currentService.lastFailures ?? [];
+    const urls = failures.map((failure) => failure.url).join(', ');
     const unreachable =
       failures.length === 0
-        ? { en: '', fr: '' }
+        ? { en: '', fr: '', de: '', es: '' }
         : {
-            en: ` ${failures.length} NAS unreachable: ${failures.map((failure) => failure.url).join(', ')}.`,
-            fr: ` ${failures.length} NAS injoignable(s) : ${failures.map((failure) => failure.url).join(', ')}.`,
+            en: ` ${failures.length} NAS unreachable: ${urls}.`,
+            fr: ` ${failures.length} NAS injoignable(s) : ${urls}.`,
+            de: ` ${failures.length} NAS nicht erreichbar: ${urls}.`,
+            es: ` ${failures.length} NAS inaccesible(s): ${urls}.`,
           };
     return {
-      en: `${snapshots.length} NAS reachable: ${summary}.${unreachable.en}`,
-      fr: `${snapshots.length} NAS joignable(s) : ${summary}.${unreachable.fr}`,
+      en: `${snapshots.length} NAS reachable: ${snapshotSummary(snapshots, 'en')}.${unreachable.en}`,
+      fr: `${snapshots.length} NAS joignable(s) : ${snapshotSummary(snapshots, 'fr')}.${unreachable.fr}`,
+      de: `${snapshots.length} NAS erreichbar: ${snapshotSummary(snapshots, 'de')}.${unreachable.de}`,
+      es: `${snapshots.length} NAS accesible(s): ${snapshotSummary(snapshots, 'es')}.${unreachable.es}`,
     };
   });
 

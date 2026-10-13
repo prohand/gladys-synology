@@ -53,8 +53,16 @@ test('the NAS card shows the load, one row per volume and the disk and backup su
     [
       ['95 %', 'danger'],
       ['? · crashed', 'danger'],
-      [{ en: '1/2 healthy', fr: '1/2 sains' }, 'danger'],
-      [{ en: '1 OK, 1 failed', fr: '1 OK, 1 en échec' }, 'danger'],
+      [{ en: '1/2 healthy', fr: '1/2 sains', de: '1/2 fehlerfrei', es: '1/2 correctos' }, 'danger'],
+      [
+        {
+          en: '1 OK, 1 failed',
+          fr: '1 OK, 1 en échec',
+          de: '1 OK, 1 fehlgeschlagen',
+          es: '1 OK, 1 fallida(s)',
+        },
+        'danger',
+      ],
     ],
   );
   assert.deepEqual(ofType(result, 'button')[0].link, { url: 'https://nas-1:5001' });
@@ -89,6 +97,8 @@ test('the storage card shows a gauge per volume and the SMART state of each disk
   assert.deepEqual(ofType(result, 'text')[1].text, {
     en: '204.8 GB free of 4 TB',
     fr: '204,8 Go libres sur 4 To',
+    de: '204,8 GB frei von 4 TB',
+    es: '204,8 GB libres de 4 TB',
   });
   assert.deepEqual(
     ofType(result, 'gauge').map((gauge) => [gauge.label, gauge.value, gauge.color]),
@@ -200,6 +210,16 @@ test('widgets explain what is missing instead of failing', async () => {
 });
 
 test('sizes are short and localized', () => {
-  assert.deepEqual(formatSize(1.5 * 1024 ** 4), { en: '1.5 TB', fr: '1,5 To' });
-  assert.deepEqual(formatSize(512 * 1024 ** 2), { en: '512 MB', fr: '512 Mo' });
+  assert.deepEqual(formatSize(1.5 * 1024 ** 4), {
+    en: '1.5 TB',
+    fr: '1,5 To',
+    de: '1,5 TB',
+    es: '1,5 TB',
+  });
+  assert.deepEqual(formatSize(512 * 1024 ** 2), {
+    en: '512 MB',
+    fr: '512 Mo',
+    de: '512 MB',
+    es: '512 MB',
+  });
 });

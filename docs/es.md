@@ -1,0 +1,85 @@
+# Integración Synology DSM
+
+Esta integración supervisa un NAS Synology desde Gladys Assistant. Funciona en modo de solo lectura y utiliza la WebAPI de DSM disponible en el NAS.
+
+## Antes de empezar
+
+1. En **Panel de control → Usuario y grupo → Usuario**, cree un usuario dedicado para Gladys.
+2. En la página de asignación de grupos, añada este usuario al grupo **administrators**. Es obligatorio: las WebAPI de DSM utilizadas para el uso del sistema y el almacenamiento rechazan a un usuario normal con el error `105` (privilegios insuficientes). El rol delegado **Supervisión del sistema** no sustituye de forma fiable a este permiso para estas API.
+3. Establezca **Sin acceso** para todas las carpetas compartidas.
+4. Establezca **Denegar** para todas las aplicaciones. Las WebAPI de supervisión siguen disponibles a través del grupo de administradores aunque la cuenta no pueda usar DSM ni explorar archivos de forma interactiva.
+5. No conceda ninguna cuota ni permiso de File Station, Surveillance Station, SSH u otro servicio.
+6. En **Panel de control → Portal de inicio de sesión**, anote el puerto HTTPS de DSM (normalmente `5001`).
+7. Asegúrese de que el equipo que ejecuta Gladys puede acceder a esa dirección. No exponga DSM a Internet solo para esta integración.
+
+La MFA es compatible mediante los códigos de verificación de DSM (OTP). **Aprobar inicio de sesión** y las llaves de seguridad físicas solo funcionan con un inicio de sesión web interactivo, así que configure **Código de verificación (OTP)** para esta cuenta. En el primer inicio de sesión, la integración intercambia el OTP actual por un identificador de dispositivo de confianza de DSM y lo guarda en su volumen privado `/data`. Puede vaciar el campo OTP tras la primera conexión correcta. Si más adelante se revoca el dispositivo de confianza en DSM, introduzca un OTP nuevo y guarde la configuración para registrarlo de nuevo.
+
+## Configuración
+
+- **URL de DSM**: URL local completa, por ejemplo `https://192.168.1.20:5001`.
+- **Nombre de usuario / contraseña**: credenciales del usuario DSM dedicado.
+- **Código OTP actual (MFA)**: un código actual de 6 dígitos para el primer inicio de sesión MFA o tras revocar el dispositivo de confianza de DSM. Deja de enviarse una vez aceptado el dispositivo recordado.
+- **Verificar el certificado TLS**: manténgalo activado con un certificado de confianza. Con un certificado autofirmado, es preferible fijar su huella (campo siguiente) antes que desactivar esta comprobación: una vez desactivada, cualquier dispositivo de su red capaz de interceptar el tráfico entre Gladys y el NAS puede hacerse pasar por el NAS y recibir la contraseña de DSM (ataque de intermediario).
+- **Huella del certificado fijado (SHA-256)**: opcional. Si se rellena, el NAS solo se acepta si su certificado tiene exactamente esta huella, sea cual sea el ajuste anterior; de lo contrario, la conexión se corta antes de enviar nada, contraseña incluida. Consúltela en su navegador (candado → certificado → huella SHA-256) o con `openssl s_client -connect NAS_ADDRESS:5001 </dev/null | openssl x509 -noout -fingerprint -sha256`; los dos puntos, los espacios y las mayúsculas no importan. Actualícela cada vez que DSM renueve el certificado, y no fije un certificado que se renueva automáticamente (Let's Encrypt): en ese caso, mantenga activada la comprobación.
+- **NAS 2, NAS 3 y NAS 4**: conexiones opcionales con los mismos campos de URL, nombre de usuario, contraseña, OTP, TLS y huella que el NAS principal. Deje vacía la URL de un NAS para ignorar esa ranura. Cada contraseña y cada OTP se guarda en un campo secreto dedicado de Gladys y nunca aparece en un documento JSON.
+- **Intervalo de actualización**: introducido manualmente en segundos, de 60 a 86400. El valor predeterminado recomendado es 900 segundos (15 minutos). Un intervalo moderado evita que la base de datos de Gladys crezca innecesariamente.
+- **Formato de fecha**: cómo se muestran las fechas de copia de seguridad en Gladys. `ISO 8601` (predeterminado, UTC) conserva la marca de tiempo original de DSM; `AAAA-MM-DD HH:mm`, `DD/MM/AAAA HH:mm` y `MM/DD/AAAA hh:mm AM/PM` muestran la hora local del contenedor de la integración. Defina la variable de entorno `TZ` del contenedor de la integración con su zona horaria si estos formatos muestran una hora inesperada. El cambio de formato se aplica a partir de la siguiente actualización; las fechas ya registradas conservan el formato con el que se publicaron.
+
+Pulse **Probar la conexión DSM**. Si todo va bien, el resultado muestra el modelo del NAS, la versión de DSM y el número de volúmenes detectados. Después, en la pestaña **Descubrir** de la integración, busque los dispositivos con **Buscar**.
+
+## Dispositivos
+
+La integración crea un dispositivo por NAS, un dispositivo por cada volumen de almacenamiento, un dispositivo por cada disco interno y, cuando están disponibles, un dispositivo por cada tarea de Hyper Backup o Active Backup. Cada disco expone el estado SMART exacto indicado por DSM, un indicador binario de salud SMART y, cuando DSM la indica, su temperatura. Una tarea de copia de seguridad expone su estado, su último resultado y la hora de la última copia. Estas API de paquetes de DSM no están disponibles en todos los modelos y versiones; su ausencia no impide la supervisión del sistema ni del almacenamiento.
+
+Se envía una primera lectura inmediatamente después de añadir un dispositivo y, a continuación, cada actualización refresca todos los valores del NAS. Los porcentajes de uso de los volúmenes se redondean a dos decimales. Se guarda un historial para el uso, la temperatura y los valores de salud; las capacidades y la información de texto no generan un historial redundante.
+
+Los indicadores de salud solo toman un valor cuando DSM indica claramente un estado como correcto o como fallo. Durante una operación de mantenimiento (ampliación, limpieza de datos, reparación) o cuando SMART no es compatible, se conserva el valor anterior en lugar de publicar una falsa alarma.
+
+## Widgets del panel
+
+Requiere Gladys 5.1 o posterior. Añádalos desde el modo de edición del panel (**Editar**); cada widget tiene un ajuste **NAS** que acepta cualquier dispositivo del NAS que se mostrará (el propio NAS, un volumen, un disco o una tarea de copia de seguridad). Déjelo vacío para mostrar el primer NAS.
+
+- **NAS Synology**: modelo, versión de DSM, CPU, memoria y temperatura, una fila por volumen (uso y salud), un resumen de los discos y de las copias de seguridad, y un botón para abrir DSM cuando su URL utiliza HTTPS. Una vez añadido el dispositivo NAS a Gladys, la tarjeta también traza el historial de CPU y memoria durante el periodo elegido en el ajuste **Historial de carga**.
+- **Almacenamiento Synology**: un indicador por volumen, el espacio libre total y una fila por disco con su estado SMART y su temperatura.
+- **Copias de seguridad Synology**: las tareas de Hyper Backup y Active Backup con su último resultado, fallos primero. Con el ajuste **NAS** vacío, muestra las tareas de todos los NAS. El ajuste **Tareas mostradas** permite conservar solo las fallidas o parciales.
+
+Los widgets muestran los valores leídos en la última actualización: abrir un panel nunca consulta el NAS. Se actualizan después de cada actualización. Un NAS que deja de responder se marca como **Inaccesible** y conserva sus últimos valores conocidos. En un panel configurado con unidades de EE. UU., las temperaturas se muestran en °F.
+
+## Escenas
+
+Requiere Gladys 5.1 o posterior.
+
+Los **disparadores** se activan una vez, ante un cambio entre dos actualizaciones. La primera lectura tras el inicio de la integración solo sirve de referencia: un fallo ya presente al iniciar no vuelve a activarse, y un cambio que se produce mientras la integración está detenida no se notifica. Cada disparador puede limitarse a un dispositivo; deje el campo vacío para reaccionar a todos.
+
+| Disparador                                   | Se activa cuando                                                                                                                        | Variables                                                                 |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Un NAS Synology deja de responder            | Un NAS que respondía falla una actualización                                                                                            | Modelo del NAS, URL de DSM, error                                         |
+| Un NAS Synology vuelve a responder           | Ese NAS vuelve a responder                                                                                                              | Modelo del NAS, URL de DSM, inaccesible durante (min)                     |
+| Un volumen Synology está degradado           | DSM indica que un volumen en buen estado está degradado, caído o con error                                                              | Modelo del NAS, nombre del volumen, estado DSM, uso (%)                   |
+| Un disco Synology está fallando              | El estado SMART de un disco en buen estado pasa a fallo                                                                                 | Modelo del NAS, nombre del disco, estado SMART, temperatura (°C)          |
+| Una copia de seguridad Synology ha terminado | Se lee un nuevo resultado de una tarea de Hyper Backup o Active Backup (filtro por paquete y por resultado: correcta, parcial, fallida) | Modelo del NAS, nombre de la tarea, paquete, resultado, fecha de la copia |
+| DSM se ha actualizado                        | Un NAS indica una nueva versión de DSM                                                                                                  | Modelo del NAS, versión anterior, nueva versión                           |
+
+Un estado de mantenimiento (ampliación, limpieza de datos, reparación) nunca cuenta como fallo, y una copia de seguridad todavía en curso solo se notifica cuando ha terminado.
+
+Las **acciones** consultan el NAS cuando la escena llega a ellas y devuelven valores que las acciones siguientes pueden utilizar:
+
+- **Obtener el estado de un NAS Synology**: accesible (sí/no), modelo, versión de DSM, CPU, memoria, temperatura, número de volúmenes degradados, discos con fallos y copias de seguridad fallidas, y la lista de problemas detectados. Un NAS inaccesible no detiene la escena: compruebe el valor **Accesible**.
+- **Obtener el estado de un volumen Synology**: nombre, estado DSM, en buen estado (sí/no), uso (%), espacio usado, libre y total (GB).
+- **Obtener el estado de una copia de seguridad Synology**: nombre de la tarea, paquete, estado, resultado, fecha de la última copia (en el formato de fecha configurado) y horas desde la última copia, útil para avisar de una copia de seguridad que ya no se ejecuta.
+
+## Solución de problemas
+
+- **Credenciales no válidas**: compruebe la cuenta dedicada y su política de inicio de sesión.
+- **Código MFA obligatorio / error 403 o 406**: configure OTP para la cuenta DSM, introduzca un código actual de 6 dígitos en Gladys y guarde. Las notificaciones de aprobación y las llaves físicas no son compatibles con la API de DSM.
+- **Código MFA no válido o caducado / error 404**: espere al siguiente OTP y guárdelo antes de que caduque.
+- **Privilegios insuficientes / error 105**: añada la cuenta dedicada al grupo `administrators` de DSM. Un rol delegado de Supervisión del sistema por sí solo no basta para estas API.
+- **Conexión perdida tras reiniciar el NAS o actualizar DSM / error 498**: no hay nada que hacer. DSM puede rechazar el inicio de sesión recordado mientras se reinicia; la integración vuelve a iniciar sesión por sí sola y reintenta la conexión cada 30 segundos, luego con menos frecuencia hasta cada 15 minutos, hasta que el NAS responde.
+- **No se puede acceder a DSM**: pruebe la URL desde el equipo de Gladys y compruebe el cortafuegos del NAS.
+- **DSM no respondió a tiempo**: el NAS aceptó la conexión pero no respondió en 20 segundos. La actualización se abandona y se reintenta en el siguiente ciclo; compruebe la carga del NAS y la red.
+- **Un solo NAS es inaccesible en una configuración con varios NAS**: los demás NAS siguen publicando sus valores y la pestaña **Configuración** de la integración en Gladys indica la dirección que falla. Solo un fallo de todos los NAS muestra la integración como desconectada.
+- **Error de certificado** (`certificate rejected`): instale un certificado de confianza en DSM. En una instalación privada con certificado autofirmado, fije la huella del certificado; desactivar la verificación también funciona, pero deja la contraseña expuesta a un intermediario en su red.
+- **`certificate does not match the pinned SHA-256 fingerprint`**: DSM ha presentado otro certificado. Si lo ha renovado o sustituido usted mismo, pegue la nueva huella; de lo contrario, algo se está haciendo pasar por su NAS: no se le ha enviado nada.
+- **Falta un volumen**: vuelva a buscar dispositivos después de crear o eliminar un volumen.
+- **Faltan tareas de copia de seguridad**: compruebe que Hyper Backup o Active Backup está instalado, que existe al menos una tarea y que la cuenta DSM dedicada puede abrir el paquete correspondiente, y vuelva a buscar dispositivos.
+- **Una fecha de copia de seguridad no tiene valor**: actualice la integración, vuelva a guardar la conexión y espere a la siguiente actualización. Los detalles de Active Backup se consultan tarea por tarea porque su lista general de tareas no siempre incluye las fechas de las versiones.

@@ -17,6 +17,9 @@ import { DEFAULT_CHART_INTERVAL } from '../src/widgets/overview.js';
 import { createFakeGladys } from './helpers/fakeGladys.js';
 import { createFleet, rawDsmSnapshot } from './helpers/fleet.js';
 
+// Every text a user reads is offered in the four languages of the Gladys interface.
+const LANGUAGES = ['en', 'fr', 'de', 'es'];
+
 const manifest = JSON.parse(
   await readFile(new URL('../gladys-assistant-integration.json', import.meta.url), 'utf8'),
 );
@@ -45,8 +48,10 @@ test('manifest configuration defaults stay in sync with code', () => {
     DATE_FORMATS,
   );
   assert.ok(
-    fields.date_format.options.every((option) => option.label.en && option.label.fr),
-    'every date format option is bilingual',
+    fields.date_format.options.every((option) =>
+      LANGUAGES.every((language) => option.label[language]),
+    ),
+    'every date format option is translated',
   );
   assert.equal(fields.password.type, 'secret');
   assert.equal(fields.otp_code.type, 'secret');
@@ -86,7 +91,7 @@ test('catalog assets satisfy the store size and dimension constraints', async ()
   assert.equal(cover.readUInt32BE(20), 534);
   assert.ok((await stat(coverPath)).size <= 150_000);
 
-  for (const language of ['en', 'fr']) {
+  for (const language of LANGUAGES) {
     const documentation = await readFile(
       new URL(`../docs/${language}.md`, import.meta.url),
       'utf8',
@@ -101,10 +106,17 @@ test('manifest requires Gladys 5.1 and the SDK that brings widgets and scene dec
   assert.match(pkg.dependencies['@gladysassistant/integration-sdk'], /^\^0\.(1[4-9]|[2-9]\d)\./);
 });
 
+function assertTranslated(text, path) {
+  assert.deepEqual(Object.keys(text).sort(), [...LANGUAGES].sort(), `${path} languages`);
+  for (const language of LANGUAGES) {
+    assert.ok(typeof text[language] === 'string' && text[language].trim(), `${path}.${language}`);
+  }
+}
+
 function assertBilingual(entry, path) {
   for (const key of ['label', 'description']) {
     if (entry[key] === undefined) continue;
-    assert.ok(entry[key].en && entry[key].fr, `${path}.${key} must be bilingual`);
+    assertTranslated(entry[key], `${path}.${key}`);
   }
   for (const [index, child] of [
     ...(entry.fields ?? []),
@@ -116,6 +128,47 @@ function assertBilingual(entry, path) {
     assertBilingual(child, `${path}[${index}]`);
   }
 }
+
+// Every multi-language object of the manifest, wherever it sits.
+function multiLanguageTexts(node, path = '', found = []) {
+  if (Array.isArray(node)) {
+    node.forEach((child, index) => multiLanguageTexts(child, `${path}[${index}]`, found));
+  } else if (node && typeof node === 'object') {
+    if (typeof node.en === 'string') found.push({ path, text: node });
+    else {
+      for (const [key, child] of Object.entries(node)) {
+        multiLanguageTexts(child, `${path}.${key}`, found);
+      }
+    }
+  }
+  return found;
+}
+
+function assertLengths(text, path, min, max) {
+  for (const language of LANGUAGES) {
+    const { length } = text[language];
+    assert.ok(length >= min && length <= max, `${path}.${language}: ${length} characters`);
+  }
+}
+
+test('every manifest text is offered in English, French, German and Spanish', () => {
+  const texts = multiLanguageTexts(manifest);
+  assert.ok(texts.length > 100);
+  for (const { path, text } of texts) assertTranslated(text, path);
+});
+
+test('manifest texts respect the store length limits in every language', () => {
+  assertLengths(manifest.description, 'description', 10, 100);
+  for (const field of manifest.config_schema.filter((entry) => entry.type === 'section')) {
+    for (const key of ['label', 'description']) {
+      if (field[key]) assertLengths(field[key], `${field.key}.${key}`, 1, 1000);
+    }
+  }
+  for (const widget of manifest.widgets) {
+    assertLengths(widget.label, `${widget.key}.label`, 3, 30);
+    if (widget.description) assertLengths(widget.description, `${widget.key}.description`, 1, 100);
+  }
+});
 
 test('manifest widgets stay in sync with code', () => {
   assert.deepEqual(

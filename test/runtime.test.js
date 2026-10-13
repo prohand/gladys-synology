@@ -57,6 +57,8 @@ test('a rejected configuration is reported to Gladys and is not retried', async 
       message: {
         en: 'Unable to monitor Synology DSM: The Synology DSM URL is required.',
         fr: 'Impossible de superviser Synology DSM : The Synology DSM URL is required.',
+        de: 'Synology DSM kann nicht überwacht werden: The Synology DSM URL is required.',
+        es: 'No se puede supervisar Synology DSM: The Synology DSM URL is required.',
       },
     },
   ]);
@@ -129,6 +131,8 @@ test('a partially unreachable fleet stays connected and names the failing NAS', 
       message: {
         en: '1 Synology NAS unreachable: https://nas2 (Unable to reach Synology DSM)',
         fr: '1 NAS Synology injoignable(s) : https://nas2 (Unable to reach Synology DSM)',
+        de: '1 Synology-NAS nicht erreichbar: https://nas2 (Unable to reach Synology DSM)',
+        es: '1 NAS Synology inaccesible(s): https://nas2 (Unable to reach Synology DSM)',
       },
     },
   ]);
@@ -191,6 +195,20 @@ test('the connection test reports both reachable and unreachable NAS', async () 
   assert.match(message.en, /^1 NAS reachable: DS920\+ \(DSM 7\.2\.2, 1 volume\(s\), 2 disk\(s\)/);
   assert.match(message.en, /1 NAS unreachable: https:\/\/nas2\./);
   assert.match(message.fr, /1 NAS injoignable\(s\) : https:\/\/nas2\./);
+  assert.match(
+    message.fr,
+    /^1 NAS joignable\(s\) : DS920\+ \(DSM 7\.2\.2, 1 volume\(s\), 2 disque\(s\)/,
+  );
+  assert.match(
+    message.de,
+    /^1 NAS erreichbar: DS920\+ \(DSM 7\.2\.2, 1 Volume\(s\), 2 Festplatte\(n\)/,
+  );
+  assert.match(message.de, /1 NAS nicht erreichbar: https:\/\/nas2\./);
+  assert.match(
+    message.es,
+    /^1 NAS accesible\(s\): DS920\+ \(DSM 7\.2\.2, 1 volumen\(es\), 2 disco\(s\)/,
+  );
+  assert.match(message.es, /1 NAS inaccesible\(s\): https:\/\/nas2\./);
 });
 
 test('widgets answer at once and are refreshed after every refresh cycle', async () => {

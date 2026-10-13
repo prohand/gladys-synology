@@ -20,14 +20,15 @@ function dsmLabel(version) {
 
 function caption(snapshot) {
   const { nas, volumes, disks } = snapshot;
-  const parts = [dsmLabel(nas.dsmVersion)];
+  const line = (volumeWord, diskWord) =>
+    [dsmLabel(nas.dsmVersion), `${volumes.length} ${volumeWord}`, `${disks.length} ${diskWord}`]
+      .filter(Boolean)
+      .join(' · ');
   return {
-    en: [...parts, `${volumes.length} volume(s)`, `${disks.length} disk(s)`]
-      .filter(Boolean)
-      .join(' · '),
-    fr: [...parts, `${volumes.length} volume(s)`, `${disks.length} disque(s)`]
-      .filter(Boolean)
-      .join(' · '),
+    en: line('volume(s)', 'disk(s)'),
+    fr: line('volume(s)', 'disque(s)'),
+    de: line('Volume(s)', 'Festplatte(n)'),
+    es: line('volumen(es)', 'disco(s)'),
   };
 }
 
@@ -46,7 +47,7 @@ function tiles(nas, units) {
   if (nas.memoryUsage !== undefined) {
     components.push({
       type: 'value',
-      label: { en: 'Memory', fr: 'Mémoire' },
+      label: { en: 'Memory', fr: 'Mémoire', de: 'Arbeitsspeicher', es: 'Memoria' },
       value: Math.round(nas.memoryUsage),
       unit: '%',
       icon: 'layers',
@@ -56,7 +57,7 @@ function tiles(nas, units) {
   if (nas.temperature !== undefined) {
     components.push({
       type: 'value',
-      label: { en: 'Temperature', fr: 'Température' },
+      label: { en: 'Temperature', fr: 'Température', de: 'Temperatur', es: 'Temperatura' },
       ...temperature(nas.temperature, units),
       icon: 'thermometer',
       color: thresholdColor(nas.temperature, 55, 65),
@@ -84,8 +85,18 @@ function disksRow(disks) {
     color = healthy === judged.length ? WIDGET_COLORS.SUCCESS : WIDGET_COLORS.DANGER;
   }
   return {
-    label: { en: 'Disks (SMART)', fr: 'Disques (SMART)' },
-    value: { en: `${healthy}/${disks.length} healthy`, fr: `${healthy}/${disks.length} sains` },
+    label: {
+      en: 'Disks (SMART)',
+      fr: 'Disques (SMART)',
+      de: 'Festplatten (SMART)',
+      es: 'Discos (SMART)',
+    },
+    value: {
+      en: `${healthy}/${disks.length} healthy`,
+      fr: `${healthy}/${disks.length} sains`,
+      de: `${healthy}/${disks.length} fehlerfrei`,
+      es: `${healthy}/${disks.length} correctos`,
+    },
     icon: 'disc',
     color,
   };
@@ -100,19 +111,23 @@ function backupsRow(backups) {
   if (failed > 0) color = WIDGET_COLORS.DANGER;
   else if (partial > 0) color = WIDGET_COLORS.WARNING;
   else if (succeeded === 0) color = WIDGET_COLORS.NEUTRAL;
-  const en = [`${succeeded} OK`];
-  const fr = [`${succeeded} OK`];
-  if (partial > 0) {
-    en.push(`${partial} partial`);
-    fr.push(`${partial} partielle(s)`);
-  }
-  if (failed > 0) {
-    en.push(`${failed} failed`);
-    fr.push(`${failed} en échec`);
-  }
+  const words = {
+    en: { partial: 'partial', failed: 'failed' },
+    fr: { partial: 'partielle(s)', failed: 'en échec' },
+    de: { partial: 'teilweise', failed: 'fehlgeschlagen' },
+    es: { partial: 'parcial(es)', failed: 'fallida(s)' },
+  };
+  const summary = ({ partial: partialWord, failed: failedWord }) => {
+    const parts = [`${succeeded} OK`];
+    if (partial > 0) parts.push(`${partial} ${partialWord}`);
+    if (failed > 0) parts.push(`${failed} ${failedWord}`);
+    return parts.join(', ');
+  };
   return {
-    label: { en: 'Backups', fr: 'Sauvegardes' },
-    value: { en: en.join(', '), fr: fr.join(', ') },
+    label: { en: 'Backups', fr: 'Sauvegardes', de: 'Backups', es: 'Copias de seguridad' },
+    value: Object.fromEntries(
+      Object.entries(words).map(([language, entry]) => [language, summary(entry)]),
+    ),
     icon: 'archive',
     color,
   };
@@ -136,7 +151,7 @@ export function buildOverviewContent({ gladys, service, settings = {}, units, po
     components.push({
       type: 'chart',
       chart_type: 'line',
-      title: { en: 'Load', fr: 'Charge' },
+      title: { en: 'Load', fr: 'Charge', de: 'Last', es: 'Carga' },
       unit: '%',
       device_features: [ids.feature(SYSTEM_FEATURE.CPU), ids.feature(SYSTEM_FEATURE.MEMORY)],
       interval: settings.chart_interval || DEFAULT_CHART_INTERVAL,
@@ -154,7 +169,7 @@ export function buildOverviewContent({ gladys, service, settings = {}, units, po
   if (service.config.url.startsWith('https://')) {
     components.push({
       type: 'button',
-      label: { en: 'Open DSM', fr: 'Ouvrir DSM' },
+      label: { en: 'Open DSM', fr: 'Ouvrir DSM', de: 'DSM öffnen', es: 'Abrir DSM' },
       icon: 'external-link',
       style: 'secondary',
       link: { url: service.config.url },

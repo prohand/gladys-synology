@@ -32,7 +32,8 @@ Metrics are saved every 15 minutes by default. The interval is entered manually 
 
 Up to four NAS can be configured with identical connection fields. NAS 2 to 4 are optional, and each password and OTP is stored in its own secret field instead of a visible JSON document. Hyper Backup and Active Backup devices are discovered only when their DSM packages expose the corresponding task APIs to the configured account.
 
-See [docs/en.md](docs/en.md) or [docs/fr.md](docs/fr.md) for the complete guide.
+See [docs/en.md](docs/en.md), [docs/fr.md](docs/fr.md), [docs/de.md](docs/de.md) or
+[docs/es.md](docs/es.md) for the complete guide.
 
 ## Development
 
