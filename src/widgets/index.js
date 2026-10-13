@@ -13,13 +13,13 @@ export const WIDGET = {
 const NOT_CONNECTED = {
   en: 'Synology DSM is not connected yet. Check the integration configuration.',
   fr: "Synology DSM n'est pas encore connecté. Vérifiez la configuration de l'intégration.",
-  de: 'Synology DSM ist noch nicht verbunden. Überprüfen Sie die Konfiguration der Integration.',
+  de: 'Synology DSM ist noch nicht verbunden. Überprüfe die Konfiguration der Integration.',
   es: 'Synology DSM aún no está conectado. Compruebe la configuración de la integración.',
 };
 const UNKNOWN_DEVICE = {
   en: 'The chosen device is no longer known. Choose a Synology device in the widget settings.',
   fr: "L'appareil choisi n'est plus connu. Choisissez un appareil Synology dans les réglages du widget.",
-  de: 'Das gewählte Gerät ist nicht mehr bekannt. Wählen Sie in den Widget-Einstellungen ein Synology-Gerät.',
+  de: 'Das gewählte Gerät ist nicht mehr bekannt. Wähle in den Widget-Einstellungen ein Synology-Gerät.',
   es: 'El dispositivo elegido ya no se reconoce. Elija un dispositivo Synology en los ajustes del widget.',
 };
 const FIRST_READING = {

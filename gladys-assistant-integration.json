@@ -27,7 +27,7 @@
       "description": {
         "en": "Use a dedicated, read-only DSM account. Gladys must be able to reach the NAS on your local network.",
         "fr": "Utilisez un compte DSM dédié en lecture seule. Gladys doit pouvoir joindre le NAS sur votre réseau local.",
-        "de": "Verwenden Sie ein eigenes DSM-Konto mit reinem Lesezugriff. Gladys muss das NAS in Ihrem lokalen Netzwerk erreichen können.",
+        "de": "Verwende ein eigenes DSM-Konto mit reinem Lesezugriff. Gladys muss das NAS in deinem lokalen Netzwerk erreichen können.",
         "es": "Utilice una cuenta DSM dedicada de solo lectura. Gladys debe poder acceder al NAS en su red local."
       },
       "links": [
@@ -93,7 +93,7 @@
       "description": {
         "en": "Required only to trust this Gladys installation on the first MFA login, or after revoking the trusted device in DSM. Enter a current 6-digit verification code.",
         "fr": "Requis uniquement pour approuver cette installation Gladys lors de la première connexion MFA, ou après révocation de l'appareil de confiance dans DSM. Saisissez un code de vérification actuel à 6 chiffres.",
-        "de": "Nur erforderlich, um diese Gladys-Installation bei der ersten MFA-Anmeldung als vertrauenswürdig zu registrieren oder nachdem das vertrauenswürdige Gerät in DSM widerrufen wurde. Geben Sie einen aktuellen 6-stelligen Bestätigungscode ein.",
+        "de": "Nur erforderlich, um diese Gladys-Installation bei der ersten MFA-Anmeldung als vertrauenswürdig zu registrieren oder nachdem das vertrauenswürdige Gerät in DSM widerrufen wurde. Gib einen aktuellen 6-stelligen Bestätigungscode ein.",
         "es": "Solo es necesario para registrar esta instalación de Gladys como de confianza en el primer inicio de sesión MFA, o tras revocar el dispositivo de confianza en DSM. Introduzca un código de verificación actual de 6 dígitos."
       },
       "required": false
@@ -110,7 +110,7 @@
       "description": {
         "en": "Keep enabled unless DSM uses a self-signed certificate.",
         "fr": "Laissez activé sauf si DSM utilise un certificat auto-signé.",
-        "de": "Lassen Sie diese Option aktiviert, es sei denn, DSM verwendet ein selbstsigniertes Zertifikat.",
+        "de": "Lass diese Option aktiviert, es sei denn, DSM verwendet ein selbstsigniertes Zertifikat.",
         "es": "Manténgalo activado salvo que DSM utilice un certificado autofirmado."
       },
       "required": false,
@@ -151,7 +151,7 @@
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
         "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
-        "de": "Lassen Sie die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
         "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
@@ -234,7 +234,7 @@
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
         "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
-        "de": "Lassen Sie die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
         "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
@@ -317,7 +317,7 @@
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
         "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
-        "de": "Lassen Sie die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
         "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
@@ -710,7 +710,7 @@
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
             "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
-            "de": "Wählen Sie das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
             "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false
@@ -777,7 +777,7 @@
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
             "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
-            "de": "Wählen Sie das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
             "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false
@@ -844,7 +844,7 @@
           "description": {
             "en": "Choose a volume. Leave empty for any volume.",
             "fr": "Choisissez un volume. Laissez vide pour n'importe quel volume.",
-            "de": "Wählen Sie ein Volume. Leer lassen für ein beliebiges Volume.",
+            "de": "Wähle ein Volume. Leer lassen für ein beliebiges Volume.",
             "es": "Elija un volumen. Déjelo vacío para cualquier volumen."
           },
           "required": false
@@ -921,7 +921,7 @@
           "description": {
             "en": "Choose a disk. Leave empty for any disk.",
             "fr": "Choisissez un disque. Laissez vide pour n'importe quel disque.",
-            "de": "Wählen Sie eine Festplatte. Leer lassen für eine beliebige Festplatte.",
+            "de": "Wähle eine Festplatte. Leer lassen für eine beliebige Festplatte.",
             "es": "Elija un disco. Déjelo vacío para cualquier disco."
           },
           "required": false
@@ -998,7 +998,7 @@
           "description": {
             "en": "Choose a backup task. Leave empty for any task.",
             "fr": "Choisissez une tâche de sauvegarde. Laissez vide pour n'importe quelle tâche.",
-            "de": "Wählen Sie eine Backup-Aufgabe. Leer lassen für eine beliebige Aufgabe.",
+            "de": "Wähle eine Backup-Aufgabe. Leer lassen für eine beliebige Aufgabe.",
             "es": "Elija una tarea de copia de seguridad. Déjelo vacío para cualquier tarea."
           },
           "required": false
@@ -1178,7 +1178,7 @@
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
             "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
-            "de": "Wählen Sie das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
             "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false

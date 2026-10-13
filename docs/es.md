@@ -37,7 +37,7 @@ Los indicadores de salud solo toman un valor cuando DSM indica claramente un est
 
 ## Widgets del panel
 
-Requiere Gladys 5.1 o posterior. Añádalos desde el modo de edición del panel (**Editar**); cada widget tiene un ajuste **NAS** que acepta cualquier dispositivo del NAS que se mostrará (el propio NAS, un volumen, un disco o una tarea de copia de seguridad). Déjelo vacío para mostrar el primer NAS.
+Requiere Gladys 5.1 o posterior. Añádalos desde el modo de edición del panel (**Editar → Nuevo widget**); cada widget tiene un ajuste **NAS** que acepta cualquier dispositivo del NAS que se mostrará (el propio NAS, un volumen, un disco o una tarea de copia de seguridad). Déjelo vacío para mostrar el primer NAS.
 
 - **NAS Synology**: modelo, versión de DSM, CPU, memoria y temperatura, una fila por volumen (uso y salud), un resumen de los discos y de las copias de seguridad, y un botón para abrir DSM cuando su URL utiliza HTTPS. Una vez añadido el dispositivo NAS a Gladys, la tarjeta también traza el historial de CPU y memoria durante el periodo elegido en el ajuste **Historial de carga**.
 - **Almacenamiento Synology**: un indicador por volumen, el espacio libre total y una fila por disco con su estado SMART y su temperatura.
