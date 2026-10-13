@@ -4,7 +4,9 @@
   "name": "Synology DSM",
   "description": {
     "en": "Monitor Synology NAS system metrics, storage volumes, disk SMART health and backups.",
-    "fr": "Supervisez les métriques système, volumes, états SMART des disques et sauvegardes d'un NAS Synology."
+    "fr": "Supervisez les métriques système, volumes, états SMART des disques et sauvegardes d'un NAS Synology.",
+    "de": "Überwacht Systemwerte, Volumes, SMART-Zustand der Festplatten und Backups eines Synology-NAS.",
+    "es": "Supervise métricas del sistema, volúmenes, estado SMART de discos y copias de un NAS Synology."
   },
   "version": "2.3.1",
   "docker_image": "ghcr.io/prohand/gladys-synology:2.3.1",
@@ -18,18 +20,24 @@
       "type": "section",
       "label": {
         "en": "Synology DSM connection",
-        "fr": "Connexion à Synology DSM"
+        "fr": "Connexion à Synology DSM",
+        "de": "Verbindung zu Synology DSM",
+        "es": "Conexión con Synology DSM"
       },
       "description": {
         "en": "Use a dedicated, read-only DSM account. Gladys must be able to reach the NAS on your local network.",
-        "fr": "Utilisez un compte DSM dédié en lecture seule. Gladys doit pouvoir joindre le NAS sur votre réseau local."
+        "fr": "Utilisez un compte DSM dédié en lecture seule. Gladys doit pouvoir joindre le NAS sur votre réseau local.",
+        "de": "Verwende ein eigenes DSM-Konto mit reinem Lesezugriff. Gladys muss das NAS in deinem lokalen Netzwerk erreichen können.",
+        "es": "Utilice una cuenta DSM dedicada de solo lectura. Gladys debe poder acceder al NAS en su red local."
       },
       "links": [
         {
           "url": "https://github.com/prohand/gladys-synology/blob/main/docs/en.md",
           "label": {
             "en": "Setup guide",
-            "fr": "Guide d'installation"
+            "fr": "Guide d'installation",
+            "de": "Installationsanleitung",
+            "es": "Guía de instalación"
           }
         }
       ]
@@ -39,11 +47,15 @@
       "type": "string",
       "label": {
         "en": "DSM URL",
-        "fr": "URL DSM"
+        "fr": "URL DSM",
+        "de": "DSM-URL",
+        "es": "URL de DSM"
       },
       "description": {
         "en": "For example: https://192.168.1.20:5001",
-        "fr": "Par exemple : https://192.168.1.20:5001"
+        "fr": "Par exemple : https://192.168.1.20:5001",
+        "de": "Zum Beispiel: https://192.168.1.20:5001",
+        "es": "Por ejemplo: https://192.168.1.20:5001"
       },
       "required": true
     },
@@ -52,7 +64,9 @@
       "type": "string",
       "label": {
         "en": "Username",
-        "fr": "Nom d'utilisateur"
+        "fr": "Nom d'utilisateur",
+        "de": "Benutzername",
+        "es": "Nombre de usuario"
       },
       "required": true
     },
@@ -61,7 +75,9 @@
       "type": "secret",
       "label": {
         "en": "Password",
-        "fr": "Mot de passe"
+        "fr": "Mot de passe",
+        "de": "Passwort",
+        "es": "Contraseña"
       },
       "required": true
     },
@@ -70,11 +86,15 @@
       "type": "secret",
       "label": {
         "en": "Current OTP code (MFA)",
-        "fr": "Code OTP actuel (MFA)"
+        "fr": "Code OTP actuel (MFA)",
+        "de": "Aktueller OTP-Code (MFA)",
+        "es": "Código OTP actual (MFA)"
       },
       "description": {
         "en": "Required only to trust this Gladys installation on the first MFA login, or after revoking the trusted device in DSM. Enter a current 6-digit verification code.",
-        "fr": "Requis uniquement pour approuver cette installation Gladys lors de la première connexion MFA, ou après révocation de l'appareil de confiance dans DSM. Saisissez un code de vérification actuel à 6 chiffres."
+        "fr": "Requis uniquement pour approuver cette installation Gladys lors de la première connexion MFA, ou après révocation de l'appareil de confiance dans DSM. Saisissez un code de vérification actuel à 6 chiffres.",
+        "de": "Nur erforderlich, um diese Gladys-Installation bei der ersten MFA-Anmeldung als vertrauenswürdig zu registrieren oder nachdem das vertrauenswürdige Gerät in DSM widerrufen wurde. Gib einen aktuellen 6-stelligen Bestätigungscode ein.",
+        "es": "Solo es necesario para registrar esta instalación de Gladys como de confianza en el primer inicio de sesión MFA, o tras revocar el dispositivo de confianza en DSM. Introduzca un código de verificación actual de 6 dígitos."
       },
       "required": false
     },
@@ -83,11 +103,15 @@
       "type": "boolean",
       "label": {
         "en": "Verify the TLS certificate",
-        "fr": "Vérifier le certificat TLS"
+        "fr": "Vérifier le certificat TLS",
+        "de": "TLS-Zertifikat überprüfen",
+        "es": "Verificar el certificado TLS"
       },
       "description": {
         "en": "Keep enabled unless DSM uses a self-signed certificate.",
-        "fr": "Laissez activé sauf si DSM utilise un certificat auto-signé."
+        "fr": "Laissez activé sauf si DSM utilise un certificat auto-signé.",
+        "de": "Lass diese Option aktiviert, es sei denn, DSM verwendet ein selbstsigniertes Zertifikat.",
+        "es": "Manténgalo activado salvo que DSM utilice un certificado autofirmado."
       },
       "required": false,
       "default": true
@@ -97,15 +121,21 @@
       "type": "string",
       "label": {
         "en": "Pinned certificate fingerprint (SHA-256)",
-        "fr": "Empreinte du certificat épinglé (SHA-256)"
+        "fr": "Empreinte du certificat épinglé (SHA-256)",
+        "de": "Fingerabdruck des gepinnten Zertifikats (SHA-256)",
+        "es": "Huella del certificado fijado (SHA-256)"
       },
       "description": {
         "en": "Optional, for a self-signed certificate. When filled in, the NAS is only accepted if its certificate has exactly this SHA-256 fingerprint (the password is never sent otherwise), whatever the setting above.",
-        "fr": "Facultatif, pour un certificat auto-signé. Une fois renseignée, le NAS n'est accepté que si son certificat a exactement cette empreinte SHA-256 (sinon le mot de passe n'est jamais envoyé), quel que soit le réglage ci-dessus."
+        "fr": "Facultatif, pour un certificat auto-signé. Une fois renseignée, le NAS n'est accepté que si son certificat a exactement cette empreinte SHA-256 (sinon le mot de passe n'est jamais envoyé), quel que soit le réglage ci-dessus.",
+        "de": "Optional, für ein selbstsigniertes Zertifikat. Wenn ausgefüllt, wird das NAS nur akzeptiert, wenn sein Zertifikat genau diesen SHA-256-Fingerabdruck hat (andernfalls wird das Passwort nie gesendet), unabhängig von der Einstellung oben.",
+        "es": "Opcional, para un certificado autofirmado. Si se rellena, el NAS solo se acepta si su certificado tiene exactamente esta huella SHA-256 (de lo contrario, la contraseña nunca se envía), sea cual sea el ajuste anterior."
       },
       "placeholder": {
         "en": "AB:CD:EF:… (64 hexadecimal characters)",
-        "fr": "AB:CD:EF:… (64 caractères hexadécimaux)"
+        "fr": "AB:CD:EF:… (64 caractères hexadécimaux)",
+        "de": "AB:CD:EF:… (64 Hexadezimalzeichen)",
+        "es": "AB:CD:EF:… (64 caracteres hexadecimales)"
       },
       "required": false
     },
@@ -114,11 +144,15 @@
       "type": "section",
       "label": {
         "en": "NAS 2 (optional)",
-        "fr": "NAS 2 (facultatif)"
+        "fr": "NAS 2 (facultatif)",
+        "de": "NAS 2 (optional)",
+        "es": "NAS 2 (opcional)"
       },
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
-        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
     {
@@ -126,7 +160,9 @@
       "type": "string",
       "label": {
         "en": "NAS 2 — DSM URL",
-        "fr": "NAS 2 — URL DSM"
+        "fr": "NAS 2 — URL DSM",
+        "de": "NAS 2 — DSM-URL",
+        "es": "NAS 2 — URL de DSM"
       },
       "required": false
     },
@@ -135,7 +171,9 @@
       "type": "string",
       "label": {
         "en": "NAS 2 — Username",
-        "fr": "NAS 2 — Nom d'utilisateur"
+        "fr": "NAS 2 — Nom d'utilisateur",
+        "de": "NAS 2 — Benutzername",
+        "es": "NAS 2 — Nombre de usuario"
       },
       "required": false
     },
@@ -144,7 +182,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 2 — Password",
-        "fr": "NAS 2 — Mot de passe"
+        "fr": "NAS 2 — Mot de passe",
+        "de": "NAS 2 — Passwort",
+        "es": "NAS 2 — Contraseña"
       },
       "required": false
     },
@@ -153,7 +193,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 2 — Current OTP code",
-        "fr": "NAS 2 — Code OTP actuel"
+        "fr": "NAS 2 — Code OTP actuel",
+        "de": "NAS 2 — Aktueller OTP-Code",
+        "es": "NAS 2 — Código OTP actual"
       },
       "required": false
     },
@@ -162,7 +204,9 @@
       "type": "boolean",
       "label": {
         "en": "NAS 2 — Verify TLS certificate",
-        "fr": "NAS 2 — Vérifier le certificat TLS"
+        "fr": "NAS 2 — Vérifier le certificat TLS",
+        "de": "NAS 2 — TLS-Zertifikat überprüfen",
+        "es": "NAS 2 — Verificar el certificado TLS"
       },
       "required": false,
       "default": true
@@ -172,7 +216,9 @@
       "type": "string",
       "label": {
         "en": "NAS 2 — Pinned certificate fingerprint (SHA-256)",
-        "fr": "NAS 2 — Empreinte du certificat épinglé (SHA-256)"
+        "fr": "NAS 2 — Empreinte du certificat épinglé (SHA-256)",
+        "de": "NAS 2 — Fingerabdruck des gepinnten Zertifikats (SHA-256)",
+        "es": "NAS 2 — Huella del certificado fijado (SHA-256)"
       },
       "required": false
     },
@@ -181,11 +227,15 @@
       "type": "section",
       "label": {
         "en": "NAS 3 (optional)",
-        "fr": "NAS 3 (facultatif)"
+        "fr": "NAS 3 (facultatif)",
+        "de": "NAS 3 (optional)",
+        "es": "NAS 3 (opcional)"
       },
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
-        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
     {
@@ -193,7 +243,9 @@
       "type": "string",
       "label": {
         "en": "NAS 3 — DSM URL",
-        "fr": "NAS 3 — URL DSM"
+        "fr": "NAS 3 — URL DSM",
+        "de": "NAS 3 — DSM-URL",
+        "es": "NAS 3 — URL de DSM"
       },
       "required": false
     },
@@ -202,7 +254,9 @@
       "type": "string",
       "label": {
         "en": "NAS 3 — Username",
-        "fr": "NAS 3 — Nom d'utilisateur"
+        "fr": "NAS 3 — Nom d'utilisateur",
+        "de": "NAS 3 — Benutzername",
+        "es": "NAS 3 — Nombre de usuario"
       },
       "required": false
     },
@@ -211,7 +265,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 3 — Password",
-        "fr": "NAS 3 — Mot de passe"
+        "fr": "NAS 3 — Mot de passe",
+        "de": "NAS 3 — Passwort",
+        "es": "NAS 3 — Contraseña"
       },
       "required": false
     },
@@ -220,7 +276,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 3 — Current OTP code",
-        "fr": "NAS 3 — Code OTP actuel"
+        "fr": "NAS 3 — Code OTP actuel",
+        "de": "NAS 3 — Aktueller OTP-Code",
+        "es": "NAS 3 — Código OTP actual"
       },
       "required": false
     },
@@ -229,7 +287,9 @@
       "type": "boolean",
       "label": {
         "en": "NAS 3 — Verify TLS certificate",
-        "fr": "NAS 3 — Vérifier le certificat TLS"
+        "fr": "NAS 3 — Vérifier le certificat TLS",
+        "de": "NAS 3 — TLS-Zertifikat überprüfen",
+        "es": "NAS 3 — Verificar el certificado TLS"
       },
       "required": false,
       "default": true
@@ -239,7 +299,9 @@
       "type": "string",
       "label": {
         "en": "NAS 3 — Pinned certificate fingerprint (SHA-256)",
-        "fr": "NAS 3 — Empreinte du certificat épinglé (SHA-256)"
+        "fr": "NAS 3 — Empreinte du certificat épinglé (SHA-256)",
+        "de": "NAS 3 — Fingerabdruck des gepinnten Zertifikats (SHA-256)",
+        "es": "NAS 3 — Huella del certificado fijado (SHA-256)"
       },
       "required": false
     },
@@ -248,11 +310,15 @@
       "type": "section",
       "label": {
         "en": "NAS 4 (optional)",
-        "fr": "NAS 4 (facultatif)"
+        "fr": "NAS 4 (facultatif)",
+        "de": "NAS 4 (optional)",
+        "es": "NAS 4 (opcional)"
       },
       "description": {
         "en": "Leave the URL empty to ignore this slot. Credentials are stored in dedicated secret fields.",
-        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés."
+        "fr": "Laissez l'URL vide pour ignorer cet emplacement. Les identifiants sont stockés dans des champs secrets dédiés.",
+        "de": "Lass die URL leer, um diesen Platz zu ignorieren. Die Zugangsdaten werden in eigenen geheimen Feldern gespeichert.",
+        "es": "Deje la URL vacía para ignorar esta ranura. Las credenciales se guardan en campos secretos dedicados."
       }
     },
     {
@@ -260,7 +326,9 @@
       "type": "string",
       "label": {
         "en": "NAS 4 — DSM URL",
-        "fr": "NAS 4 — URL DSM"
+        "fr": "NAS 4 — URL DSM",
+        "de": "NAS 4 — DSM-URL",
+        "es": "NAS 4 — URL de DSM"
       },
       "required": false
     },
@@ -269,7 +337,9 @@
       "type": "string",
       "label": {
         "en": "NAS 4 — Username",
-        "fr": "NAS 4 — Nom d'utilisateur"
+        "fr": "NAS 4 — Nom d'utilisateur",
+        "de": "NAS 4 — Benutzername",
+        "es": "NAS 4 — Nombre de usuario"
       },
       "required": false
     },
@@ -278,7 +348,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 4 — Password",
-        "fr": "NAS 4 — Mot de passe"
+        "fr": "NAS 4 — Mot de passe",
+        "de": "NAS 4 — Passwort",
+        "es": "NAS 4 — Contraseña"
       },
       "required": false
     },
@@ -287,7 +359,9 @@
       "type": "secret",
       "label": {
         "en": "NAS 4 — Current OTP code",
-        "fr": "NAS 4 — Code OTP actuel"
+        "fr": "NAS 4 — Code OTP actuel",
+        "de": "NAS 4 — Aktueller OTP-Code",
+        "es": "NAS 4 — Código OTP actual"
       },
       "required": false
     },
@@ -296,7 +370,9 @@
       "type": "boolean",
       "label": {
         "en": "NAS 4 — Verify TLS certificate",
-        "fr": "NAS 4 — Vérifier le certificat TLS"
+        "fr": "NAS 4 — Vérifier le certificat TLS",
+        "de": "NAS 4 — TLS-Zertifikat überprüfen",
+        "es": "NAS 4 — Verificar el certificado TLS"
       },
       "required": false,
       "default": true
@@ -306,7 +382,9 @@
       "type": "string",
       "label": {
         "en": "NAS 4 — Pinned certificate fingerprint (SHA-256)",
-        "fr": "NAS 4 — Empreinte du certificat épinglé (SHA-256)"
+        "fr": "NAS 4 — Empreinte du certificat épinglé (SHA-256)",
+        "de": "NAS 4 — Fingerabdruck des gepinnten Zertifikats (SHA-256)",
+        "es": "NAS 4 — Huella del certificado fijado (SHA-256)"
       },
       "required": false
     },
@@ -315,11 +393,15 @@
       "type": "number",
       "label": {
         "en": "Refresh interval (s)",
-        "fr": "Intervalle de rafraîchissement (s)"
+        "fr": "Intervalle de rafraîchissement (s)",
+        "de": "Aktualisierungsintervall (s)",
+        "es": "Intervalo de actualización (s)"
       },
       "description": {
         "en": "Custom interval in seconds (60 to 86400). The default is 900 seconds. A moderate interval limits the growth of the Gladys database.",
-        "fr": "Intervalle personnalisé en secondes (60 à 86400). La valeur par défaut est 900 secondes. Un intervalle modéré limite la croissance de la base Gladys."
+        "fr": "Intervalle personnalisé en secondes (60 à 86400). La valeur par défaut est 900 secondes. Un intervalle modéré limite la croissance de la base Gladys.",
+        "de": "Eigenes Intervall in Sekunden (60 bis 86400). Der Standardwert beträgt 900 Sekunden. Ein moderates Intervall begrenzt das Wachstum der Gladys-Datenbank.",
+        "es": "Intervalo personalizado en segundos (60 a 86400). El valor predeterminado es 900 segundos. Un intervalo moderado limita el crecimiento de la base de datos de Gladys."
       },
       "required": false,
       "default": 900,
@@ -327,7 +409,9 @@
       "max": 86400,
       "placeholder": {
         "en": "900",
-        "fr": "900"
+        "fr": "900",
+        "de": "900",
+        "es": "900"
       }
     },
     {
@@ -335,11 +419,15 @@
       "type": "select",
       "label": {
         "en": "Date format",
-        "fr": "Format de date"
+        "fr": "Format de date",
+        "de": "Datumsformat",
+        "es": "Formato de fecha"
       },
       "description": {
         "en": "Format used for the backup dates published to Gladys. Every format except ISO 8601 shows the local time of the integration container.",
-        "fr": "Format utilisé pour les dates de sauvegarde publiées dans Gladys. Tous les formats sauf ISO 8601 affichent l'heure locale du conteneur de l'intégration."
+        "fr": "Format utilisé pour les dates de sauvegarde publiées dans Gladys. Tous les formats sauf ISO 8601 affichent l'heure locale du conteneur de l'intégration.",
+        "de": "Format der an Gladys übermittelten Backup-Daten. Alle Formate außer ISO 8601 zeigen die Ortszeit des Containers der Integration.",
+        "es": "Formato de las fechas de copia de seguridad publicadas en Gladys. Todos los formatos salvo ISO 8601 muestran la hora local del contenedor de la integración."
       },
       "required": false,
       "default": "iso",
@@ -348,28 +436,36 @@
           "value": "iso",
           "label": {
             "en": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z",
-            "fr": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z"
+            "fr": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z",
+            "de": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z",
+            "es": "ISO 8601 (UTC) — 2026-08-20T13:08:00.000Z"
           }
         },
         {
           "value": "iso_local",
           "label": {
             "en": "YYYY-MM-DD HH:mm — 2026-08-20 15:08",
-            "fr": "AAAA-MM-JJ HH:mm — 2026-08-20 15:08"
+            "fr": "AAAA-MM-JJ HH:mm — 2026-08-20 15:08",
+            "de": "JJJJ-MM-TT HH:mm — 2026-08-20 15:08",
+            "es": "AAAA-MM-DD HH:mm — 2026-08-20 15:08"
           }
         },
         {
           "value": "european",
           "label": {
             "en": "DD/MM/YYYY HH:mm — 20/08/2026 15:08",
-            "fr": "JJ/MM/AAAA HH:mm — 20/08/2026 15:08"
+            "fr": "JJ/MM/AAAA HH:mm — 20/08/2026 15:08",
+            "de": "TT/MM/JJJJ HH:mm — 20/08/2026 15:08",
+            "es": "DD/MM/AAAA HH:mm — 20/08/2026 15:08"
           }
         },
         {
           "value": "us",
           "label": {
             "en": "MM/DD/YYYY hh:mm AM/PM — 08/20/2026 03:08 PM",
-            "fr": "MM/JJ/AAAA hh:mm AM/PM — 08/20/2026 03:08 PM"
+            "fr": "MM/JJ/AAAA hh:mm AM/PM — 08/20/2026 03:08 PM",
+            "de": "MM/TT/JJJJ hh:mm AM/PM — 08/20/2026 03:08 PM",
+            "es": "MM/DD/AAAA hh:mm AM/PM — 08/20/2026 03:08 PM"
           }
         }
       ]
@@ -380,7 +476,9 @@
       "key": "test_connection",
       "label": {
         "en": "Test the DSM connection",
-        "fr": "Tester la connexion DSM"
+        "fr": "Tester la connexion DSM",
+        "de": "DSM-Verbindung testen",
+        "es": "Probar la conexión DSM"
       },
       "timeout_seconds": 30
     }
@@ -390,11 +488,15 @@
       "key": "nas_overview",
       "label": {
         "en": "Synology NAS",
-        "fr": "NAS Synology"
+        "fr": "NAS Synology",
+        "de": "Synology-NAS",
+        "es": "NAS Synology"
       },
       "description": {
         "en": "Load, temperature, volumes, disks and backups of one NAS, with the load history.",
-        "fr": "Charge, température, volumes, disques et sauvegardes d'un NAS, avec l'historique de la charge."
+        "fr": "Charge, température, volumes, disques et sauvegardes d'un NAS, avec l'historique de la charge.",
+        "de": "Last, Temperatur, Volumes, Festplatten und Backups eines NAS, mit Lastverlauf.",
+        "es": "Carga, temperatura, volúmenes, discos y copias de seguridad de un NAS, con historial de carga."
       },
       "icon": "server",
       "settings": [
@@ -404,11 +506,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Any device of the NAS to show. Leave empty for the first NAS.",
-            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS."
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS.",
+            "de": "Beliebiges Gerät des anzuzeigenden NAS. Leer lassen für das erste NAS.",
+            "es": "Cualquier dispositivo del NAS que se mostrará. Déjelo vacío para el primer NAS."
           },
           "required": false
         },
@@ -417,39 +523,51 @@
           "type": "select",
           "label": {
             "en": "Load history",
-            "fr": "Historique de la charge"
+            "fr": "Historique de la charge",
+            "de": "Lastverlauf",
+            "es": "Historial de carga"
           },
           "description": {
             "en": "Shown once the NAS device is added to Gladys.",
-            "fr": "Affiché une fois l'appareil NAS ajouté à Gladys."
+            "fr": "Affiché une fois l'appareil NAS ajouté à Gladys.",
+            "de": "Wird angezeigt, sobald das NAS-Gerät zu Gladys hinzugefügt wurde.",
+            "es": "Se muestra una vez añadido el dispositivo NAS a Gladys."
           },
           "options": [
             {
               "value": "last-day",
               "label": {
                 "en": "Last 24 hours",
-                "fr": "Dernières 24 heures"
+                "fr": "Dernières 24 heures",
+                "de": "Letzte 24 Stunden",
+                "es": "Últimas 24 horas"
               }
             },
             {
               "value": "last-three-days",
               "label": {
                 "en": "Last 3 days",
-                "fr": "3 derniers jours"
+                "fr": "3 derniers jours",
+                "de": "Letzte 3 Tage",
+                "es": "Últimos 3 días"
               }
             },
             {
               "value": "last-week",
               "label": {
                 "en": "Last week",
-                "fr": "Dernière semaine"
+                "fr": "Dernière semaine",
+                "de": "Letzte Woche",
+                "es": "Última semana"
               }
             },
             {
               "value": "last-month",
               "label": {
                 "en": "Last month",
-                "fr": "Dernier mois"
+                "fr": "Dernier mois",
+                "de": "Letzter Monat",
+                "es": "Último mes"
               }
             }
           ],
@@ -462,11 +580,15 @@
       "key": "storage",
       "label": {
         "en": "Synology storage",
-        "fr": "Stockage Synology"
+        "fr": "Stockage Synology",
+        "de": "Synology-Speicher",
+        "es": "Almacenamiento Synology"
       },
       "description": {
         "en": "Usage of each volume, free space, SMART status and temperature of each disk.",
-        "fr": "Occupation de chaque volume, espace libre, état SMART et température de chaque disque."
+        "fr": "Occupation de chaque volume, espace libre, état SMART et température de chaque disque.",
+        "de": "Belegung jedes Volumes, freier Speicher, SMART-Status und Temperatur jeder Festplatte.",
+        "es": "Uso de cada volumen, espacio libre, estado SMART y temperatura de cada disco."
       },
       "icon": "hard-drive",
       "settings": [
@@ -476,11 +598,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Any device of the NAS to show. Leave empty for the first NAS.",
-            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS."
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour le premier NAS.",
+            "de": "Beliebiges Gerät des anzuzeigenden NAS. Leer lassen für das erste NAS.",
+            "es": "Cualquier dispositivo del NAS que se mostrará. Déjelo vacío para el primer NAS."
           },
           "required": false
         }
@@ -490,11 +616,15 @@
       "key": "backups",
       "label": {
         "en": "Synology backups",
-        "fr": "Sauvegardes Synology"
+        "fr": "Sauvegardes Synology",
+        "de": "Synology-Backups",
+        "es": "Copias de seguridad Synology"
       },
       "description": {
         "en": "Hyper Backup and Active Backup tasks with their last result, failures first.",
-        "fr": "Tâches Hyper Backup et Active Backup avec leur dernier résultat, échecs en premier."
+        "fr": "Tâches Hyper Backup et Active Backup avec leur dernier résultat, échecs en premier.",
+        "de": "Hyper Backup- und Active Backup-Aufgaben mit ihrem letzten Ergebnis, Fehler zuerst.",
+        "es": "Tareas de Hyper Backup y Active Backup con su último resultado, fallos primero."
       },
       "icon": "archive",
       "settings": [
@@ -504,11 +634,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Any device of the NAS to show. Leave empty to show every NAS.",
-            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour afficher tous les NAS."
+            "fr": "N'importe quel appareil du NAS à afficher. Laissez vide pour afficher tous les NAS.",
+            "de": "Beliebiges Gerät des anzuzeigenden NAS. Leer lassen, um alle NAS anzuzeigen.",
+            "es": "Cualquier dispositivo del NAS que se mostrará. Déjelo vacío para mostrar todos los NAS."
           },
           "required": false
         },
@@ -517,21 +651,27 @@
           "type": "select",
           "label": {
             "en": "Tasks shown",
-            "fr": "Tâches affichées"
+            "fr": "Tâches affichées",
+            "de": "Angezeigte Aufgaben",
+            "es": "Tareas mostradas"
           },
           "options": [
             {
               "value": "all",
               "label": {
                 "en": "All tasks",
-                "fr": "Toutes les tâches"
+                "fr": "Toutes les tâches",
+                "de": "Alle Aufgaben",
+                "es": "Todas las tareas"
               }
             },
             {
               "value": "problems",
               "label": {
                 "en": "Failed or partial only",
-                "fr": "En échec ou partielles uniquement"
+                "fr": "En échec ou partielles uniquement",
+                "de": "Nur fehlgeschlagene oder teilweise",
+                "es": "Solo fallidas o parciales"
               }
             }
           ],
@@ -546,11 +686,15 @@
       "key": "nas_unreachable",
       "label": {
         "en": "A Synology NAS stops answering",
-        "fr": "Un NAS Synology ne répond plus"
+        "fr": "Un NAS Synology ne répond plus",
+        "de": "Ein Synology-NAS antwortet nicht mehr",
+        "es": "Un NAS Synology deja de responder"
       },
       "description": {
         "en": "Fires once when a NAS that was answering fails a refresh.",
-        "fr": "Se déclenche une fois quand un NAS qui répondait échoue à un rafraîchissement."
+        "fr": "Se déclenche une fois quand un NAS qui répondait échoue à un rafraîchissement.",
+        "de": "Wird einmal ausgelöst, wenn ein NAS, das bisher geantwortet hat, bei einer Aktualisierung scheitert.",
+        "es": "Se activa una vez cuando un NAS que respondía falla una actualización."
       },
       "fields": [
         {
@@ -559,11 +703,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
-            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false
         }
@@ -574,7 +722,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -582,7 +732,9 @@
           "type": "string",
           "label": {
             "en": "DSM URL",
-            "fr": "URL DSM"
+            "fr": "URL DSM",
+            "de": "DSM-URL",
+            "es": "URL de DSM"
           }
         },
         {
@@ -590,7 +742,9 @@
           "type": "string",
           "label": {
             "en": "Error",
-            "fr": "Erreur"
+            "fr": "Erreur",
+            "de": "Fehler",
+            "es": "Error"
           }
         }
       ]
@@ -599,11 +753,15 @@
       "key": "nas_reachable",
       "label": {
         "en": "A Synology NAS answers again",
-        "fr": "Un NAS Synology répond à nouveau"
+        "fr": "Un NAS Synology répond à nouveau",
+        "de": "Ein Synology-NAS antwortet wieder",
+        "es": "Un NAS Synology vuelve a responder"
       },
       "description": {
         "en": "Fires once when a NAS reported unreachable answers again.",
-        "fr": "Se déclenche une fois quand un NAS signalé injoignable répond à nouveau."
+        "fr": "Se déclenche une fois quand un NAS signalé injoignable répond à nouveau.",
+        "de": "Wird einmal ausgelöst, wenn ein als nicht erreichbar gemeldetes NAS wieder antwortet.",
+        "es": "Se activa una vez cuando un NAS señalado como inaccesible vuelve a responder."
       },
       "fields": [
         {
@@ -612,11 +770,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
-            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false
         }
@@ -627,7 +789,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -635,7 +799,9 @@
           "type": "string",
           "label": {
             "en": "DSM URL",
-            "fr": "URL DSM"
+            "fr": "URL DSM",
+            "de": "DSM-URL",
+            "es": "URL de DSM"
           }
         },
         {
@@ -643,7 +809,9 @@
           "type": "number",
           "label": {
             "en": "Unreachable for (min)",
-            "fr": "Injoignable pendant (min)"
+            "fr": "Injoignable pendant (min)",
+            "de": "Nicht erreichbar während (min)",
+            "es": "Inaccesible durante (min)"
           }
         }
       ]
@@ -652,11 +820,15 @@
       "key": "volume_unhealthy",
       "label": {
         "en": "A Synology volume is degraded",
-        "fr": "Un volume Synology est dégradé"
+        "fr": "Un volume Synology est dégradé",
+        "de": "Ein Synology-Volume ist beeinträchtigt",
+        "es": "Un volumen Synology está degradado"
       },
       "description": {
         "en": "Fires once when DSM reports a healthy volume as degraded, crashed or in error.",
-        "fr": "Se déclenche une fois quand DSM signale un volume sain comme dégradé, planté ou en erreur."
+        "fr": "Se déclenche une fois quand DSM signale un volume sain comme dégradé, planté ou en erreur.",
+        "de": "Wird einmal ausgelöst, wenn DSM ein fehlerfreies Volume als beeinträchtigt, abgestürzt oder fehlerhaft meldet.",
+        "es": "Se activa una vez cuando DSM indica que un volumen en buen estado está degradado, caído o con error."
       },
       "fields": [
         {
@@ -665,11 +837,15 @@
           "source": "devices",
           "label": {
             "en": "Volume",
-            "fr": "Volume"
+            "fr": "Volume",
+            "de": "Volume",
+            "es": "Volumen"
           },
           "description": {
             "en": "Choose a volume. Leave empty for any volume.",
-            "fr": "Choisissez un volume. Laissez vide pour n'importe quel volume."
+            "fr": "Choisissez un volume. Laissez vide pour n'importe quel volume.",
+            "de": "Wähle ein Volume. Leer lassen für ein beliebiges Volume.",
+            "es": "Elija un volumen. Déjelo vacío para cualquier volumen."
           },
           "required": false
         }
@@ -680,7 +856,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -688,7 +866,9 @@
           "type": "string",
           "label": {
             "en": "Volume name",
-            "fr": "Nom du volume"
+            "fr": "Nom du volume",
+            "de": "Volume-Name",
+            "es": "Nombre del volumen"
           }
         },
         {
@@ -696,7 +876,9 @@
           "type": "string",
           "label": {
             "en": "DSM status",
-            "fr": "État DSM"
+            "fr": "État DSM",
+            "de": "DSM-Status",
+            "es": "Estado DSM"
           }
         },
         {
@@ -704,7 +886,9 @@
           "type": "number",
           "label": {
             "en": "Usage (%)",
-            "fr": "Occupation (%)"
+            "fr": "Occupation (%)",
+            "de": "Belegung (%)",
+            "es": "Uso (%)"
           }
         }
       ]
@@ -713,11 +897,15 @@
       "key": "disk_unhealthy",
       "label": {
         "en": "A Synology disk is failing",
-        "fr": "Un disque Synology est défaillant"
+        "fr": "Un disque Synology est défaillant",
+        "de": "Eine Synology-Festplatte fällt aus",
+        "es": "Un disco Synology está fallando"
       },
       "description": {
         "en": "Fires once when the SMART status of a healthy disk turns to a failure.",
-        "fr": "Se déclenche une fois quand l'état SMART d'un disque sain passe en défaut."
+        "fr": "Se déclenche une fois quand l'état SMART d'un disque sain passe en défaut.",
+        "de": "Wird einmal ausgelöst, wenn der SMART-Status einer fehlerfreien Festplatte auf einen Fehler wechselt.",
+        "es": "Se activa una vez cuando el estado SMART de un disco en buen estado pasa a fallo."
       },
       "fields": [
         {
@@ -726,11 +914,15 @@
           "source": "devices",
           "label": {
             "en": "Disk",
-            "fr": "Disque"
+            "fr": "Disque",
+            "de": "Festplatte",
+            "es": "Disco"
           },
           "description": {
             "en": "Choose a disk. Leave empty for any disk.",
-            "fr": "Choisissez un disque. Laissez vide pour n'importe quel disque."
+            "fr": "Choisissez un disque. Laissez vide pour n'importe quel disque.",
+            "de": "Wähle eine Festplatte. Leer lassen für eine beliebige Festplatte.",
+            "es": "Elija un disco. Déjelo vacío para cualquier disco."
           },
           "required": false
         }
@@ -741,7 +933,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -749,7 +943,9 @@
           "type": "string",
           "label": {
             "en": "Disk name",
-            "fr": "Nom du disque"
+            "fr": "Nom du disque",
+            "de": "Festplattenname",
+            "es": "Nombre del disco"
           }
         },
         {
@@ -757,7 +953,9 @@
           "type": "string",
           "label": {
             "en": "SMART status",
-            "fr": "État SMART"
+            "fr": "État SMART",
+            "de": "SMART-Status",
+            "es": "Estado SMART"
           }
         },
         {
@@ -765,7 +963,9 @@
           "type": "number",
           "label": {
             "en": "Temperature (°C)",
-            "fr": "Température (°C)"
+            "fr": "Température (°C)",
+            "de": "Temperatur (°C)",
+            "es": "Temperatura (°C)"
           }
         }
       ]
@@ -774,11 +974,15 @@
       "key": "backup_finished",
       "label": {
         "en": "A Synology backup finished",
-        "fr": "Une sauvegarde Synology est terminée"
+        "fr": "Une sauvegarde Synology est terminée",
+        "de": "Ein Synology-Backup ist abgeschlossen",
+        "es": "Una copia de seguridad Synology ha terminado"
       },
       "description": {
         "en": "Fires once per backup run, when a new result is read from Hyper Backup or Active Backup.",
-        "fr": "Se déclenche une fois par sauvegarde, quand un nouveau résultat est lu dans Hyper Backup ou Active Backup."
+        "fr": "Se déclenche une fois par sauvegarde, quand un nouveau résultat est lu dans Hyper Backup ou Active Backup.",
+        "de": "Wird einmal pro Backup-Lauf ausgelöst, wenn ein neues Ergebnis aus Hyper Backup oder Active Backup gelesen wird.",
+        "es": "Se activa una vez por copia de seguridad, cuando se lee un nuevo resultado de Hyper Backup o Active Backup."
       },
       "fields": [
         {
@@ -787,11 +991,15 @@
           "source": "devices",
           "label": {
             "en": "Backup task",
-            "fr": "Tâche de sauvegarde"
+            "fr": "Tâche de sauvegarde",
+            "de": "Backup-Aufgabe",
+            "es": "Tarea de copia de seguridad"
           },
           "description": {
             "en": "Choose a backup task. Leave empty for any task.",
-            "fr": "Choisissez une tâche de sauvegarde. Laissez vide pour n'importe quelle tâche."
+            "fr": "Choisissez une tâche de sauvegarde. Laissez vide pour n'importe quelle tâche.",
+            "de": "Wähle eine Backup-Aufgabe. Leer lassen für eine beliebige Aufgabe.",
+            "es": "Elija una tarea de copia de seguridad. Déjelo vacío para cualquier tarea."
           },
           "required": false
         },
@@ -800,25 +1008,33 @@
           "type": "select",
           "label": {
             "en": "Package",
-            "fr": "Paquet"
+            "fr": "Paquet",
+            "de": "Paket",
+            "es": "Paquete"
           },
           "description": {
             "en": "Leave empty for both.",
-            "fr": "Laissez vide pour les deux."
+            "fr": "Laissez vide pour les deux.",
+            "de": "Leer lassen für beide.",
+            "es": "Déjelo vacío para ambos."
           },
           "options": [
             {
               "value": "hyper-backup",
               "label": {
                 "en": "Hyper Backup",
-                "fr": "Hyper Backup"
+                "fr": "Hyper Backup",
+                "de": "Hyper Backup",
+                "es": "Hyper Backup"
               }
             },
             {
               "value": "active-backup",
               "label": {
                 "en": "Active Backup",
-                "fr": "Active Backup"
+                "fr": "Active Backup",
+                "de": "Active Backup",
+                "es": "Active Backup"
               }
             }
           ],
@@ -829,32 +1045,42 @@
           "type": "multi_select",
           "label": {
             "en": "Result",
-            "fr": "Résultat"
+            "fr": "Résultat",
+            "de": "Ergebnis",
+            "es": "Resultado"
           },
           "description": {
             "en": "Leave empty for any result.",
-            "fr": "Laissez vide pour tous les résultats."
+            "fr": "Laissez vide pour tous les résultats.",
+            "de": "Leer lassen für jedes Ergebnis.",
+            "es": "Déjelo vacío para cualquier resultado."
           },
           "options": [
             {
               "value": "success",
               "label": {
                 "en": "Success",
-                "fr": "Réussie"
+                "fr": "Réussie",
+                "de": "Erfolgreich",
+                "es": "Correcta"
               }
             },
             {
               "value": "partial",
               "label": {
                 "en": "Partial success",
-                "fr": "Réussite partielle"
+                "fr": "Réussite partielle",
+                "de": "Teilweise erfolgreich",
+                "es": "Éxito parcial"
               }
             },
             {
               "value": "failure",
               "label": {
                 "en": "Failure or cancelled",
-                "fr": "Échec ou annulée"
+                "fr": "Échec ou annulée",
+                "de": "Fehlgeschlagen oder abgebrochen",
+                "es": "Fallida o cancelada"
               }
             }
           ],
@@ -867,7 +1093,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -875,7 +1103,9 @@
           "type": "string",
           "label": {
             "en": "Task name",
-            "fr": "Nom de la tâche"
+            "fr": "Nom de la tâche",
+            "de": "Aufgabenname",
+            "es": "Nombre de la tarea"
           }
         },
         {
@@ -883,7 +1113,9 @@
           "type": "string",
           "label": {
             "en": "Package",
-            "fr": "Paquet"
+            "fr": "Paquet",
+            "de": "Paket",
+            "es": "Paquete"
           }
         },
         {
@@ -891,7 +1123,9 @@
           "type": "string",
           "label": {
             "en": "Result reported by DSM",
-            "fr": "Résultat renvoyé par DSM"
+            "fr": "Résultat renvoyé par DSM",
+            "de": "Von DSM gemeldetes Ergebnis",
+            "es": "Resultado indicado por DSM"
           }
         },
         {
@@ -899,7 +1133,9 @@
           "type": "string",
           "label": {
             "en": "Result (success, partial or failure)",
-            "fr": "Résultat (success, partial ou failure)"
+            "fr": "Résultat (success, partial ou failure)",
+            "de": "Ergebnis (success, partial oder failure)",
+            "es": "Resultado (success, partial o failure)"
           }
         },
         {
@@ -907,7 +1143,9 @@
           "type": "string",
           "label": {
             "en": "Backup date",
-            "fr": "Date de la sauvegarde"
+            "fr": "Date de la sauvegarde",
+            "de": "Backup-Datum",
+            "es": "Fecha de la copia de seguridad"
           }
         }
       ]
@@ -916,11 +1154,15 @@
       "key": "dsm_updated",
       "label": {
         "en": "DSM was updated",
-        "fr": "DSM a été mis à jour"
+        "fr": "DSM a été mis à jour",
+        "de": "DSM wurde aktualisiert",
+        "es": "DSM se ha actualizado"
       },
       "description": {
         "en": "Fires once when a NAS reports a new DSM version.",
-        "fr": "Se déclenche une fois quand un NAS signale une nouvelle version de DSM."
+        "fr": "Se déclenche une fois quand un NAS signale une nouvelle version de DSM.",
+        "de": "Wird einmal ausgelöst, wenn ein NAS eine neue DSM-Version meldet.",
+        "es": "Se activa una vez cuando un NAS indica una nueva versión de DSM."
       },
       "fields": [
         {
@@ -929,11 +1171,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Choose the NAS device. Leave empty for any NAS.",
-            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS."
+            "fr": "Choisissez l'appareil NAS. Laissez vide pour n'importe quel NAS.",
+            "de": "Wähle das NAS-Gerät. Leer lassen für ein beliebiges NAS.",
+            "es": "Elija el dispositivo NAS. Déjelo vacío para cualquier NAS."
           },
           "required": false
         }
@@ -944,7 +1190,9 @@
           "type": "string",
           "label": {
             "en": "NAS model",
-            "fr": "Modèle du NAS"
+            "fr": "Modèle du NAS",
+            "de": "NAS-Modell",
+            "es": "Modelo del NAS"
           }
         },
         {
@@ -952,7 +1200,9 @@
           "type": "string",
           "label": {
             "en": "Previous version",
-            "fr": "Version précédente"
+            "fr": "Version précédente",
+            "de": "Vorherige Version",
+            "es": "Versión anterior"
           }
         },
         {
@@ -960,7 +1210,9 @@
           "type": "string",
           "label": {
             "en": "New version",
-            "fr": "Nouvelle version"
+            "fr": "Nouvelle version",
+            "de": "Neue Version",
+            "es": "Nueva versión"
           }
         }
       ]
@@ -971,11 +1223,15 @@
       "key": "get_nas_status",
       "label": {
         "en": "Get the state of a Synology NAS",
-        "fr": "Récupérer l'état d'un NAS Synology"
+        "fr": "Récupérer l'état d'un NAS Synology",
+        "de": "Status eines Synology-NAS abrufen",
+        "es": "Obtener el estado de un NAS Synology"
       },
       "description": {
         "en": "Reads the NAS now: load, temperature and the number of problems. An unreachable NAS answers \"reachable: no\".",
-        "fr": "Interroge le NAS maintenant : charge, température et nombre de problèmes. Un NAS injoignable répond « joignable : non »."
+        "fr": "Interroge le NAS maintenant : charge, température et nombre de problèmes. Un NAS injoignable répond « joignable : non ».",
+        "de": "Fragt das NAS sofort ab: Last, Temperatur und Anzahl der Probleme. Ein nicht erreichbares NAS antwortet mit „erreichbar: nein“.",
+        "es": "Consulta el NAS en ese momento: carga, temperatura y número de problemas. Un NAS inaccesible responde «accesible: no»."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -985,11 +1241,15 @@
           "source": "devices",
           "label": {
             "en": "NAS",
-            "fr": "NAS"
+            "fr": "NAS",
+            "de": "NAS",
+            "es": "NAS"
           },
           "description": {
             "en": "Any device of the NAS. Leave empty for the first NAS.",
-            "fr": "N'importe quel appareil du NAS. Laissez vide pour le premier NAS."
+            "fr": "N'importe quel appareil du NAS. Laissez vide pour le premier NAS.",
+            "de": "Beliebiges Gerät des NAS. Leer lassen für das erste NAS.",
+            "es": "Cualquier dispositivo del NAS. Déjelo vacío para el primer NAS."
           },
           "required": false
         }
@@ -1000,7 +1260,9 @@
           "type": "boolean",
           "label": {
             "en": "Reachable",
-            "fr": "Joignable"
+            "fr": "Joignable",
+            "de": "Erreichbar",
+            "es": "Accesible"
           }
         },
         {
@@ -1008,7 +1270,9 @@
           "type": "string",
           "label": {
             "en": "Model",
-            "fr": "Modèle"
+            "fr": "Modèle",
+            "de": "Modell",
+            "es": "Modelo"
           }
         },
         {
@@ -1016,7 +1280,9 @@
           "type": "string",
           "label": {
             "en": "DSM version",
-            "fr": "Version DSM"
+            "fr": "Version DSM",
+            "de": "DSM-Version",
+            "es": "Versión de DSM"
           }
         },
         {
@@ -1024,7 +1290,9 @@
           "type": "number",
           "label": {
             "en": "CPU usage (%)",
-            "fr": "Utilisation CPU (%)"
+            "fr": "Utilisation CPU (%)",
+            "de": "CPU-Auslastung (%)",
+            "es": "Uso de CPU (%)"
           }
         },
         {
@@ -1032,7 +1300,9 @@
           "type": "number",
           "label": {
             "en": "Memory usage (%)",
-            "fr": "Utilisation mémoire (%)"
+            "fr": "Utilisation mémoire (%)",
+            "de": "Arbeitsspeicherauslastung (%)",
+            "es": "Uso de memoria (%)"
           }
         },
         {
@@ -1040,7 +1310,9 @@
           "type": "number",
           "label": {
             "en": "System temperature (°C)",
-            "fr": "Température système (°C)"
+            "fr": "Température système (°C)",
+            "de": "Systemtemperatur (°C)",
+            "es": "Temperatura del sistema (°C)"
           }
         },
         {
@@ -1048,7 +1320,9 @@
           "type": "number",
           "label": {
             "en": "Degraded volumes",
-            "fr": "Volumes dégradés"
+            "fr": "Volumes dégradés",
+            "de": "Beeinträchtigte Volumes",
+            "es": "Volúmenes degradados"
           }
         },
         {
@@ -1056,7 +1330,9 @@
           "type": "number",
           "label": {
             "en": "Failing disks",
-            "fr": "Disques défaillants"
+            "fr": "Disques défaillants",
+            "de": "Ausfallende Festplatten",
+            "es": "Discos con fallos"
           }
         },
         {
@@ -1064,7 +1340,9 @@
           "type": "number",
           "label": {
             "en": "Failed backups",
-            "fr": "Sauvegardes en échec"
+            "fr": "Sauvegardes en échec",
+            "de": "Fehlgeschlagene Backups",
+            "es": "Copias de seguridad fallidas"
           }
         },
         {
@@ -1072,7 +1350,9 @@
           "type": "string",
           "label": {
             "en": "Problems found",
-            "fr": "Problèmes détectés"
+            "fr": "Problèmes détectés",
+            "de": "Gefundene Probleme",
+            "es": "Problemas detectados"
           }
         }
       ]
@@ -1081,11 +1361,15 @@
       "key": "get_volume_status",
       "label": {
         "en": "Get the state of a Synology volume",
-        "fr": "Récupérer l'état d'un volume Synology"
+        "fr": "Récupérer l'état d'un volume Synology",
+        "de": "Status eines Synology-Volumes abrufen",
+        "es": "Obtener el estado de un volumen Synology"
       },
       "description": {
         "en": "Reads the volume now: health and used space.",
-        "fr": "Interroge le volume maintenant : santé et espace occupé."
+        "fr": "Interroge le volume maintenant : santé et espace occupé.",
+        "de": "Fragt das Volume sofort ab: Zustand und belegter Speicher.",
+        "es": "Consulta el volumen en ese momento: estado y espacio usado."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -1095,11 +1379,15 @@
           "source": "devices",
           "label": {
             "en": "Volume",
-            "fr": "Volume"
+            "fr": "Volume",
+            "de": "Volume",
+            "es": "Volumen"
           },
           "description": {
             "en": "One of the volumes added to Gladys.",
-            "fr": "Un des volumes ajoutés à Gladys."
+            "fr": "Un des volumes ajoutés à Gladys.",
+            "de": "Eines der zu Gladys hinzugefügten Volumes.",
+            "es": "Uno de los volúmenes añadidos a Gladys."
           },
           "required": true
         }
@@ -1110,7 +1398,9 @@
           "type": "string",
           "label": {
             "en": "Volume name",
-            "fr": "Nom du volume"
+            "fr": "Nom du volume",
+            "de": "Volume-Name",
+            "es": "Nombre del volumen"
           }
         },
         {
@@ -1118,7 +1408,9 @@
           "type": "string",
           "label": {
             "en": "DSM status",
-            "fr": "État DSM"
+            "fr": "État DSM",
+            "de": "DSM-Status",
+            "es": "Estado DSM"
           }
         },
         {
@@ -1126,7 +1418,9 @@
           "type": "boolean",
           "label": {
             "en": "Healthy",
-            "fr": "Sain"
+            "fr": "Sain",
+            "de": "Fehlerfrei",
+            "es": "En buen estado"
           }
         },
         {
@@ -1134,7 +1428,9 @@
           "type": "number",
           "label": {
             "en": "Usage (%)",
-            "fr": "Occupation (%)"
+            "fr": "Occupation (%)",
+            "de": "Belegung (%)",
+            "es": "Uso (%)"
           }
         },
         {
@@ -1142,7 +1438,9 @@
           "type": "number",
           "label": {
             "en": "Used space (GB)",
-            "fr": "Espace utilisé (Go)"
+            "fr": "Espace utilisé (Go)",
+            "de": "Belegter Speicher (GB)",
+            "es": "Espacio usado (GB)"
           }
         },
         {
@@ -1150,7 +1448,9 @@
           "type": "number",
           "label": {
             "en": "Free space (GB)",
-            "fr": "Espace libre (Go)"
+            "fr": "Espace libre (Go)",
+            "de": "Freier Speicher (GB)",
+            "es": "Espacio libre (GB)"
           }
         },
         {
@@ -1158,7 +1458,9 @@
           "type": "number",
           "label": {
             "en": "Total space (GB)",
-            "fr": "Espace total (Go)"
+            "fr": "Espace total (Go)",
+            "de": "Gesamtspeicher (GB)",
+            "es": "Espacio total (GB)"
           }
         }
       ]
@@ -1167,11 +1469,15 @@
       "key": "get_backup_status",
       "label": {
         "en": "Get the state of a Synology backup",
-        "fr": "Récupérer l'état d'une sauvegarde Synology"
+        "fr": "Récupérer l'état d'une sauvegarde Synology",
+        "de": "Status eines Synology-Backups abrufen",
+        "es": "Obtener el estado de una copia de seguridad Synology"
       },
       "description": {
         "en": "Reads the backup task now: last result and how long ago it ran.",
-        "fr": "Interroge la tâche de sauvegarde maintenant : dernier résultat et ancienneté."
+        "fr": "Interroge la tâche de sauvegarde maintenant : dernier résultat et ancienneté.",
+        "de": "Fragt die Backup-Aufgabe sofort ab: letztes Ergebnis und wie lange der Lauf zurückliegt.",
+        "es": "Consulta la tarea de copia de seguridad en ese momento: último resultado y cuánto hace que se ejecutó."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -1181,11 +1487,15 @@
           "source": "devices",
           "label": {
             "en": "Backup task",
-            "fr": "Tâche de sauvegarde"
+            "fr": "Tâche de sauvegarde",
+            "de": "Backup-Aufgabe",
+            "es": "Tarea de copia de seguridad"
           },
           "description": {
             "en": "One of the backup tasks added to Gladys.",
-            "fr": "Une des tâches de sauvegarde ajoutées à Gladys."
+            "fr": "Une des tâches de sauvegarde ajoutées à Gladys.",
+            "de": "Eine der zu Gladys hinzugefügten Backup-Aufgaben.",
+            "es": "Una de las tareas de copia de seguridad añadidas a Gladys."
           },
           "required": true
         }
@@ -1196,7 +1506,9 @@
           "type": "string",
           "label": {
             "en": "Task name",
-            "fr": "Nom de la tâche"
+            "fr": "Nom de la tâche",
+            "de": "Aufgabenname",
+            "es": "Nombre de la tarea"
           }
         },
         {
@@ -1204,7 +1516,9 @@
           "type": "string",
           "label": {
             "en": "Package",
-            "fr": "Paquet"
+            "fr": "Paquet",
+            "de": "Paket",
+            "es": "Paquete"
           }
         },
         {
@@ -1212,7 +1526,9 @@
           "type": "string",
           "label": {
             "en": "Status",
-            "fr": "État"
+            "fr": "État",
+            "de": "Status",
+            "es": "Estado"
           }
         },
         {
@@ -1220,7 +1536,9 @@
           "type": "string",
           "label": {
             "en": "Result reported by DSM",
-            "fr": "Résultat renvoyé par DSM"
+            "fr": "Résultat renvoyé par DSM",
+            "de": "Von DSM gemeldetes Ergebnis",
+            "es": "Resultado indicado por DSM"
           }
         },
         {
@@ -1228,7 +1546,9 @@
           "type": "string",
           "label": {
             "en": "Result (success, partial or failure)",
-            "fr": "Résultat (success, partial ou failure)"
+            "fr": "Résultat (success, partial ou failure)",
+            "de": "Ergebnis (success, partial oder failure)",
+            "es": "Resultado (success, partial o failure)"
           }
         },
         {
@@ -1236,7 +1556,9 @@
           "type": "string",
           "label": {
             "en": "Last backup",
-            "fr": "Dernière sauvegarde"
+            "fr": "Dernière sauvegarde",
+            "de": "Letztes Backup",
+            "es": "Última copia de seguridad"
           }
         },
         {
@@ -1244,7 +1566,9 @@
           "type": "number",
           "label": {
             "en": "Hours since the last backup",
-            "fr": "Heures depuis la dernière sauvegarde"
+            "fr": "Heures depuis la dernière sauvegarde",
+            "de": "Stunden seit dem letzten Backup",
+            "es": "Horas desde la última copia de seguridad"
           }
         }
       ]

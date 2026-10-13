@@ -6,9 +6,21 @@ const MAX_ITEMS = 8;
 export const BACKUP_FILTER = { ALL: 'all', PROBLEMS: 'problems' };
 
 const OUTCOMES = {
-  failure: { rank: 0, text: { en: 'Failed', fr: 'Échec' }, color: WIDGET_COLORS.DANGER },
-  partial: { rank: 1, text: { en: 'Partial', fr: 'Partielle' }, color: WIDGET_COLORS.WARNING },
-  success: { rank: 3, text: { en: 'Success', fr: 'Réussie' }, color: WIDGET_COLORS.SUCCESS },
+  failure: {
+    rank: 0,
+    text: { en: 'Failed', fr: 'Échec', de: 'Fehler', es: 'Fallida' },
+    color: WIDGET_COLORS.DANGER,
+  },
+  partial: {
+    rank: 1,
+    text: { en: 'Partial', fr: 'Partielle', de: 'Teilweise', es: 'Parcial' },
+    color: WIDGET_COLORS.WARNING,
+  },
+  success: {
+    rank: 3,
+    text: { en: 'Success', fr: 'Réussie', de: 'Erfolg', es: 'Correcta' },
+    color: WIDGET_COLORS.SUCCESS,
+  },
 };
 const UNKNOWN_RANK = 2;
 
@@ -61,14 +73,14 @@ export function buildBackupsContent({ services, settings = {}, pollFrequency }) 
   const components = [
     {
       type: 'value',
-      label: { en: 'Succeeded', fr: 'Réussies' },
+      label: { en: 'Succeeded', fr: 'Réussies', de: 'Erfolgreich', es: 'Correctas' },
       value: count('success'),
       icon: 'check-circle',
       color: WIDGET_COLORS.SUCCESS,
     },
     {
       type: 'value',
-      label: { en: 'To check', fr: 'À vérifier' },
+      label: { en: 'To check', fr: 'À vérifier', de: 'Zu prüfen', es: 'Por revisar' },
       value: count('failure') + count('partial'),
       icon: 'alert-triangle',
       color: count('failure') > 0 ? WIDGET_COLORS.DANGER : WIDGET_COLORS.NEUTRAL,
@@ -87,10 +99,17 @@ export function buildBackupsContent({ services, settings = {}, pollFrequency }) 
       variant: 'body',
       text:
         entries.length > 0
-          ? { en: 'No failed backup.', fr: 'Aucune sauvegarde en échec.' }
+          ? {
+              en: 'No failed backup.',
+              fr: 'Aucune sauvegarde en échec.',
+              de: 'Kein fehlgeschlagenes Backup.',
+              es: 'Ninguna copia de seguridad fallida.',
+            }
           : {
               en: 'No Hyper Backup or Active Backup task found.',
               fr: 'Aucune tâche Hyper Backup ou Active Backup trouvée.',
+              de: 'Keine Hyper Backup- oder Active Backup-Aufgabe gefunden.',
+              es: 'No se ha encontrado ninguna tarea de Hyper Backup ni de Active Backup.',
             },
     });
   }
@@ -101,6 +120,8 @@ export function buildBackupsContent({ services, settings = {}, pollFrequency }) 
       text: {
         en: `${MAX_ITEMS} of ${shown.length} tasks shown, failures first`,
         fr: `${MAX_ITEMS} tâches sur ${shown.length} affichées, échecs en premier`,
+        de: `${MAX_ITEMS} von ${shown.length} Aufgaben angezeigt, Fehler zuerst`,
+        es: `${MAX_ITEMS} de ${shown.length} tareas mostradas, fallos primero`,
       },
     });
   }
@@ -111,7 +132,7 @@ export function buildBackupsContent({ services, settings = {}, pollFrequency }) 
       type: 'status',
       items: unreachable.slice(0, 10).map((service) => ({
         label: truncate(service.snapshot?.nas.model ?? new URL(service.config.url).host, 40),
-        value: { en: 'Unreachable', fr: 'Injoignable' },
+        value: { en: 'Unreachable', fr: 'Injoignable', de: 'Nicht erreichbar', es: 'Inaccesible' },
         icon: 'wifi-off',
         color: WIDGET_COLORS.DANGER,
       })),

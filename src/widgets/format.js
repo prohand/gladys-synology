@@ -13,23 +13,30 @@ export function truncate(text, length) {
   return value.length > length ? `${value.slice(0, length - 1)}…` : value;
 }
 
+// French, German and Spanish write a decimal comma.
+const DECIMAL_COMMA = new Set(['fr', 'de', 'es']);
+
 function decimal(value, language) {
   const rounded = Math.round(value * 10) / 10;
-  return language === 'fr' ? String(rounded).replace('.', ',') : String(rounded);
+  return DECIMAL_COMMA.has(language) ? String(rounded).replace('.', ',') : String(rounded);
 }
 
-/** A byte count as a short bilingual text: `{ en: '1.8 TB', fr: '1,8 To' }`. */
+// French writes "octet" units (To, Go, Mo); German and Spanish keep the byte symbols.
+const SIZE_UNITS = [
+  { size: 1024 ** 4, en: 'TB', fr: 'To', de: 'TB', es: 'TB' },
+  { size: 1024 ** 3, en: 'GB', fr: 'Go', de: 'GB', es: 'GB' },
+  { size: 1024 ** 2, en: 'MB', fr: 'Mo', de: 'MB', es: 'MB' },
+];
+
+/** A byte count as a short multi-language text: `{ en: '1.8 TB', fr: '1,8 To', de: '1,8 TB', … }`. */
 export function formatSize(bytes) {
-  const units = [
-    ['TB', 'To', 1024 ** 4],
-    ['GB', 'Go', 1024 ** 3],
-    ['MB', 'Mo', 1024 ** 2],
-  ];
-  const [en, fr, divider] = units.find(([, , size]) => bytes >= size) ?? units[units.length - 1];
-  return {
-    en: `${decimal(bytes / divider, 'en')} ${en}`,
-    fr: `${decimal(bytes / divider, 'fr')} ${fr}`,
-  };
+  const unit = SIZE_UNITS.find(({ size }) => bytes >= size) ?? SIZE_UNITS[SIZE_UNITS.length - 1];
+  return Object.fromEntries(
+    ['en', 'fr', 'de', 'es'].map((language) => [
+      language,
+      `${decimal(bytes / unit.size, language)} ${unit[language]}`,
+    ]),
+  );
 }
 
 /** DSM always reports °C; a dashboard set to US units reads °F. */
@@ -52,8 +59,8 @@ export function volumeColor(volume) {
 }
 
 export const UNREACHABLE_ROW = {
-  label: { en: 'Connection', fr: 'Connexion' },
-  value: { en: 'Unreachable', fr: 'Injoignable' },
+  label: { en: 'Connection', fr: 'Connexion', de: 'Verbindung', es: 'Conexión' },
+  value: { en: 'Unreachable', fr: 'Injoignable', de: 'Nicht erreichbar', es: 'Inaccesible' },
   icon: 'wifi-off',
   color: WIDGET_COLORS.DANGER,
 };

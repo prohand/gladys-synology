@@ -22,7 +22,12 @@ function freeSpaceCaption(volumes) {
   return {
     type: 'text',
     variant: 'caption',
-    text: { en: `${free.en} free of ${total.en}`, fr: `${free.fr} libres sur ${total.fr}` },
+    text: {
+      en: `${free.en} free of ${total.en}`,
+      fr: `${free.fr} libres sur ${total.fr}`,
+      de: `${free.de} frei von ${total.de}`,
+      es: `${free.es} libres de ${total.es}`,
+    },
   };
 }
 
@@ -54,6 +59,8 @@ export function buildStorageContent({ service, units, pollFrequency }) {
       text: {
         en: truncate(`${snapshot.nas.model} storage`, 40),
         fr: truncate(`Stockage ${snapshot.nas.model}`, 40),
+        de: truncate(`Speicher ${snapshot.nas.model}`, 40),
+        es: truncate(`Almacenamiento ${snapshot.nas.model}`, 40),
       },
     },
   ];
@@ -88,6 +95,8 @@ export function buildStorageContent({ service, units, pollFrequency }) {
       text: {
         en: 'DSM reports no volume and no disk for this NAS.',
         fr: 'DSM ne signale aucun volume ni disque pour ce NAS.',
+        de: 'DSM meldet für dieses NAS weder Volumes noch Festplatten.',
+        es: 'DSM no indica ningún volumen ni disco para este NAS.',
       },
     });
   }

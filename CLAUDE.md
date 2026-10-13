@@ -101,8 +101,8 @@ and the action outputs in sync with the manifest — a published key is never re
 - **Secrets.** Password and OTP go in the POST body only, are never logged, and each NAS slot has
   its own `secret`-typed manifest field. The DSM trusted-device token lives in `/data`
   (`src/synology/mfa-device-store.js`, mode 0600, overridable via `SYNOLOGY_MFA_DEVICE_PATH`).
-- **User-facing strings are bilingual**: every message returned to Gladys is `{ en, fr }`, and
-  `docs/en.md` + `docs/fr.md` must be updated together.
+- **User-facing strings are translated**: every message returned to Gladys is
+  `{ en, fr, de, es }`, and `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md` stay in sync.
 
 ### Manifest and config
 
