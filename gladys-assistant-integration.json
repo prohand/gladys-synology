@@ -8,8 +8,8 @@
     "de": "Überwacht Systemwerte, Volumes, SMART-Zustand der Festplatten und Backups eines Synology-NAS.",
     "es": "Supervise métricas del sistema, volúmenes, estado SMART de discos y copias de un NAS Synology."
   },
-  "version": "2.4.0",
-  "docker_image": "ghcr.io/prohand/gladys-synology:2.4.0",
+  "version": "2.4.1",
+  "docker_image": "ghcr.io/prohand/gladys-synology:2.4.1",
   "gladys_version": ">=5.1.0",
   "cover_image": "https://raw.githubusercontent.com/prohand/gladys-synology/main/cover.png",
   "categories": ["network"],
