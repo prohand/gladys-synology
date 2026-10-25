@@ -6,6 +6,8 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-10-25
+
 ### Added
 
 - **Wake-on-LAN**: the new **Wake a Synology NAS** scene action wakes a NAS that is asleep or shut
@@ -152,7 +154,8 @@ First public release.
 - Publish Synology metrics reliably
 - Migrate fast polling to safe default
 
-[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.4.1...HEAD
+[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/prohand/gladys-synology/compare/v2.4.1...v2.5.0
 [2.4.1]: https://github.com/prohand/gladys-synology/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/prohand/gladys-synology/compare/v2.3.1...v2.4.0
 [2.3.1]: https://github.com/prohand/gladys-synology/compare/v2.3.0...v2.3.1
