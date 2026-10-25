@@ -13,6 +13,11 @@ export const SYSTEM_FEATURE = {
   DSM_VERSION: 'dsm-version',
 };
 
+// Device param carrying the MAC address of the NAS. Gladys keeps the params of a created device
+// and hands them back on every connection (`gladys.devices`): that is what lets Wake-on-LAN reach a
+// NAS that has been asleep since the integration started. A stored key: never renamed.
+export const MAC_ADDRESS_PARAM = 'MAC_ADDRESS';
+
 export function systemExternalIds(gladys, nasId) {
   return gladys.externalIds(DEVICE_TYPE, nasId);
 }
@@ -22,6 +27,7 @@ export function buildSystemDevice(gladys, nasId, nas) {
   return {
     name: nas.model || 'Synology NAS',
     external_id: ids.device,
+    ...(nas.macAddress ? { params: [{ name: MAC_ADDRESS_PARAM, value: nas.macAddress }] } : {}),
     features: [
       {
         name: 'CPU usage',

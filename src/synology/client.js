@@ -17,7 +17,9 @@ const REQUIRED_APIS = [
   'SYNO.Core.System.Utilization',
   'SYNO.Storage.CGI.Storage',
 ];
-const OPTIONAL_APIS = ['SYNO.Backup.Task', 'SYNO.ActiveBackup.Task'];
+// SYNO.DSM.Network gives the MAC address Wake-on-LAN needs; an account without the right to read
+// it only loses Wake-on-LAN.
+const OPTIONAL_APIS = ['SYNO.Backup.Task', 'SYNO.ActiveBackup.Task', 'SYNO.DSM.Network'];
 const SESSION_ERROR_CODES = new Set([106, 107, 119, 498]);
 // DSM rejects a login for good with these codes: retrying cannot help.
 const CREDENTIAL_ERROR_CODES = new Set([400, 401, 402, 407, 408, 409, 410]);
@@ -371,10 +373,21 @@ export class SynologyClient {
     };
   }
 
+  // Only Wake-on-LAN depends on it: whatever goes wrong here must never cost the NAS its
+  // monitoring (an unreachable NAS fails the required calls anyway).
+  async getNetwork() {
+    try {
+      return await this.optionalCall('SYNO.DSM.Network', 'list', {}, { preferredVersion: 1 });
+    } catch (error) {
+      logger.debug(`Synology network settings unavailable: ${error.message}`);
+      return null;
+    }
+  }
+
   async getSnapshot() {
     if (!this.apis) await this.discoverApis();
     if (!this.sid) await this.login();
-    const [system, utilization, storage, hyperBackup, activeBackup] = await Promise.all([
+    const [system, utilization, storage, hyperBackup, activeBackup, network] = await Promise.all([
       this.call('SYNO.Core.System', 'info', {}, { preferredVersion: 3 }),
       this.call('SYNO.Core.System.Utilization', 'get', {}, { preferredVersion: 1 }),
       this.call(
@@ -385,7 +398,8 @@ export class SynologyClient {
       ),
       this.getHyperBackup(),
       this.getActiveBackup(),
+      this.getNetwork(),
     ]);
-    return { system, utilization, storage, hyperBackup, activeBackup };
+    return { system, utilization, storage, hyperBackup, activeBackup, network };
   }
 }

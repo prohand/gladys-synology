@@ -6,6 +6,22 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Wake-on-LAN**: the new **Wake a Synology NAS** scene action wakes a NAS that is asleep or shut
+  down. The MAC address is read from DSM and kept on the NAS device, so it still works after a
+  Gladys restart. Gladys asks for the Wake-on-LAN permission when the integration is installed or
+  updated; Wake-on-LAN must be enabled in DSM.
+- Search keywords in the store catalog ("diskstation", "hyper backup", "raid"…).
+- The integration is also listed on the new **Servers** shelf of the catalog.
+
+### Changed
+
+- **Gladys 5.3.0 or later is now required** (the catalog search keywords need it).
+- `@gladysassistant/integration-sdk` updated to 0.16.0.
+- The release workflow runs the full store admission checks on the published image; pull
+  requests run them without the image check.
+
 ## [2.4.1] - 2026-10-23
 
 ### Security

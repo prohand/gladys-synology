@@ -548,3 +548,45 @@ test('client reads the status of many backup tasks a few at a time', async () =>
   assert.equal(hyperBackup.task_list[7].last_bkp_result, 'done-7');
   assert.equal(peak, BACKUP_TASK_CONCURRENCY);
 });
+
+test('client reads the network settings for Wake-on-LAN, and never fails a snapshot over them', async () => {
+  const apiData = {
+    'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
+    'SYNO.Core.System': { path: 'entry.cgi', minVersion: 1, maxVersion: 3 },
+    'SYNO.Core.System.Utilization': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    'SYNO.Storage.CGI.Storage': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    'SYNO.DSM.Network': { path: 'entry.cgi', minVersion: 1, maxVersion: 2 },
+  };
+  const clientAnswering = (network) =>
+    new SynologyClient(normalizeConfig({ url: 'https://nas:5001', username: 'u', password: 'p' }), {
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          assert.match(body.query, /SYNO\.DSM\.Network/);
+          return jsonResponse({ success: true, data: apiData });
+        }
+        if (body.api === 'SYNO.API.Auth') {
+          return jsonResponse({ success: true, data: { sid: 'sid' } });
+        }
+        if (body.api === 'SYNO.DSM.Network') {
+          assert.equal(body.method, 'list');
+          return network();
+        }
+        return jsonResponse({ success: true, data: {} });
+      },
+    });
+
+  const interfaces = [{ id: 'eth0', mac: '00:11:32:ab:cd:ef' }];
+  const snapshot = await clientAnswering(() =>
+    jsonResponse({ success: true, data: { interfaces } }),
+  ).getSnapshot();
+  assert.deepEqual(snapshot.network.interfaces, interfaces);
+
+  // An account without the right to read the network settings only loses Wake-on-LAN.
+  const refused = await clientAnswering(() =>
+    jsonResponse({ success: false, error: { code: 105 } }),
+  ).getSnapshot();
+  assert.equal(refused.network, null);
+  const broken = await clientAnswering(() => jsonResponse({}, 500)).getSnapshot();
+  assert.equal(broken.network, null);
+});

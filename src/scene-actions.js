@@ -1,4 +1,5 @@
 import { backupProviderName } from './devices/backup.js';
+import { MAC_ADDRESS_PARAM } from './devices/system.js';
 import { formatDate } from './date-format.js';
 import { bytesToGigabytes } from './synology/metrics.js';
 
@@ -7,6 +8,7 @@ export const SCENE_ACTION = {
   NAS_STATUS: 'get_nas_status',
   VOLUME_STATUS: 'get_volume_status',
   BACKUP_STATUS: 'get_backup_status',
+  WAKE_NAS: 'wake_nas',
 };
 
 function booleanHealth(value) {
@@ -105,4 +107,40 @@ export async function getBackupStatus(fleet, gladys, fields = {}) {
       ? Math.round((service.now() - lastBackup) / 360_000) / 10
       : undefined,
   };
+}
+
+function macParam(device) {
+  return device?.params?.find((param) => param.name === MAC_ADDRESS_PARAM)?.value || undefined;
+}
+
+/**
+ * The MAC address of the NAS a scene names. The snapshot in memory answers for any device of a NAS
+ * read since the start; a NAS asleep since then is only known through the param Gladys stored on
+ * its device. Without a device, the only NAS known to carry one stands in (single-NAS setups).
+ */
+function wakeTarget(fleet, gladys, externalId) {
+  const target = fleet.resolve(gladys, externalId);
+  const fromSnapshot = target?.service.snapshot?.nas.macAddress;
+  if (fromSnapshot) return fromSnapshot;
+  const created = gladys.devices ?? [];
+  if (externalId) return macParam(created.find((device) => device.external_id === externalId));
+  const known = [...new Set(created.map(macParam).filter(Boolean))];
+  return known.length === 1 ? known[0] : undefined;
+}
+
+/**
+ * Sends a Wake-on-LAN packet to the NAS, through the Gladys core (a broadcast never leaves the
+ * integration container). Fire-and-forget by nature: the packet left, the NAS still has to have
+ * Wake-on-LAN enabled and to boot. The next refresh shows it back. Never a scene event: an action
+ * must not be able to start a scene.
+ */
+export async function wakeNas(fleet, gladys, fields = {}) {
+  const macAddress = wakeTarget(fleet, gladys, fields.device);
+  if (!macAddress) {
+    throw new Error(
+      'The MAC address of this NAS is unknown: select the NAS device itself, created in Gladys after DSM has been reached once with an account allowed to read its network settings.',
+    );
+  }
+  await gladys.wakeOnLan(macAddress);
+  return { mac_address: macAddress };
 }

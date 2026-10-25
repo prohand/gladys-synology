@@ -9,13 +9,14 @@ import {
   getNasStatus,
   getVolumeStatus,
   SCENE_ACTION,
+  wakeNas,
 } from '../src/scene-actions.js';
 import { SCENE_TRIGGER, SceneEventTracker } from '../src/scene-events.js';
 import { BACKUP_FILTER } from '../src/widgets/backups.js';
 import { WIDGET } from '../src/widgets/index.js';
 import { DEFAULT_CHART_INTERVAL } from '../src/widgets/overview.js';
 import { createFakeGladys } from './helpers/fakeGladys.js';
-import { createFleet, rawDsmSnapshot } from './helpers/fleet.js';
+import { createFleet, dsmNetwork, rawDsmSnapshot } from './helpers/fleet.js';
 
 // Every text a user reads is offered in the four languages of the Gladys interface.
 const LANGUAGES = ['en', 'fr', 'de', 'es'];
@@ -100,10 +101,54 @@ test('catalog assets satisfy the store size and dimension constraints', async ()
   }
 });
 
-test('manifest requires Gladys 5.1 and the SDK that brings widgets and scene declarations', async () => {
+test('manifest requires Gladys 5.3 and the SDK that brings its manifest fields', async () => {
   const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
-  assert.equal(manifest.gladys_version, '>=5.1.0');
-  assert.match(pkg.dependencies['@gladysassistant/integration-sdk'], /^\^0\.(1[4-9]|[2-9]\d)\./);
+  // An older core rejects the whole manifest over a field it does not know: categories need
+  // 4.86, widgets and scenes 5.1, keywords / countries / music 5.3.
+  assert.equal(manifest.gladys_version, '>=5.3.0');
+  assert.ok(manifest.keywords || manifest.countries || manifest.music);
+  assert.match(pkg.dependencies['@gladysassistant/integration-sdk'], /^\^0\.(1[6-9]|[2-9]\d)\./);
+});
+
+// The store's controlled vocabulary of catalog shelves (Gladys 5.3 added the last four). An
+// unknown key is not rejected, it is DROPPED with a warning: a typo silently costs the shelf.
+const CATALOG_CATEGORIES = [
+  'climate',
+  'lighting',
+  'energy',
+  'security',
+  'multimedia',
+  'appliances',
+  'environment',
+  'protocols',
+  'network',
+  'notifications',
+  'assistants',
+  'services',
+  'transport',
+  'vehicles',
+  'servers',
+  'leisure',
+];
+
+test('manifest catalog placement follows the store rules', () => {
+  assert.deepEqual(manifest.categories, ['servers', 'network']);
+  for (const category of manifest.categories) assert.ok(CATALOG_CATEGORIES.includes(category));
+  // 1 to 10 search-only terms of 2 to 30 characters, unique once trimmed and lowercased.
+  const keywords = manifest.keywords.map((keyword) => keyword.trim().toLowerCase());
+  assert.ok(keywords.length >= 1 && keywords.length <= 10);
+  assert.equal(new Set(keywords).size, keywords.length, 'keywords must be unique');
+  for (const keyword of keywords) {
+    assert.ok(keyword.length >= 2 && keyword.length <= 30, `keyword "${keyword}"`);
+  }
+  // A Synology NAS sits anywhere: `countries` would hide the integration from other countries.
+  assert.equal(manifest.countries, undefined);
+});
+
+test('manifest asks for Wake-on-LAN exactly when a scene action uses it', () => {
+  // An undeclared wake is a 403 from the core; a declared one is shown on the install screen.
+  assert.equal(manifest.network_wake, true);
+  assert.ok(manifest.scene_actions.some((action) => action.key === SCENE_ACTION.WAKE_NAS));
 });
 
 function assertTranslated(text, path) {
@@ -253,17 +298,19 @@ test('manifest scene actions declare exactly the outputs their handlers return',
     Object.values(SCENE_ACTION),
   );
   const gladys = createFakeGladys();
-  const fleet = createFleet([[rawDsmSnapshot()]]);
+  const fleet = createFleet([[rawDsmSnapshot({ network: dsmNetwork() })]]);
   await fleet.refresh();
   const fields = {
     [SCENE_ACTION.NAS_STATUS]: {},
     [SCENE_ACTION.VOLUME_STATUS]: { device: 'synology-volume:ABC123:volume_1' },
     [SCENE_ACTION.BACKUP_STATUS]: { device: 'synology-backup:ABC123:hyper-backup:7' },
+    [SCENE_ACTION.WAKE_NAS]: { device: 'synology-nas:ABC123' },
   };
   const handlers = {
     [SCENE_ACTION.NAS_STATUS]: getNasStatus,
     [SCENE_ACTION.VOLUME_STATUS]: getVolumeStatus,
     [SCENE_ACTION.BACKUP_STATUS]: getBackupStatus,
+    [SCENE_ACTION.WAKE_NAS]: wakeNas,
   };
   for (const action of manifest.scene_actions) {
     assertBilingual(action, action.key);

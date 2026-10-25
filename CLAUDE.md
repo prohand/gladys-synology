@@ -30,7 +30,8 @@ manifest image by hand — `test/manifest.test.js` asserts they stay in sync.
 
 An external Gladys Assistant integration: a standalone Node process (ESM, no build step) that
 talks to Gladys over the `@gladysassistant/integration-sdk` websocket and to one to four Synology
-NAS over the DSM WebAPI. It is strictly read-only towards DSM.
+NAS over the DSM WebAPI. It is strictly read-only towards DSM (the one action on the NAS,
+Wake-on-LAN, is a magic packet emitted by the Gladys core, never a DSM call).
 
 Data flows in one direction through four layers (`index.js` is only three lines of SDK wiring):
 
@@ -84,6 +85,11 @@ and the action outputs in sync with the manifest — a published key is never re
   `refresh()`, which never publishes events, so a scene cannot loop through the integration.
 - **Scene actions** re-read DSM and return scalars only; an unreachable NAS is an output
   (`reachable: false`), a wrong device kind is a thrown error.
+- **Wake-on-LAN** (`wake_nas`, manifest `network_wake: true`, `gladys.wakeOnLan()`): the MAC comes
+  from `SYNO.DSM.Network` `list` (`primaryMacAddress()`, optional — any failure only loses it) and is
+  published as the `MAC_ADDRESS` param of the NAS device (a stored key: never renamed), so a NAS
+  asleep since the start is woken from `gladys.devices`. An unknown MAC is a thrown error, never a
+  guess (two NAS and no selection included).
 
 ### Conventions that matter
 
@@ -113,7 +119,10 @@ slashes), `date_format` narrowed to the `DATE_FORMATS` offered by the manifest `
 (`src/date-format.js`, `iso` is the historical default and must stay it) and `getNasConfigs()`
 which expands the flat `nas_2_*`/`nas_3_*`/`nas_4_*` fields into per-NAS connection objects
 (display settings are integration-wide and copied into each of them). Adding a config field means touching both, and
-`test/manifest.test.js` enforces the defaults, the `secret` types and the cover-image constraints.
+`test/manifest.test.js` enforces the defaults, the `secret` types and the cover-image constraints,
+plus the store rules of Gladys 5.3: `gladys_version >=5.3.0` (required by `keywords`), `categories`
+`["servers", "network"]` in the store vocabulary, the `keywords` shape (1–10 unique terms of 2–30
+characters), no `countries` (worldwide) and `network_wake` declared for `wake_nas`.
 
 ### Testing
 

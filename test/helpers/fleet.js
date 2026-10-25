@@ -36,6 +36,18 @@ export function rawDsmSnapshot({ serial = 'ABC123', model = 'DS920+', ...overrid
   };
 }
 
+/** A raw `SYNO.DSM.Network` `list` answer: a bond, then the two wired ports of the NAS. */
+export function dsmNetwork() {
+  return {
+    server_name: 'nas',
+    interfaces: [
+      { id: 'ovs_bond0', type: 'ovs', mac: '00:00:00:00:00:00' },
+      { id: 'eth0', type: 'lan', mac: '00:11:32:AB:CD:EF', ip: [{ address: '192.168.1.20' }] },
+      { id: 'eth1', type: 'lan', mac: '00:11:32:AB:CD:F0' },
+    ],
+  };
+}
+
 /**
  * A real fleet whose DSM clients answer from `readings` (one list per NAS, the last reading is
  * repeated; an Error entry makes that refresh fail).

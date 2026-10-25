@@ -4,6 +4,8 @@ Esta integración supervisa un NAS Synology desde Gladys Assistant. Funciona en 
 
 ## Antes de empezar
 
+Requiere **Gladys 5.3 o posterior**.
+
 1. En **Panel de control → Usuario y grupo → Usuario**, cree un usuario dedicado para Gladys.
 2. En la página de asignación de grupos, añada este usuario al grupo **administrators**. Es obligatorio: las WebAPI de DSM utilizadas para el uso del sistema y el almacenamiento rechazan a un usuario normal con el error `105` (privilegios insuficientes). El rol delegado **Supervisión del sistema** no sustituye de forma fiable a este permiso para estas API.
 3. Establezca **Sin acceso** para todas las carpetas compartidas.
@@ -37,7 +39,7 @@ Los indicadores de salud solo toman un valor cuando DSM indica claramente un est
 
 ## Widgets del panel
 
-Requiere Gladys 5.1 o posterior. Añádalos desde el modo de edición del panel (**Editar → Nuevo widget**); cada widget tiene un ajuste **NAS** que acepta cualquier dispositivo del NAS que se mostrará (el propio NAS, un volumen, un disco o una tarea de copia de seguridad). Déjelo vacío para mostrar el primer NAS.
+Añádalos desde el modo de edición del panel (**Editar → Nuevo widget**); cada widget tiene un ajuste **NAS** que acepta cualquier dispositivo del NAS que se mostrará (el propio NAS, un volumen, un disco o una tarea de copia de seguridad). Déjelo vacío para mostrar el primer NAS.
 
 - **NAS Synology**: modelo, versión de DSM, CPU, memoria y temperatura, una fila por volumen (uso y salud), un resumen de los discos y de las copias de seguridad, y un botón para abrir DSM cuando su URL utiliza HTTPS. Una vez añadido el dispositivo NAS a Gladys, la tarjeta también traza el historial de CPU y memoria durante el periodo elegido en el ajuste **Historial de carga**.
 - **Almacenamiento Synology**: un indicador por volumen, el espacio libre total y una fila por disco con su estado SMART y su temperatura.
@@ -46,8 +48,6 @@ Requiere Gladys 5.1 o posterior. Añádalos desde el modo de edición del panel 
 Los widgets muestran los valores leídos en la última actualización: abrir un panel nunca consulta el NAS. Se actualizan después de cada actualización. Un NAS que deja de responder se marca como **Inaccesible** y conserva sus últimos valores conocidos. En un panel configurado con unidades de EE. UU., las temperaturas se muestran en °F.
 
 ## Escenas
-
-Requiere Gladys 5.1 o posterior.
 
 Los **disparadores** se activan una vez, ante un cambio entre dos actualizaciones. La primera lectura tras el inicio de la integración solo sirve de referencia: un fallo ya presente al iniciar no vuelve a activarse, y un cambio que se produce mientras la integración está detenida no se notifica. Cada disparador puede limitarse a un dispositivo; deje el campo vacío para reaccionar a todos.
 
@@ -67,6 +67,17 @@ Las **acciones** consultan el NAS cuando la escena llega a ellas y devuelven val
 - **Obtener el estado de un NAS Synology**: accesible (sí/no), modelo, versión de DSM, CPU, memoria, temperatura, número de volúmenes degradados, discos con fallos y copias de seguridad fallidas, y la lista de problemas detectados. Un NAS inaccesible no detiene la escena: compruebe el valor **Accesible**.
 - **Obtener el estado de un volumen Synology**: nombre, estado DSM, en buen estado (sí/no), uso (%), espacio usado, libre y total (GB).
 - **Obtener el estado de una copia de seguridad Synology**: nombre de la tarea, paquete, estado, resultado, fecha de la última copia (en el formato de fecha configurado) y horas desde la última copia, útil para avisar de una copia de seguridad que ya no se ejecuta.
+- **Despertar un NAS Synology**: envía un paquete Wake-on-LAN al NAS (vea más abajo) y devuelve la dirección MAC despertada.
+
+## Wake-on-LAN
+
+La acción de escena **Despertar un NAS Synology** despierta un NAS en reposo o apagado, por ejemplo antes de una copia de seguridad nocturna. Durante la instalación, Gladys le pide que autorice a la integración a enviar paquetes Wake-on-LAN: es Gladys quien envía el paquete en su red local.
+
+1. En DSM, active **Panel de control → Hardware y energía → General → Habilitar WOL en LAN 1** (solo en los modelos que lo admiten, en un puerto con cable).
+2. Deje que la integración alcance el NAS una primera vez mientras está encendido y añada el dispositivo del NAS en Gladys: la integración lee su dirección MAC en DSM y la guarda en ese dispositivo, lo que le permite despertar el NAS incluso después de reiniciar Gladys.
+3. En la acción, elija el propio dispositivo del NAS (cualquier dispositivo del NAS sirve mientras el NAS se haya leído desde el inicio de la integración), o deje el campo vacío si Gladys solo conoce un NAS.
+
+La acción solo envía el paquete: compruebe el resultado un poco más tarde con **Obtener el estado de un NAS Synology**. Nunca se modifica nada en el NAS.
 
 ## Solución de problemas
 
