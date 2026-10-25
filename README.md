@@ -13,11 +13,13 @@ External [Gladys Assistant](https://gladysassistant.com/) integration for monito
 
 Volumes are discovered dynamically. Metrics are read-only: this integration does not modify the NAS.
 
-## Gladys 5.1 widgets and scenes
+Requires **Gladys 5.3 or later**.
+
+## Widgets, scenes and Wake-on-LAN
 
 - Dashboard widgets: **Synology NAS** (load, temperature, volumes, disks and backups summary, load history), **Synology storage** (volume gauges, disk SMART and temperature) and **Synology backups** (tasks with their last result, failures first).
 - Scene triggers: NAS unreachable / reachable again, volume degraded, disk failing, backup finished (filter by package and result), DSM updated.
-- Scene actions: get the state of a NAS, a volume or a backup task, with values usable by the following actions.
+- Scene actions: get the state of a NAS, a volume or a backup task, with values usable by the following actions, and wake a NAS (Wake-on-LAN).
 
 ## Setup
 
@@ -35,6 +37,18 @@ Up to four NAS can be configured with identical connection fields. NAS 2 to 4 ar
 See [docs/en.md](docs/en.md), [docs/fr.md](docs/fr.md), [docs/de.md](docs/de.md) or
 [docs/es.md](docs/es.md) for the complete guide.
 
+## Wake-on-LAN
+
+The **Wake a Synology NAS** scene action asks the Gladys core to emit a Wake-on-LAN magic packet
+(`gladys.wakeOnLan()`, manifest `network_wake: true`, shown on the install screen): a broadcast
+never leaves the integration's bridged container. The MAC address comes from DSM
+(`SYNO.DSM.Network` `list`, the first wired `eth*` port, read with every snapshot and optional: an
+account that cannot read it only loses Wake-on-LAN) and is published as the `MAC_ADDRESS` param of
+the NAS device. Gladys keeps the params of a created device and hands them back on every
+connection, so a NAS asleep since the integration started can still be woken. Wake-on-LAN must be
+enabled in DSM (**Control Panel → Hardware & Power → General → Enable WOL on LAN 1**). The action
+never touches DSM and fires no scene event.
+
 ## Development
 
 Requires Node.js 22.19 or later.
@@ -44,7 +58,13 @@ npm ci
 npm run format:check
 npm run lint
 npm test
+npx github:GladysAssistant/integration-store --skip-image-check .
 ```
+
+The last command runs the store's admission checks (catalog `categories` `servers` + `network`,
+search `keywords`, no `countries`: worldwide; `gladys_version >=5.3.0`, required by `keywords`).
+Pull requests run it with `--skip-image-check`; the Release workflow runs it in full on the tag
+once the image is published.
 
 The repository keeps the structure and release workflows of the official JavaScript external-integration template. A version tag builds `linux/amd64` and `linux/arm64` images on GitHub Actions.
 

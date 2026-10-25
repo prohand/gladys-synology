@@ -4,6 +4,8 @@ This integration monitors a Synology NAS from Gladys Assistant. It is read-only 
 
 ## Before you start
 
+Requires **Gladys 5.3 or later**.
+
 1. In **Control Panel → User & Group → User**, create a dedicated user for Gladys.
 2. On the group assignment page, add this user to the **administrators** group. This is mandatory: the DSM WebAPIs used for system utilization and storage reject an ordinary user with error `105` (insufficient privilege). The delegated **System monitoring** role is not a reliable substitute for these APIs.
 3. Set **No access** for every shared folder.
@@ -37,7 +39,7 @@ The health indicators only take a value on a status DSM clearly reports as healt
 
 ## Dashboard widgets
 
-Requires Gladys 5.1 or later. Add them in the dashboard's edit mode (**Edit → New widget**); every widget has a **NAS** setting that accepts any device of the NAS to show (the NAS itself, a volume, a disk or a backup task). Leave it empty to show the first NAS.
+Add them in the dashboard's edit mode (**Edit → New widget**); every widget has a **NAS** setting that accepts any device of the NAS to show (the NAS itself, a volume, a disk or a backup task). Leave it empty to show the first NAS.
 
 - **Synology NAS**: model, DSM version, CPU, memory and temperature, one row per volume (usage and health), a summary of the disks and the backups, and a button to open DSM when its URL uses HTTPS. Once the NAS device is added to Gladys, the card also plots the CPU and memory history over the period chosen in the **Load history** setting.
 - **Synology storage**: one gauge per volume, the total free space and one row per disk with its SMART status and temperature.
@@ -46,8 +48,6 @@ Requires Gladys 5.1 or later. Add them in the dashboard's edit mode (**Edit → 
 Widgets show the values read at the last refresh: opening a dashboard never queries the NAS. They update after each refresh. A NAS that stops answering is flagged **Unreachable** and keeps its last known values. On a dashboard set to US units, temperatures are shown in °F.
 
 ## Scenes
-
-Requires Gladys 5.1 or later.
 
 **Triggers** fire once, on a change between two refreshes. The first reading after the integration starts only serves as a reference: a failure already present at startup does not fire again, and a change that happens while the integration is stopped is not reported. Each trigger can be limited to one device; leave the field empty to react to all of them.
 
@@ -67,6 +67,17 @@ A maintenance state (expansion, scrubbing, repair) never counts as a failure, an
 - **Get the state of a Synology NAS**: reachable (yes/no), model, DSM version, CPU, memory, temperature, number of degraded volumes, failing disks and failed backups, and the list of problems found. An unreachable NAS does not stop the scene: test the **Reachable** value.
 - **Get the state of a Synology volume**: name, DSM status, healthy (yes/no), usage (%), used, free and total space (GB).
 - **Get the state of a Synology backup**: task name, package, status, result, last backup date (in the configured date format) and hours since the last backup, handy to warn about a backup that no longer runs.
+- **Wake a Synology NAS**: sends a Wake-on-LAN packet to the NAS (see below) and returns the MAC address woken.
+
+## Wake-on-LAN
+
+The **Wake a Synology NAS** scene action wakes a NAS that is asleep or shut down, for instance before a nightly backup. On installation, Gladys asks you to allow the integration to send Wake-on-LAN packets: the packet is sent by Gladys itself on your local network.
+
+1. In DSM, enable **Control Panel → Hardware & Power → General → Enable WOL on LAN 1** (only on models that support it, on a wired port).
+2. Let the integration reach the NAS once while it is on, and add the NAS device in Gladys: the integration reads its MAC address from DSM and stores it on that device, so it can still wake the NAS after a Gladys restart.
+3. In the action, select the NAS device itself (any device of the NAS works while the NAS has been read since the integration started), or leave the field empty when Gladys knows a single NAS.
+
+The action only sends the packet: test the result later with **Get the state of a Synology NAS**. Nothing is ever changed on the NAS.
 
 ## Troubleshooting
 

@@ -233,6 +233,37 @@ function normalizeBackupTasks(provider, data) {
   return tasks.map((task, index) => normalizeBackupTask(provider, task, index));
 }
 
+const MAC_PATTERN = /^[0-9a-f]{2}([:-]?)[0-9a-f]{2}(?:\1[0-9a-f]{2}){4}$/i;
+
+function normalizeMac(value) {
+  if (typeof value !== 'string' || !MAC_PATTERN.test(value.trim())) return undefined;
+  const hex = value.trim().replace(/[:-]/g, '').toLowerCase();
+  // A virtual or unconfigured interface reports an empty or broadcast address: no NIC to wake.
+  if (/^0+$/.test(hex) || /^f+$/.test(hex)) return undefined;
+  return hex.match(/../g).join(':');
+}
+
+/**
+ * The MAC address a Wake-on-LAN packet should target, from `SYNO.DSM.Network` `list`
+ * (`interfaces[].mac`, the very field Home Assistant's DSM client reads). DSM wakes on its
+ * wired LAN ports only, so an `eth*` port wins over a bond, a bridge or a VPN interface; the
+ * first one in DSM's order is LAN 1. `undefined` when DSM did not tell (API absent, account
+ * without the right to read the network settings): Wake-on-LAN is then simply not offered.
+ */
+export function primaryMacAddress(network) {
+  const interfaces = arrayFrom(network?.interfaces ?? network?.nif).filter(
+    (entry) => entry && typeof entry === 'object',
+  );
+  const candidates = interfaces
+    .map((entry) => ({
+      id: String(entry.id ?? entry.ifname ?? ''),
+      mac: normalizeMac(entry.mac ?? entry.mac_address ?? entry.macaddr),
+    }))
+    .filter((entry) => entry.mac);
+  const wired = candidates.find((entry) => /^eth\d/i.test(entry.id));
+  return (wired ?? candidates[0])?.mac;
+}
+
 export function normalizeSnapshot(snapshot) {
   const system = snapshot.system ?? {};
   const utilization = snapshot.utilization ?? {};
@@ -248,6 +279,7 @@ export function normalizeSnapshot(snapshot) {
     cpu.load,
     calculatedCpu.length ? calculatedCpu.reduce((sum, value) => sum + value, 0) : undefined,
   );
+  const macAddress = primaryMacAddress(snapshot.network);
   return {
     nas: {
       serial: String(system.serial ?? system.serial_number ?? ''),
@@ -256,6 +288,7 @@ export function normalizeSnapshot(snapshot) {
       temperature: finite(system.temperature, system.sys_temp, system.system_temperature),
       cpuUsage,
       memoryUsage: finite(memory.real_usage, memory.usage),
+      ...(macAddress ? { macAddress } : {}),
     },
     volumes: normalizeVolumes(snapshot.storage ?? {}),
     disks: normalizeDisks(snapshot.storage ?? {}),

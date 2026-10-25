@@ -204,3 +204,16 @@ test('undefined optional values are not published', () => {
   assert.equal(states.length, 2);
   assert.ok(states.every((state) => state.state === 0));
 });
+
+test('the NAS device carries its MAC address as a param only when DSM gave it', () => {
+  const [nas] = buildDiscoveredDevices(gladys, 'ABC123', snapshot);
+  assert.equal(nas.params, undefined);
+  const devices = buildDiscoveredDevices(gladys, 'ABC123', {
+    ...snapshot,
+    nas: { ...snapshot.nas, macAddress: '00:11:32:ab:cd:ef' },
+  });
+  assert.deepEqual(devices[0].params, [{ name: 'MAC_ADDRESS', value: '00:11:32:ab:cd:ef' }]);
+  // Only the NAS itself: a volume, a disk or a backup task is not what Wake-on-LAN targets.
+  assert.ok(devices.length > 1);
+  assert.ok(devices.slice(1).every((device) => device.params === undefined));
+});

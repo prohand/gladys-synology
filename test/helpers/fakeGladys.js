@@ -1,9 +1,11 @@
 export function createFakeGladys() {
   const published = [];
   const sceneEvents = [];
+  const wakes = [];
   return {
     published,
     sceneEvents,
+    wakes,
     devices: [],
     externalIds(type, platformId) {
       const device = `${type}:${platformId}`;
@@ -18,6 +20,10 @@ export function createFakeGladys() {
     },
     async publishSceneEvent(key, data) {
       sceneEvents.push({ key, data });
+      return { success: true };
+    },
+    async wakeOnLan(mac, options = {}) {
+      wakes.push({ mac, options });
       return { success: true };
     },
   };

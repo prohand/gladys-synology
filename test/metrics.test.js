@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { bytesToGigabytes, normalizeSnapshot } from '../src/synology/metrics.js';
+import { bytesToGigabytes, normalizeSnapshot, primaryMacAddress } from '../src/synology/metrics.js';
+import { dsmNetwork } from './helpers/fleet.js';
 
 test('normalizeSnapshot converts DSM system, utilization and storage shapes', () => {
   const snapshot = normalizeSnapshot({
@@ -189,4 +190,38 @@ test('normalizeSnapshot only judges volume health on known DSM statuses', () => 
 test('bytesToGigabytes rounds to two decimals', () => {
   assert.equal(bytesToGigabytes(5 * 1024 ** 3 + 512 * 1024 ** 2), 5.5);
   assert.equal(bytesToGigabytes(undefined), undefined);
+});
+
+test('the Wake-on-LAN MAC address is the first wired port DSM reports', () => {
+  assert.equal(primaryMacAddress(dsmNetwork()), '00:11:32:ab:cd:ef');
+  assert.equal(
+    normalizeSnapshot({ system: { serial: 'A' }, network: dsmNetwork() }).nas.macAddress,
+    '00:11:32:ab:cd:ef',
+  );
+  // DSM 6 `nif` shape, dashes, no `eth*` id: the first valid address stands in.
+  assert.equal(
+    primaryMacAddress({ nif: [{ id: 'bond0', mac_address: '00-11-32-12-34-56' }] }),
+    '00:11:32:12:34:56',
+  );
+  assert.equal(
+    primaryMacAddress({ interfaces: [{ id: 'eth0', mac: '001132aabbcc' }] }),
+    '00:11:32:aa:bb:cc',
+  );
+});
+
+test('no MAC address is invented when DSM does not tell', () => {
+  assert.equal(primaryMacAddress(null), undefined);
+  assert.equal(primaryMacAddress({ interfaces: [] }), undefined);
+  assert.equal(
+    primaryMacAddress({
+      interfaces: [
+        { id: 'eth0', mac: '00:00:00:00:00:00' },
+        { id: 'tun0', mac: 'ff:ff:ff:ff:ff:ff' },
+        { id: 'eth1', mac: 'not a mac' },
+        { id: 'eth2', mac: '00:11:32:ab:cd' },
+      ],
+    }),
+    undefined,
+  );
+  assert.equal('macAddress' in normalizeSnapshot({ system: { serial: 'A' } }).nas, false);
 });

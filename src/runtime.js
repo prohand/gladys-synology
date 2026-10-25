@@ -2,7 +2,13 @@ import { logger } from '@gladysassistant/integration-sdk';
 import { createBackoff } from './backoff.js';
 import { ConfigValidationError, normalizeConfig } from './config.js';
 import { SynologyFleetService } from './fleet-service.js';
-import { getBackupStatus, getNasStatus, getVolumeStatus, SCENE_ACTION } from './scene-actions.js';
+import {
+  getBackupStatus,
+  getNasStatus,
+  getVolumeStatus,
+  SCENE_ACTION,
+  wakeNas,
+} from './scene-actions.js';
 import { buildWidgetContent, WIDGET } from './widgets/index.js';
 
 const defaultScheduler = { setTimeout, clearTimeout, setInterval, clearInterval };
@@ -262,6 +268,7 @@ export function createRuntime(
     [SCENE_ACTION.NAS_STATUS]: getNasStatus,
     [SCENE_ACTION.VOLUME_STATUS]: getVolumeStatus,
     [SCENE_ACTION.BACKUP_STATUS]: getBackupStatus,
+    [SCENE_ACTION.WAKE_NAS]: wakeNas,
   };
   for (const [key, run] of Object.entries(sceneActions)) {
     gladys.onSceneAction(key, async (fields) => run(await ready(), gladys, fields));
