@@ -174,6 +174,35 @@ function normalizeDisks(storage = {}) {
   });
 }
 
+function countFrom(...candidates) {
+  // Number('') and Number(true) are finite: only a real number, or its string, is a count.
+  const count = finite(
+    ...candidates.filter(
+      (value) => typeof value === 'number' || (typeof value === 'string' && value.trim() !== ''),
+    ),
+  );
+  return Number.isInteger(count) && count >= 0 ? count : undefined;
+}
+
+/**
+ * Number of versions in a `SYNO.Backup.Version` `list` answer. The API is undocumented: an
+ * explicit total wins over the length of the list (which may be one page only), and an answer
+ * with neither gives `undefined`, never 0.
+ */
+export function countBackupVersions(data) {
+  if (!data || typeof data !== 'object') return undefined;
+  const total = countFrom(data.total, data.total_count, data.count, data.version_count);
+  if (total !== undefined) return total;
+  const list = [
+    data.version_info_list,
+    data.version_list,
+    data.versions,
+    data.list,
+    data.items,
+  ].find(Array.isArray);
+  return list ? list.length : undefined;
+}
+
 function normalizeBackupTask(provider, task, index) {
   const versions = arrayFrom(task.versions ?? task.version_list);
   const latestVersion = versions[0] ?? {};
@@ -216,6 +245,8 @@ function normalizeBackupTask(provider, task, index) {
       latestVersion.create_time,
     ),
   );
+  // Read by the client from SYNO.Backup.Version (Hyper Backup only).
+  const versionCount = provider === 'hyper-backup' ? countFrom(task.version_count) : undefined;
   return {
     id: String(id),
     provider,
@@ -224,6 +255,7 @@ function normalizeBackupTask(provider, task, index) {
     result: result === undefined ? undefined : String(result),
     outcome: backupOutcome(result),
     lastBackupAt,
+    ...(versionCount === undefined ? {} : { versionCount }),
   };
 }
 

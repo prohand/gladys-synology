@@ -31,7 +31,7 @@ Pulse **Probar la conexión DSM**. Si todo va bien, el resultado muestra el mode
 
 ## Dispositivos
 
-La integración crea un dispositivo por NAS, un dispositivo por cada volumen de almacenamiento, un dispositivo por cada disco interno y, cuando están disponibles, un dispositivo por cada tarea de Hyper Backup o Active Backup. Cada disco expone el estado SMART exacto indicado por DSM, un indicador binario de salud SMART y, cuando DSM la indica, su temperatura. Una tarea de copia de seguridad expone su estado, su último resultado y la hora de la última copia. Estas API de paquetes de DSM no están disponibles en todos los modelos y versiones; su ausencia no impide la supervisión del sistema ni del almacenamiento.
+La integración crea un dispositivo por NAS, un dispositivo por cada volumen de almacenamiento, un dispositivo por cada disco interno y, cuando están disponibles, un dispositivo por cada tarea de Hyper Backup o Active Backup. Cada disco expone el estado SMART exacto indicado por DSM, un indicador binario de salud SMART y, cuando DSM la indica, su temperatura. Una tarea de copia de seguridad expone su estado, su último resultado y la hora de la última copia. Una tarea de Hyper Backup también expone su número de versiones cuando DSM lo proporciona; este número se vuelve a leer después de cada nueva copia y, como mínimo, cada 6 horas. Estas API de paquetes de DSM no están disponibles en todos los modelos y versiones; su ausencia no impide la supervisión del sistema ni del almacenamiento.
 
 Se envía una primera lectura inmediatamente después de añadir un dispositivo y, a continuación, cada actualización refresca todos los valores del NAS. Los porcentajes de uso de los volúmenes se redondean a dos decimales. Se guarda un historial para el uso, la temperatura y los valores de salud; las capacidades y la información de texto no generan un historial redundante.
 
@@ -66,7 +66,7 @@ Las **acciones** consultan el NAS cuando la escena llega a ellas y devuelven val
 
 - **Obtener el estado de un NAS Synology**: accesible (sí/no), modelo, versión de DSM, CPU, memoria, temperatura, número de volúmenes degradados, discos con fallos y copias de seguridad fallidas, y la lista de problemas detectados. Un NAS inaccesible no detiene la escena: compruebe el valor **Accesible**.
 - **Obtener el estado de un volumen Synology**: nombre, estado DSM, en buen estado (sí/no), uso (%), espacio usado, libre y total (GB).
-- **Obtener el estado de una copia de seguridad Synology**: nombre de la tarea, paquete, estado, resultado, fecha de la última copia (en el formato de fecha configurado) y horas desde la última copia, útil para avisar de una copia de seguridad que ya no se ejecuta.
+- **Obtener el estado de una copia de seguridad Synology**: nombre de la tarea, paquete, estado, resultado, fecha de la última copia (en el formato de fecha configurado) horas desde la última copia y, para Hyper Backup, el número de versiones, útil para avisar de una copia de seguridad que ya no se ejecuta.
 - **Despertar un NAS Synology**: envía un paquete Wake-on-LAN al NAS (vea más abajo) y devuelve la dirección MAC despertada.
 
 ## Wake-on-LAN
@@ -93,4 +93,5 @@ La acción solo envía el paquete: compruebe el resultado un poco más tarde con
 - **`certificate does not match the pinned SHA-256 fingerprint`**: DSM ha presentado otro certificado. Si lo ha renovado o sustituido usted mismo, pegue la nueva huella; de lo contrario, algo se está haciendo pasar por su NAS: no se le ha enviado nada.
 - **Falta un volumen**: vuelva a buscar dispositivos después de crear o eliminar un volumen.
 - **Faltan tareas de copia de seguridad**: compruebe que Hyper Backup o Active Backup está instalado, que existe al menos una tarea y que la cuenta DSM dedicada puede abrir el paquete correspondiente, y vuelva a buscar dispositivos.
+- **Una tarea de Hyper Backup no tiene la función Versiones**: vuelva a buscar dispositivos y actualice el dispositivo en Gladys. El número procede de una API de DSM no documentada: si su versión de DSM no la proporciona, la función simplemente no se crea.
 - **Una fecha de copia de seguridad no tiene valor**: actualice la integración, vuelva a guardar la conexión y espere a la siguiente actualización. Los detalles de Active Backup se consultan tarea por tarea porque su lista general de tareas no siempre incluye las fechas de las versiones.

@@ -7,7 +7,11 @@ export const BACKUP_FEATURE = {
   STATUS: 'status',
   RESULT: 'last-result',
   LAST_BACKUP: 'last-backup',
+  VERSION_COUNT: 'version-count',
 };
+
+// Hyper Backup keeps at most 65535 versions per task.
+const MAX_VERSION_COUNT = 65535;
 
 function backupPlatformId(nasId, backup) {
   return `${nasId}:${backup.provider}:${backup.id}`;
@@ -44,6 +48,22 @@ export function buildBackupDevice(gladys, nasId, nas, backup) {
       textFeature(ids, 'Status', BACKUP_FEATURE.STATUS),
       textFeature(ids, 'Last result', BACKUP_FEATURE.RESULT),
       textFeature(ids, 'Last backup', BACKUP_FEATURE.LAST_BACKUP),
+      // Only when DSM gave a count: a DSM without SYNO.Backup.Version gets no dead feature.
+      ...(backup.versionCount === undefined
+        ? []
+        : [
+            {
+              name: 'Versions',
+              external_id: ids.feature(BACKUP_FEATURE.VERSION_COUNT),
+              category: DEVICE_FEATURE_CATEGORIES.UNKNOWN,
+              type: DEVICE_FEATURE_TYPES.SENSOR.INTEGER,
+              min: 0,
+              max: MAX_VERSION_COUNT,
+              read_only: true,
+              has_feedback: false,
+              keep_history: false,
+            },
+          ]),
     ],
   };
 }
@@ -55,7 +75,14 @@ export function buildBackupStates(gladys, nasId, backup, { dateFormat } = {}) {
     [BACKUP_FEATURE.RESULT, backup.result],
     [BACKUP_FEATURE.LAST_BACKUP, formatDate(backup.lastBackupAt, dateFormat)],
   ];
-  return values
+  const states = values
     .filter(([, text]) => text !== undefined && text !== '')
     .map(([key, text]) => ({ device_feature_external_id: ids.feature(key), text }));
+  if (backup.versionCount !== undefined) {
+    states.push({
+      device_feature_external_id: ids.feature(BACKUP_FEATURE.VERSION_COUNT),
+      state: backup.versionCount,
+    });
+  }
+  return states;
 }

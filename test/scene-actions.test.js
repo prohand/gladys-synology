@@ -71,8 +71,26 @@ test('the backup status tells how long ago the task ran, in the configured date 
       outcome: 'success',
       last_backup: '2026-09-21T14:13:20.000Z',
       hours_since_last_backup: 45.8,
+      version_count: undefined,
     },
   );
+});
+
+test('the backup status gives the Hyper Backup version count when DSM tells it', async () => {
+  const gladys = createFakeGladys();
+  const fleet = await readyFleet([
+    rawDsmSnapshot({
+      hyperBackup: {
+        task_list: [
+          { task_id: 7, name: 'Cloud archive', last_bkp_result: 'done', version_count: 12 },
+        ],
+      },
+    }),
+  ]);
+  const status = await getBackupStatus(fleet, gladys, {
+    device: 'synology-backup:ABC123:hyper-backup:7',
+  });
+  assert.equal(status.version_count, 12);
 });
 
 test('an action refuses a device of the wrong kind or a task gone from the NAS', async () => {

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DEVICE_FEATURE_CATEGORIES } from '@gladysassistant/integration-sdk';
+import { DEVICE_FEATURE_CATEGORIES, DEVICE_FEATURE_TYPES } from '@gladysassistant/integration-sdk';
 import { buildDiscoveredDevices, buildStates } from '../src/devices/index.js';
 import { createFakeGladys } from './helpers/fakeGladys.js';
 
@@ -90,6 +90,45 @@ test('backup tasks are discovered as text-only Gladys devices', () => {
   assert.equal(
     states.find((state) => state.device_feature_external_id.endsWith(':last-backup')).text,
     '2023-11-14T22:13:20.000Z',
+  );
+});
+
+test('a Hyper Backup task with a known version count gets a numeric Versions feature', () => {
+  const backup = {
+    id: '7',
+    provider: 'hyper-backup',
+    name: 'Cloud archive',
+    result: 'success',
+    versionCount: 12,
+  };
+  const [device] = buildDiscoveredDevices(gladys, 'ABC123', {
+    ...snapshot,
+    backups: [backup],
+  }).filter((entry) => entry.external_id.startsWith('synology-backup:'));
+  const feature = device.features.find((entry) => entry.external_id.endsWith(':version-count'));
+  assert.equal(feature.external_id, 'synology-backup:ABC123:hyper-backup:7:version-count');
+  assert.equal(feature.type, DEVICE_FEATURE_TYPES.SENSOR.INTEGER);
+  assert.equal(feature.keep_history, false);
+  const state = buildStates(gladys, 'ABC123', { ...snapshot, backups: [backup] }).find((entry) =>
+    entry.device_feature_external_id.endsWith(':version-count'),
+  );
+  assert.deepEqual(state, {
+    device_feature_external_id: 'synology-backup:ABC123:hyper-backup:7:version-count',
+    state: 12,
+  });
+
+  // DSM did not give a count: no dead feature, nothing published.
+  const { versionCount, ...unknown } = backup;
+  assert.equal(versionCount, 12);
+  const unknownSnapshot = { ...snapshot, backups: [unknown] };
+  const [plain] = buildDiscoveredDevices(gladys, 'ABC123', unknownSnapshot).filter((entry) =>
+    entry.external_id.startsWith('synology-backup:'),
+  );
+  assert.ok(plain.features.every((entry) => !entry.external_id.endsWith(':version-count')));
+  assert.ok(
+    buildStates(gladys, 'ABC123', unknownSnapshot).every(
+      (entry) => !entry.device_feature_external_id.endsWith(':version-count'),
+    ),
   );
 });
 

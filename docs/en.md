@@ -31,7 +31,7 @@ Click **Test the DSM connection**. A successful result shows the NAS model, DSM 
 
 ## Devices
 
-The integration creates one device per NAS, one device for every storage volume, one device for every internal disk and, when available, one device for every Hyper Backup or Active Backup task. Each disk exposes the exact SMART status reported by DSM, a binary SMART health indicator and, when DSM reports it, its temperature. A backup task exposes its status, latest result and latest backup time. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
+The integration creates one device per NAS, one device for every storage volume, one device for every internal disk and, when available, one device for every Hyper Backup or Active Backup task. Each disk exposes the exact SMART status reported by DSM, a binary SMART health indicator and, when DSM reports it, its temperature. A backup task exposes its status, latest result and latest backup time. A Hyper Backup task also exposes its number of versions when DSM provides it; this count is read again after each new backup, and at least every 6 hours. These DSM package APIs are not available on every model and version; their absence does not prevent system and storage monitoring.
 
 A first snapshot is sent immediately after a device is added, then every refresh updates all NAS values. Volume usage percentages are rounded to two decimal places. History is kept for utilization, temperature and health values; capacities and text information do not create redundant history.
 
@@ -66,7 +66,7 @@ A maintenance state (expansion, scrubbing, repair) never counts as a failure, an
 
 - **Get the state of a Synology NAS**: reachable (yes/no), model, DSM version, CPU, memory, temperature, number of degraded volumes, failing disks and failed backups, and the list of problems found. An unreachable NAS does not stop the scene: test the **Reachable** value.
 - **Get the state of a Synology volume**: name, DSM status, healthy (yes/no), usage (%), used, free and total space (GB).
-- **Get the state of a Synology backup**: task name, package, status, result, last backup date (in the configured date format) and hours since the last backup, handy to warn about a backup that no longer runs.
+- **Get the state of a Synology backup**: task name, package, status, result, last backup date (in the configured date format) hours since the last backup and, for Hyper Backup, the number of versions, handy to warn about a backup that no longer runs.
 - **Wake a Synology NAS**: sends a Wake-on-LAN packet to the NAS (see below) and returns the MAC address woken.
 
 ## Wake-on-LAN
@@ -93,4 +93,5 @@ The action only sends the packet: test the result later with **Get the state of 
 - **`certificate does not match the pinned SHA-256 fingerprint`**: DSM presented another certificate. If you renewed or replaced it yourself, paste the new fingerprint; otherwise, something is posing as your NAS — nothing was sent to it.
 - **A volume is missing**: rescan after creating or removing a volume.
 - **Backup tasks are missing**: verify that Hyper Backup or Active Backup is installed, that at least one task exists and that the dedicated DSM account can open the corresponding package, then scan again.
+- **A Hyper Backup task has no Versions feature**: scan again and update the device in Gladys. The count comes from an undocumented DSM API: if your DSM version does not provide it, the feature is simply not created.
 - **A backup date has no value**: update the integration, save the connection again and wait for the next refresh. Active Backup details are queried task by task because its general task list does not always include version dates.
