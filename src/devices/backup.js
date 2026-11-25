@@ -55,7 +55,9 @@ export function buildBackupDevice(gladys, nasId, nas, backup) {
             {
               name: 'Versions',
               external_id: ids.feature(BACKUP_FEATURE.VERSION_COUNT),
-              category: DEVICE_FEATURE_CATEGORIES.UNKNOWN,
+              // `unknown` has no `integer` label in the Gladys UI (an empty chip): `counter-sensor`
+              // + `integer` is shown as an integer counter.
+              category: DEVICE_FEATURE_CATEGORIES.COUNTER_SENSOR,
               type: DEVICE_FEATURE_TYPES.SENSOR.INTEGER,
               min: 0,
               max: MAX_VERSION_COUNT,

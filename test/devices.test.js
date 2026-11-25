@@ -107,6 +107,7 @@ test('a Hyper Backup task with a known version count gets a numeric Versions fea
   }).filter((entry) => entry.external_id.startsWith('synology-backup:'));
   const feature = device.features.find((entry) => entry.external_id.endsWith(':version-count'));
   assert.equal(feature.external_id, 'synology-backup:ABC123:hyper-backup:7:version-count');
+  assert.equal(feature.category, DEVICE_FEATURE_CATEGORIES.COUNTER_SENSOR);
   assert.equal(feature.type, DEVICE_FEATURE_TYPES.SENSOR.INTEGER);
   assert.equal(feature.keep_history, false);
   const state = buildStates(gladys, 'ABC123', { ...snapshot, backups: [backup] }).find((entry) =>
