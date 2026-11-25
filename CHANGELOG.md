@@ -6,6 +6,8 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-11-25
+
 ### Fixed
 
 - The number of Hyper Backup versions did not show in the **Synology backups** widget: Gladys
@@ -204,7 +206,8 @@ First public release.
 - Publish Synology metrics reliably
 - Migrate fast polling to safe default
 
-[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.7.1...HEAD
+[2.7.1]: https://github.com/prohand/gladys-synology/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/prohand/gladys-synology/compare/v2.6.2...v2.7.0
 [2.6.2]: https://github.com/prohand/gladys-synology/compare/v2.6.1...v2.6.2
 [2.6.1]: https://github.com/prohand/gladys-synology/compare/v2.6.0...v2.6.1
