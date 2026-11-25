@@ -6,6 +6,12 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- **Number of Hyper Backup versions**: the value never appeared, because DSM only answers the
+  version list in version 2 of its API. Scan again and update the Hyper Backup devices in Gladys
+  to see the **Versions** value.
+
 ## [2.6.0] - 2026-11-25
 
 ### Added

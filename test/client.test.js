@@ -550,7 +550,7 @@ test('client reads the status of many backup tasks a few at a time', async () =>
   assert.equal(peak, BACKUP_TASK_CONCURRENCY);
 });
 
-function hyperBackupClient({ withVersionApi = true, versions } = {}) {
+function hyperBackupClient({ withVersionApi = true, versionApiMax = 2, versions } = {}) {
   const state = {
     tasks: [{ task_id: 7, last_bkp_time: 1_000 }],
     versionCalls: [],
@@ -560,7 +560,7 @@ function hyperBackupClient({ withVersionApi = true, versions } = {}) {
     'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
     'SYNO.Backup.Task': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
     ...(withVersionApi
-      ? { 'SYNO.Backup.Version': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 } }
+      ? { 'SYNO.Backup.Version': { path: 'entry.cgi', minVersion: 1, maxVersion: versionApiMax } }
       : {}),
   };
   const client = new SynologyClient(
@@ -623,6 +623,36 @@ test('client reads the Hyper Backup version count, then again only after a new b
   state.clock += VERSION_COUNT_MAX_AGE_MS;
   assert.equal((await client.getHyperBackup()).task_list[0].version_count, 29);
   assert.equal(state.versionCalls.length, 3);
+});
+
+test('client lists Hyper Backup versions with version 2 of SYNO.Backup.Version', async () => {
+  // Payload captured on a real NAS: version 1 of the API has no `list` method (error 103).
+  const { client, state } = hyperBackupClient({
+    versions: (body) =>
+      body.version === '2'
+        ? jsonResponse({
+            success: true,
+            data: {
+              backup_data_type: 'data',
+              total: 1,
+              version_info_list: [{ timestamp: 1_795_000_263, version_id: 'nas_20261118.dss' }],
+            },
+          })
+        : jsonResponse({ success: false, error: { code: 103 } }),
+  });
+  await client.discoverApis();
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 1);
+  assert.equal(state.versionCalls[0].version, '2');
+});
+
+test('a DSM whose SYNO.Backup.Version stops at version 1 is asked version 1', async () => {
+  const { client, state } = hyperBackupClient({
+    versionApiMax: 1,
+    versions: () => jsonResponse({ success: true, data: { total: 4 } }),
+  });
+  await client.discoverApis();
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 4);
+  assert.equal(state.versionCalls[0].version, '1');
 });
 
 test('a failing version list keeps the last count and never fails the backup tasks', async () => {
