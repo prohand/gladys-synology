@@ -43,7 +43,7 @@ Añádalos desde el modo de edición del panel (**Editar → Nuevo widget**); ca
 
 - **NAS Synology**: modelo, versión de DSM, CPU, memoria y temperatura, una fila por volumen (uso y salud), un resumen de los discos y de las copias de seguridad, y un botón para abrir DSM cuando su URL utiliza HTTPS. Una vez añadido el dispositivo NAS a Gladys, la tarjeta también traza el historial de CPU y memoria durante el periodo elegido en el ajuste **Historial de carga**.
 - **Almacenamiento Synology**: un indicador por volumen, el espacio libre total y una fila por disco con su estado SMART y su temperatura.
-- **Copias de seguridad Synology**: las tareas de Hyper Backup y Active Backup con su último resultado, fallos primero. Con el ajuste **NAS** vacío, muestra las tareas de todos los NAS. El ajuste **Tareas mostradas** permite conservar solo las fallidas o parciales.
+- **Copias de seguridad Synology**: las tareas de Hyper Backup y Active Backup con su último resultado, fallos primero; una tarea de Hyper Backup también muestra su número de versiones cuando DSM lo proporciona. Con el ajuste **NAS** vacío, muestra las tareas de todos los NAS. El ajuste **Tareas mostradas** permite conservar solo las fallidas o parciales.
 
 Los widgets muestran los valores leídos en la última actualización: abrir un panel nunca consulta el NAS. Se actualizan después de cada actualización. Un NAS que deja de responder se marca como **Inaccesible** y conserva sus últimos valores conocidos. En un panel configurado con unidades de EE. UU., las temperaturas se muestran en °F.
 

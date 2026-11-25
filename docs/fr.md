@@ -43,7 +43,7 @@ Ajoutez-les depuis l'éditeur du tableau de bord ; chaque widget a un réglage *
 
 - **NAS Synology** : modèle, version DSM, CPU, mémoire et température, une ligne par volume (occupation et santé), un résumé des disques et des sauvegardes, et un bouton pour ouvrir DSM si son URL utilise HTTPS. Une fois l'appareil NAS ajouté à Gladys, la carte affiche aussi l'historique du CPU et de la mémoire sur la période choisie dans le réglage **Historique de la charge**.
 - **Stockage Synology** : une jauge par volume, l'espace libre total et une ligne par disque avec son état SMART et sa température.
-- **Sauvegardes Synology** : les tâches Hyper Backup et Active Backup avec leur dernier résultat, échecs en premier. Avec un réglage **NAS** vide, il liste les tâches de tous les NAS. Le réglage **Tâches affichées** permet de ne garder que celles en échec ou partielles.
+- **Sauvegardes Synology** : les tâches Hyper Backup et Active Backup avec leur dernier résultat, échecs en premier ; une tâche Hyper Backup affiche aussi son nombre de versions lorsque DSM le fournit. Avec un réglage **NAS** vide, il liste les tâches de tous les NAS. Le réglage **Tâches affichées** permet de ne garder que celles en échec ou partielles.
 
 Les widgets affichent les valeurs lues au dernier rafraîchissement : ouvrir un tableau de bord n'interroge jamais le NAS. Ils se mettent à jour après chaque rafraîchissement. Un NAS qui ne répond plus est signalé **Injoignable** et garde ses dernières valeurs connues. Sur un tableau de bord réglé en unités US, les températures sont affichées en °F.
 

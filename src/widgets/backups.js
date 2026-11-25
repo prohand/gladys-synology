@@ -41,10 +41,29 @@ function compare(left, right) {
   );
 }
 
+const VERSIONS = {
+  en: (count) => `${count} ${count === 1 ? 'version' : 'versions'}`,
+  fr: (count) => `${count} ${count === 1 ? 'version' : 'versions'}`,
+  de: (count) => `${count} ${count === 1 ? 'Version' : 'Versionen'}`,
+  es: (count) => `${count} ${count === 1 ? 'versión' : 'versiones'}`,
+};
+
+// "Hyper Backup · DS920+", plus the number of versions when DSM gave it (Hyper Backup only).
+function subtitle(backup, model) {
+  const base = `${backupProviderName(backup.provider)} · ${model}`;
+  if (backup.versionCount === undefined) return truncate(base, 60);
+  return Object.fromEntries(
+    Object.entries(VERSIONS).map(([language, versions]) => [
+      language,
+      truncate(`${base} · ${versions(backup.versionCount)}`, 60),
+    ]),
+  );
+}
+
 function item({ backup, model }) {
   const entry = {
     title: truncate(backup.name, 60),
-    subtitle: truncate(`${backupProviderName(backup.provider)} · ${model}`, 60),
+    subtitle: subtitle(backup, model),
   };
   if (backup.lastBackupAt && !Number.isNaN(new Date(backup.lastBackupAt).getTime())) {
     entry.date = backup.lastBackupAt;
