@@ -383,7 +383,8 @@ export class SynologyClient {
         'SYNO.Backup.Version',
         'list',
         { task_id: key },
-        { preferredVersion: 1 },
+        // `list` only exists from version 2: version 1 answers 103 (seen on a real DSM 7 NAS).
+        { preferredVersion: 2 },
       );
       if (versions) count = countBackupVersions(versions) ?? count;
     } catch (error) {
