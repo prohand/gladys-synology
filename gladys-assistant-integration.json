@@ -1583,6 +1583,16 @@
             "de": "Stunden seit dem letzten Backup",
             "es": "Horas desde la última copia de seguridad"
           }
+        },
+        {
+          "key": "version_count",
+          "type": "number",
+          "label": {
+            "en": "Number of versions (Hyper Backup)",
+            "fr": "Nombre de versions (Hyper Backup)",
+            "de": "Anzahl der Versionen (Hyper Backup)",
+            "es": "Número de versiones (Hyper Backup)"
+          }
         }
       ]
     },

@@ -31,7 +31,7 @@ Cliquez sur **Tester la connexion DSM**. En cas de succès, le résultat indique
 
 ## Appareils
 
-L'intégration crée un appareil par NAS, un appareil par volume de stockage, un appareil par disque interne et, lorsqu'elles sont disponibles, un appareil par tâche Hyper Backup ou Active Backup. Chaque disque expose l'état SMART exact renvoyé par DSM, un indicateur binaire de bonne santé SMART et, lorsque DSM la communique, sa température. Une tâche de sauvegarde expose son état, son dernier résultat et la date de sa dernière sauvegarde. Les API de ces paquets DSM ne sont pas présentes sur tous les modèles et versions : leur absence ne bloque pas les métriques système et stockage.
+L'intégration crée un appareil par NAS, un appareil par volume de stockage, un appareil par disque interne et, lorsqu'elles sont disponibles, un appareil par tâche Hyper Backup ou Active Backup. Chaque disque expose l'état SMART exact renvoyé par DSM, un indicateur binaire de bonne santé SMART et, lorsque DSM la communique, sa température. Une tâche de sauvegarde expose son état, son dernier résultat et la date de sa dernière sauvegarde. Une tâche Hyper Backup expose aussi son nombre de versions lorsque DSM le fournit ; ce nombre est relu après chaque nouvelle sauvegarde, et au moins toutes les 6 heures. Les API de ces paquets DSM ne sont pas présentes sur tous les modèles et versions : leur absence ne bloque pas les métriques système et stockage.
 
 Un premier instantané est envoyé immédiatement après l'ajout d'un appareil, puis chaque cycle met à jour en une seule fois les valeurs de tous les NAS. Le pourcentage d'occupation des volumes est arrondi à deux décimales. L'historique est conservé pour les taux d'utilisation, la température et l'état de santé ; les capacités et informations textuelles ne créent pas d'historique redondant.
 
@@ -66,7 +66,7 @@ Les **actions** interrogent le NAS au moment où la scène les atteint et renvoi
 
 - **Récupérer l'état d'un NAS Synology** : joignable (oui/non), modèle, version DSM, CPU, mémoire, température, nombre de volumes dégradés, de disques défaillants et de sauvegardes en échec, et la liste des problèmes détectés. Un NAS injoignable n'arrête pas la scène : testez la valeur **Joignable**.
 - **Récupérer l'état d'un volume Synology** : nom, état DSM, sain (oui/non), occupation (%), espace utilisé, libre et total (Go).
-- **Récupérer l'état d'une sauvegarde Synology** : nom de la tâche, paquet, état, résultat, date de la dernière sauvegarde (au format de date configuré) et heures depuis la dernière sauvegarde, pratique pour être prévenu d'une sauvegarde qui ne tourne plus.
+- **Récupérer l'état d'une sauvegarde Synology** : nom de la tâche, paquet, état, résultat, date de la dernière sauvegarde (au format de date configuré) heures depuis la dernière sauvegarde et, pour Hyper Backup, le nombre de versions, pratique pour être prévenu d'une sauvegarde qui ne tourne plus.
 - **Réveiller un NAS Synology** : envoie un paquet Wake-on-LAN au NAS (voir plus bas) et renvoie l'adresse MAC réveillée.
 
 ## Wake-on-LAN
@@ -93,4 +93,5 @@ L'action envoie seulement le paquet : vérifiez le résultat un peu plus tard av
 - **`certificate does not match the pinned SHA-256 fingerprint`** : DSM a présenté un autre certificat. Si vous l'avez renouvelé ou remplacé vous-même, collez la nouvelle empreinte ; sinon, quelque chose se fait passer pour votre NAS — rien ne lui a été envoyé.
 - **Volume absent** : relancez une recherche après la création ou la suppression d'un volume.
 - **Tâches de sauvegarde absentes** : vérifiez que Hyper Backup ou Active Backup est installé, qu'au moins une tâche existe et que le compte DSM dédié peut ouvrir le paquet correspondant, puis relancez la recherche.
+- **Une tâche Hyper Backup n'a pas de fonctionnalité Versions** : relancez la recherche et mettez à jour l'appareil dans Gladys. Le nombre vient d'une API DSM non documentée : si votre version de DSM ne la fournit pas, la fonctionnalité n'est simplement pas créée.
 - **La date d'une sauvegarde n'a aucune valeur** : mettez l'intégration à jour, enregistrez de nouveau la connexion et attendez le prochain rafraîchissement. Les détails Active Backup sont interrogés tâche par tâche, car la liste générale ne fournit pas toujours les dates des versions.

@@ -1,6 +1,11 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { bytesToGigabytes, normalizeSnapshot, primaryMacAddress } from '../src/synology/metrics.js';
+import {
+  bytesToGigabytes,
+  countBackupVersions,
+  normalizeSnapshot,
+  primaryMacAddress,
+} from '../src/synology/metrics.js';
 import { dsmNetwork } from './helpers/fleet.js';
 
 test('normalizeSnapshot converts DSM system, utilization and storage shapes', () => {
@@ -114,6 +119,32 @@ test('normalizeSnapshot exposes Hyper Backup and Active Backup task information'
       lastBackupAt: '2023-11-14T22:15:00.000Z',
     },
   ]);
+});
+
+test('countBackupVersions reads a total first, then the length of the version list', () => {
+  assert.equal(countBackupVersions({ total: 42, version_info_list: [{}, {}] }), 42);
+  assert.equal(countBackupVersions({ total: '7' }), 7);
+  assert.equal(countBackupVersions({ version_info_list: [{}, {}, {}] }), 3);
+  assert.equal(countBackupVersions({ versions: [] }), 0);
+  assert.equal(countBackupVersions({ list: [{}] }), 1);
+  // No count in the answer: unknown, never 0.
+  assert.equal(countBackupVersions({}), undefined);
+  assert.equal(countBackupVersions({ total: '' }), undefined);
+  assert.equal(countBackupVersions({ total: -1 }), undefined);
+  assert.equal(countBackupVersions({ total: 2.5 }), undefined);
+  assert.equal(countBackupVersions(null), undefined);
+});
+
+test('normalizeSnapshot gives a version count to Hyper Backup tasks only', () => {
+  const snapshot = normalizeSnapshot({
+    hyperBackup: { task_list: [{ task_id: 7, version_count: 30 }, { task_id: 8 }] },
+    activeBackup: { tasks: [{ task_id: 9, version_count: 5 }] },
+  });
+  assert.deepEqual(
+    snapshot.backups.map((backup) => backup.versionCount),
+    [30, undefined, undefined],
+  );
+  assert.ok(!('versionCount' in snapshot.backups[1]));
 });
 
 test('normalizeSnapshot maps a partially successful Active Backup result', () => {

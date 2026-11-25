@@ -1,5 +1,6 @@
 import { createLogger } from '@gladysassistant/integration-sdk';
 import { SynologyApiError, apiError } from './errors.js';
+import { countBackupVersions } from './metrics.js';
 import { SynologyMfaDeviceStore } from './mfa-device-store.js';
 // fetch and Agent MUST come from the same undici package: Node's global fetch runs on the undici
 // bundled with Node (6.x on Node 22, 7.x on Node 24), which rejects a dispatcher built by undici 8
@@ -19,7 +20,13 @@ const REQUIRED_APIS = [
 ];
 // SYNO.DSM.Network gives the MAC address Wake-on-LAN needs; an account without the right to read
 // it only loses Wake-on-LAN.
-const OPTIONAL_APIS = ['SYNO.Backup.Task', 'SYNO.ActiveBackup.Task', 'SYNO.DSM.Network'];
+// SYNO.Backup.Version only gives the Hyper Backup version count: undocumented, it may be missing.
+const OPTIONAL_APIS = [
+  'SYNO.Backup.Task',
+  'SYNO.Backup.Version',
+  'SYNO.ActiveBackup.Task',
+  'SYNO.DSM.Network',
+];
 const SESSION_ERROR_CODES = new Set([106, 107, 119, 498]);
 // DSM rejects a login for good with these codes: retrying cannot help.
 const CREDENTIAL_ERROR_CODES = new Set([400, 401, 402, 407, 408, 409, 410]);
@@ -27,6 +34,11 @@ const MFA_DEVICE_NAME = 'Gladys Synology';
 // DSM backup packages answer one call per task. A NAS with dozens of tasks would otherwise open
 // dozens of requests at once against a box that is also serving its users.
 export const BACKUP_TASK_CONCURRENCY = 4;
+// Listing the versions of a Hyper Backup task may make DSM open the backup target (a remote NAS,
+// a cloud bucket). The count only moves when a backup finishes (new version, rotation), so it is
+// re-read after each new backup and otherwise at most every few hours, for a version deleted by
+// hand.
+export const VERSION_COUNT_MAX_AGE_MS = 6 * 60 * 60 * 1000;
 export const CERTIFICATE_MISMATCH_CODE = 'ERR_SYNOLOGY_CERTIFICATE_MISMATCH';
 const CERTIFICATE_ERROR_CODES = new Set([
   'DEPTH_ZERO_SELF_SIGNED_CERT',
@@ -100,6 +112,7 @@ export class SynologyClient {
       fetchImpl = undiciFetch,
       mfaDeviceStore = new SynologyMfaDeviceStore(),
       requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+      now = Date.now,
     } = {},
   ) {
     this.config = config;
@@ -109,6 +122,9 @@ export class SynologyClient {
     this.loginPromise = null;
     this.requestTimeoutMs = requestTimeoutMs;
     this.mfaDeviceStore = mfaDeviceStore;
+    this.now = now;
+    // taskId -> { lastBackup, count, readAt }: the last Hyper Backup version count read.
+    this.versionCounts = new Map();
     const fingerprint = config.cert_fingerprint || '';
     this.dispatcher =
       config.url.startsWith('https://') && (fingerprint || !config.verify_ssl)
@@ -332,9 +348,49 @@ export class SynologyClient {
         { task_id: String(taskId), additional: '["last_bkp_result","last_bkp_time"]' },
         { preferredVersion: 1 },
       );
-      return status ? { ...task, ...status } : task;
+      const merged = status ? { ...task, ...status } : task;
+      const versionCount = await this.hyperBackupVersionCount(taskId, merged.last_bkp_time);
+      return versionCount === undefined ? merged : { ...merged, version_count: versionCount };
     });
+    // A deleted task must not keep its entry for the life of the process.
+    const present = new Set(taskList.map((task) => String(task.task_id ?? task.id)));
+    for (const key of this.versionCounts.keys()) {
+      if (!present.has(key)) this.versionCounts.delete(key);
+    }
     return { ...list, task_list: enriched };
+  }
+
+  /**
+   * Number of versions of a Hyper Backup task, or `undefined` when DSM does not tell. Re-read
+   * only after a new backup or when the last reading is too old (see VERSION_COUNT_MAX_AGE_MS).
+   * Any failure keeps the last known count: it must never cost the task its other states.
+   */
+  async hyperBackupVersionCount(taskId, lastBackup) {
+    if (!this.apiInfo('SYNO.Backup.Version', false)) return undefined;
+    const key = String(taskId);
+    const cached = this.versionCounts.get(key);
+    const now = this.now();
+    if (
+      cached &&
+      cached.lastBackup === lastBackup &&
+      now - cached.readAt < VERSION_COUNT_MAX_AGE_MS
+    ) {
+      return cached.count;
+    }
+    let count = cached?.count;
+    try {
+      const versions = await this.optionalCall(
+        'SYNO.Backup.Version',
+        'list',
+        { task_id: key },
+        { preferredVersion: 1 },
+      );
+      if (versions) count = countBackupVersions(versions) ?? count;
+    } catch (error) {
+      logger.debug(`Hyper Backup versions of task ${key} unavailable: ${error.message}`);
+    }
+    this.versionCounts.set(key, { lastBackup, count, readAt: now });
+    return count;
   }
 
   async getActiveBackup() {

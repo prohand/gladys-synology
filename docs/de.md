@@ -31,7 +31,7 @@ Klicke auf **DSM-Verbindung testen**. Bei Erfolg zeigt das Ergebnis das NAS-Mode
 
 ## Geräte
 
-Die Integration erstellt ein Gerät pro NAS, ein Gerät für jedes Speicher-Volume, ein Gerät für jede interne Festplatte und, sofern verfügbar, ein Gerät für jede Hyper Backup- oder Active Backup-Aufgabe. Jede Festplatte stellt den genauen von DSM gemeldeten SMART-Status, einen binären SMART-Zustandsindikator und, sofern DSM sie meldet, ihre Temperatur bereit. Eine Backup-Aufgabe stellt ihren Status, ihr letztes Ergebnis und den Zeitpunkt des letzten Backups bereit. Diese DSM-Paket-APIs sind nicht auf jedem Modell und jeder Version verfügbar; ihr Fehlen verhindert die System- und Speicherüberwachung nicht.
+Die Integration erstellt ein Gerät pro NAS, ein Gerät für jedes Speicher-Volume, ein Gerät für jede interne Festplatte und, sofern verfügbar, ein Gerät für jede Hyper Backup- oder Active Backup-Aufgabe. Jede Festplatte stellt den genauen von DSM gemeldeten SMART-Status, einen binären SMART-Zustandsindikator und, sofern DSM sie meldet, ihre Temperatur bereit. Eine Backup-Aufgabe stellt ihren Status, ihr letztes Ergebnis und den Zeitpunkt des letzten Backups bereit. Eine Hyper Backup-Aufgabe stellt zusätzlich ihre Anzahl an Versionen bereit, sofern DSM sie liefert; diese Anzahl wird nach jedem neuen Backup und mindestens alle 6 Stunden neu gelesen. Diese DSM-Paket-APIs sind nicht auf jedem Modell und jeder Version verfügbar; ihr Fehlen verhindert die System- und Speicherüberwachung nicht.
 
 Ein erster Messwertsatz wird sofort nach dem Hinzufügen eines Geräts gesendet, danach aktualisiert jede Aktualisierung alle Werte des NAS. Die Belegung der Volumes in Prozent wird auf zwei Nachkommastellen gerundet. Ein Verlauf wird für Auslastung, Temperatur und Zustandswerte gespeichert; Kapazitäten und Textinformationen erzeugen keinen redundanten Verlauf.
 
@@ -66,7 +66,7 @@ Ein Wartungszustand (Erweiterung, Datenbereinigung, Reparatur) zählt nie als Fe
 
 - **Status eines Synology-NAS abrufen**: erreichbar (ja/nein), Modell, DSM-Version, CPU, Arbeitsspeicher, Temperatur, Anzahl beeinträchtigter Volumes, ausfallender Festplatten und fehlgeschlagener Backups sowie die Liste der gefundenen Probleme. Ein nicht erreichbares NAS hält die Szene nicht an: Prüfe den Wert **Erreichbar**.
 - **Status eines Synology-Volumes abrufen**: Name, DSM-Status, fehlerfrei (ja/nein), Belegung (%), belegter, freier und gesamter Speicher (GB).
-- **Status eines Synology-Backups abrufen**: Aufgabenname, Paket, Status, Ergebnis, Datum des letzten Backups (im konfigurierten Datumsformat) und Stunden seit dem letzten Backup – praktisch, um vor einem Backup zu warnen, das nicht mehr läuft.
+- **Status eines Synology-Backups abrufen**: Aufgabenname, Paket, Status, Ergebnis, Datum des letzten Backups (im konfigurierten Datumsformat) Stunden seit dem letzten Backup und, für Hyper Backup, die Anzahl der Versionen – praktisch, um vor einem Backup zu warnen, das nicht mehr läuft.
 - **Synology-NAS aufwecken**: sendet ein Wake-on-LAN-Paket an das NAS (siehe unten) und gibt die geweckte MAC-Adresse zurück.
 
 ## Wake-on-LAN
@@ -93,4 +93,5 @@ Die Aktion sendet nur das Paket: Prüfe das Ergebnis etwas später mit **Status 
 - **`certificate does not match the pinned SHA-256 fingerprint`**: DSM hat ein anderes Zertifikat vorgelegt. Wenn du es selbst erneuert oder ersetzt hast, füge den neuen Fingerabdruck ein; andernfalls gibt sich etwas als dein NAS aus – es wurde nichts dorthin gesendet.
 - **Ein Volume fehlt**: Scanne nach dem Erstellen oder Entfernen eines Volumes erneut.
 - **Backup-Aufgaben fehlen**: Prüfe, ob Hyper Backup oder Active Backup installiert ist, mindestens eine Aufgabe existiert und das eigene DSM-Konto das entsprechende Paket öffnen kann, und scanne dann erneut.
+- **Eine Hyper Backup-Aufgabe hat keine Funktion „Versionen“**: Scanne erneut und aktualisiere das Gerät in Gladys. Die Anzahl stammt aus einer nicht dokumentierten DSM-API: Liefert deine DSM-Version sie nicht, wird die Funktion einfach nicht angelegt.
 - **Ein Backup-Datum hat keinen Wert**: Aktualisiere die Integration, speichere die Verbindung erneut und warte auf die nächste Aktualisierung. Die Details von Active Backup werden Aufgabe für Aufgabe abgefragt, da seine allgemeine Aufgabenliste nicht immer die Versionsdaten enthält.

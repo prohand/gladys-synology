@@ -4,6 +4,7 @@ import { normalizeConfig } from '../src/config.js';
 import {
   BACKUP_TASK_CONCURRENCY,
   SynologyClient,
+  VERSION_COUNT_MAX_AGE_MS,
   mapWithConcurrency,
 } from '../src/synology/client.js';
 
@@ -547,6 +548,129 @@ test('client reads the status of many backup tasks a few at a time', async () =>
   assert.equal(hyperBackup.task_list.length, taskCount);
   assert.equal(hyperBackup.task_list[7].last_bkp_result, 'done-7');
   assert.equal(peak, BACKUP_TASK_CONCURRENCY);
+});
+
+function hyperBackupClient({ withVersionApi = true, versions } = {}) {
+  const state = {
+    tasks: [{ task_id: 7, last_bkp_time: 1_000 }],
+    versionCalls: [],
+    clock: 0,
+  };
+  const apiData = {
+    'SYNO.API.Auth': { path: 'auth.cgi', minVersion: 1, maxVersion: 7 },
+    'SYNO.Backup.Task': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 },
+    ...(withVersionApi
+      ? { 'SYNO.Backup.Version': { path: 'entry.cgi', minVersion: 1, maxVersion: 1 } }
+      : {}),
+  };
+  const client = new SynologyClient(
+    normalizeConfig({ url: 'https://nas:5001', username: 'u', password: 'p' }),
+    {
+      now: () => state.clock,
+      fetchImpl: async (_url, options) => {
+        const body = Object.fromEntries(options.body.entries());
+        if (body.api === 'SYNO.API.Info') {
+          assert.match(body.query, /SYNO\.Backup\.Version/);
+          return jsonResponse({ success: true, data: apiData });
+        }
+        if (body.api === 'SYNO.API.Auth') {
+          return jsonResponse({ success: true, data: { sid: 's' } });
+        }
+        if (body.api === 'SYNO.Backup.Version') {
+          state.versionCalls.push(body);
+          return versions(body, state);
+        }
+        if (body.method === 'list') {
+          return jsonResponse({
+            success: true,
+            data: { task_list: state.tasks.map(({ task_id }) => ({ task_id })) },
+          });
+        }
+        const task = state.tasks.find((entry) => String(entry.task_id) === body.task_id);
+        return jsonResponse({ success: true, data: { last_bkp_time: task.last_bkp_time } });
+      },
+    },
+  );
+  return { client, state };
+}
+
+test('client reads the Hyper Backup version count, then again only after a new backup', async () => {
+  let total = 30;
+  const { client, state } = hyperBackupClient({
+    versions: () => jsonResponse({ success: true, data: { total, version_info_list: [] } }),
+  });
+  await client.discoverApis();
+
+  const first = await client.getHyperBackup();
+  assert.equal(first.task_list[0].version_count, 30);
+  assert.equal(state.versionCalls.length, 1);
+  assert.equal(state.versionCalls[0].task_id, '7');
+  assert.equal(state.versionCalls[0].method, 'list');
+
+  // Same backup, a few polls later: no new call, same count.
+  total = 31;
+  state.clock = 60_000;
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 30);
+  assert.equal(state.versionCalls.length, 1);
+
+  // A new backup finished: the versions are read again.
+  state.tasks[0].last_bkp_time = 2_000;
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 31);
+  assert.equal(state.versionCalls.length, 2);
+
+  // No backup for hours (a version deleted by hand): read again once the reading is too old.
+  total = 29;
+  state.clock += VERSION_COUNT_MAX_AGE_MS;
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 29);
+  assert.equal(state.versionCalls.length, 3);
+});
+
+test('a failing version list keeps the last count and never fails the backup tasks', async () => {
+  let mode = 'ok';
+  const { client, state } = hyperBackupClient({
+    versions: () => {
+      if (mode === 'ok') return jsonResponse({ success: true, data: { versions: [{}, {}] } });
+      if (mode === 'denied') return jsonResponse({ success: false, error: { code: 105 } });
+      throw new TypeError('fetch failed');
+    },
+  });
+  await client.discoverApis();
+  assert.equal((await client.getHyperBackup()).task_list[0].version_count, 2);
+
+  for (const failure of ['denied', 'network']) {
+    mode = failure;
+    state.tasks[0].last_bkp_time += 1_000;
+    const { task_list } = await client.getHyperBackup();
+    assert.equal(task_list[0].last_bkp_time, state.tasks[0].last_bkp_time);
+    assert.equal(task_list[0].version_count, 2);
+  }
+  // The failure is remembered like a reading: no new call on every poll.
+  const calls = state.versionCalls.length;
+  await client.getHyperBackup();
+  assert.equal(state.versionCalls.length, calls);
+});
+
+test('a DSM without SYNO.Backup.Version gives no version count and no extra call', async () => {
+  const { client, state } = hyperBackupClient({
+    withVersionApi: false,
+    versions: () => assert.fail('SYNO.Backup.Version must not be called'),
+  });
+  await client.discoverApis();
+  const { task_list } = await client.getHyperBackup();
+  assert.ok(!('version_count' in task_list[0]));
+  assert.equal(state.versionCalls.length, 0);
+});
+
+test('client forgets the version count of a deleted Hyper Backup task', async () => {
+  const { client, state } = hyperBackupClient({
+    versions: () => jsonResponse({ success: true, data: { total: 3 } }),
+  });
+  await client.discoverApis();
+  await client.getHyperBackup();
+  assert.ok(client.versionCounts.has('7'));
+  state.tasks = [];
+  await client.getHyperBackup();
+  assert.equal(client.versionCounts.size, 0);
 });
 
 test('client reads the network settings for Wake-on-LAN, and never fails a snapshot over them', async () => {

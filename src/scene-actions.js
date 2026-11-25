@@ -106,6 +106,8 @@ export async function getBackupStatus(fleet, gladys, fields = {}) {
     hours_since_last_backup: Number.isFinite(lastBackup)
       ? Math.round((service.now() - lastBackup) / 360_000) / 10
       : undefined,
+    // Hyper Backup only, and only when DSM answers SYNO.Backup.Version.
+    version_count: backup.versionCount,
   };
 }
 
