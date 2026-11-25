@@ -6,6 +6,11 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- The **Synology backups** widget shows the number of versions of each Hyper Backup task, when
+  DSM provides it (for example "Hyper Backup · DS218+ · 12 versions").
+
 ## [2.6.2] - 2026-11-25
 
 ### Fixed

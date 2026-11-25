@@ -43,7 +43,7 @@ Füge sie im Bearbeitungsmodus des Dashboards hinzu (**Bearbeiten → Neues Widg
 
 - **Synology-NAS**: Modell, DSM-Version, CPU, Arbeitsspeicher und Temperatur, eine Zeile pro Volume (Belegung und Zustand), eine Zusammenfassung der Festplatten und Backups sowie eine Schaltfläche zum Öffnen von DSM, wenn dessen URL HTTPS verwendet. Sobald das NAS-Gerät zu Gladys hinzugefügt wurde, zeigt die Karte außerdem den Verlauf von CPU und Arbeitsspeicher über den in der Einstellung **Lastverlauf** gewählten Zeitraum.
 - **Synology-Speicher**: eine Anzeige pro Volume, der gesamte freie Speicher und eine Zeile pro Festplatte mit ihrem SMART-Status und ihrer Temperatur.
-- **Synology-Backups**: die Hyper Backup- und Active Backup-Aufgaben mit ihrem letzten Ergebnis, Fehler zuerst. Bei leerer Einstellung **NAS** listet es die Aufgaben aller NAS auf. Mit der Einstellung **Angezeigte Aufgaben** lassen sich nur die fehlgeschlagenen oder teilweise erfolgreichen behalten.
+- **Synology-Backups**: die Hyper Backup- und Active Backup-Aufgaben mit ihrem letzten Ergebnis, Fehler zuerst; eine Hyper Backup-Aufgabe zeigt zusätzlich ihre Anzahl an Versionen, sofern DSM sie liefert. Bei leerer Einstellung **NAS** listet es die Aufgaben aller NAS auf. Mit der Einstellung **Angezeigte Aufgaben** lassen sich nur die fehlgeschlagenen oder teilweise erfolgreichen behalten.
 
 Widgets zeigen die bei der letzten Aktualisierung gelesenen Werte: Das Öffnen eines Dashboards fragt das NAS nie ab. Sie werden nach jeder Aktualisierung aktualisiert. Ein NAS, das nicht mehr antwortet, wird als **Nicht erreichbar** markiert und behält seine letzten bekannten Werte. Auf einem Dashboard mit US-Einheiten werden Temperaturen in °F angezeigt.
 

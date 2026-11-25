@@ -43,7 +43,7 @@ Add them in the dashboard's edit mode (**Edit → New widget**); every widget ha
 
 - **Synology NAS**: model, DSM version, CPU, memory and temperature, one row per volume (usage and health), a summary of the disks and the backups, and a button to open DSM when its URL uses HTTPS. Once the NAS device is added to Gladys, the card also plots the CPU and memory history over the period chosen in the **Load history** setting.
 - **Synology storage**: one gauge per volume, the total free space and one row per disk with its SMART status and temperature.
-- **Synology backups**: the Hyper Backup and Active Backup tasks with their last result, failures first. With an empty **NAS** setting, it lists the tasks of every NAS. The **Tasks shown** setting can keep only the failed or partial ones.
+- **Synology backups**: the Hyper Backup and Active Backup tasks with their last result, failures first; a Hyper Backup task also shows its number of versions when DSM provides it. With an empty **NAS** setting, it lists the tasks of every NAS. The **Tasks shown** setting can keep only the failed or partial ones.
 
 Widgets show the values read at the last refresh: opening a dashboard never queries the NAS. They update after each refresh. A NAS that stops answering is flagged **Unreachable** and keeps its last known values. On a dashboard set to US units, temperatures are shown in °F.
 
