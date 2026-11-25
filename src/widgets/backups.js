@@ -48,22 +48,23 @@ const VERSIONS = {
   es: (count) => `${count} ${count === 1 ? 'versión' : 'versiones'}`,
 };
 
-// "Hyper Backup · DS920+", plus the number of versions when DSM gave it (Hyper Backup only).
-function subtitle(backup, model) {
-  const base = `${backupProviderName(backup.provider)} · ${model}`;
-  if (backup.versionCount === undefined) return truncate(base, 60);
+// The Gladys card shows the subtitle only for an item without a date, and every task with a
+// backup has one: the number of versions (Hyper Backup only, when DSM gave it) goes in the title,
+// the task name being shortened first so the count always stays visible.
+function title(backup) {
+  if (backup.versionCount === undefined) return truncate(backup.name, 60);
   return Object.fromEntries(
-    Object.entries(VERSIONS).map(([language, versions]) => [
-      language,
-      truncate(`${base} · ${versions(backup.versionCount)}`, 60),
-    ]),
+    Object.entries(VERSIONS).map(([language, versions]) => {
+      const suffix = ` (${versions(backup.versionCount)})`;
+      return [language, `${truncate(backup.name, 60 - suffix.length)}${suffix}`];
+    }),
   );
 }
 
 function item({ backup, model }) {
   const entry = {
-    title: truncate(backup.name, 60),
-    subtitle: subtitle(backup, model),
+    title: title(backup),
+    subtitle: truncate(`${backupProviderName(backup.provider)} · ${model}`, 60),
   };
   if (backup.lastBackupAt && !Number.isNaN(new Date(backup.lastBackupAt).getTime())) {
     entry.date = backup.lastBackupAt;

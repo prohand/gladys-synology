@@ -6,6 +6,12 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The number of Hyper Backup versions did not show in the **Synology backups** widget: Gladys
+  hides the line under the task name when the task has a date. The count now follows the task
+  name, for example "Nas_Srv-Home vers Moji S3 (1 version)".
+
 ## [2.7.0] - 2026-11-25
 
 ### Added

@@ -154,15 +154,23 @@ test('the backups card lists failures first and can hide the successful tasks', 
   );
 });
 
-test('the backups card gives the number of Hyper Backup versions when DSM tells it', async () => {
+test('the backups card gives the number of Hyper Backup versions in the task title', async () => {
+  const longName = 'A very long Hyper Backup task name that fills the whole title';
   const fleet = await readyFleet([
     [
       rawDsmSnapshot({
         hyperBackup: {
           task_list: [
-            { task_id: 7, name: 'Cloud archive', last_bkp_result: 'done', version_count: 12 },
+            {
+              task_id: 7,
+              name: 'Cloud archive',
+              last_bkp_result: 'done',
+              last_bkp_time: 1_790_000_000,
+              version_count: 12,
+            },
             { task_id: 8, name: 'USB copy', last_bkp_result: 'done', version_count: 1 },
             { task_id: 9, name: 'Old task', last_bkp_result: 'done' },
+            { task_id: 10, name: longName, last_bkp_result: 'done', version_count: 3 },
           ],
         },
       }),
@@ -171,17 +179,26 @@ test('the backups card gives the number of Hyper Backup versions when DSM tells 
   const result = content(WIDGET.BACKUPS, fleet);
   assert.deepEqual(validateWidgetContent(result), []);
   const [list] = ofType(result, 'card-list');
-  const byTitle = Object.fromEntries(list.items.map((entry) => [entry.title, entry.subtitle]));
-  assert.deepEqual(byTitle['Cloud archive'], {
-    en: 'Hyper Backup · DS920+ · 12 versions',
-    fr: 'Hyper Backup · DS920+ · 12 versions',
-    de: 'Hyper Backup · DS920+ · 12 Versionen',
-    es: 'Hyper Backup · DS920+ · 12 versiones',
+  const titles = list.items.map((entry) => entry.title);
+  // The Gladys card hides the subtitle of an item with a date: the count must be in the title.
+  const archive = list.items.find((entry) => entry.title.en?.startsWith('Cloud archive'));
+  assert.ok(archive.date);
+  assert.deepEqual(archive.title, {
+    en: 'Cloud archive (12 versions)',
+    fr: 'Cloud archive (12 versions)',
+    de: 'Cloud archive (12 Versionen)',
+    es: 'Cloud archive (12 versiones)',
   });
-  assert.equal(byTitle['USB copy'].de, 'Hyper Backup · DS920+ · 1 Version');
-  assert.equal(byTitle['USB copy'].es, 'Hyper Backup · DS920+ · 1 versión');
-  // No count from DSM: the subtitle stays as it was.
-  assert.equal(byTitle['Old task'], 'Hyper Backup · DS920+');
+  assert.equal(archive.subtitle, 'Hyper Backup · DS920+');
+  const usb = titles.find((entry) => entry.en?.startsWith('USB copy'));
+  assert.equal(usb.de, 'USB copy (1 Version)');
+  assert.equal(usb.es, 'USB copy (1 versión)');
+  // No count from DSM: the plain task name, as before.
+  assert.ok(titles.includes('Old task'));
+  // A long name is shortened, never the count.
+  const long = titles.find((entry) => entry.en?.endsWith('(3 versions)'));
+  assert.ok(long.en.length <= 60);
+  assert.match(long.en, /^A very long .*… \(3 versions\)$/);
 });
 
 test('the backups card covers every NAS unless one is chosen, and names the unreachable ones', async () => {
