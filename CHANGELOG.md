@@ -6,6 +6,14 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- **Number of Hyper Backup versions**: each Hyper Backup task gets a **Versions** value, and the
+  **Get the state of a Synology backup** scene action a new `version_count` output. The count is
+  read again after each new backup and at least every 6 hours. It comes from an undocumented DSM
+  API: when DSM does not provide it, the value is simply not created. Scan again and update the
+  device in Gladys to see it on tasks already added.
+
 ## [2.5.3] - 2026-11-16
 
 - Maintenance release, no functional change.
