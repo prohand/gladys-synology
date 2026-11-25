@@ -6,6 +6,11 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+
+- The **Versions** value of a Hyper Backup task showed as an empty chip, without name or icon, in
+  Gladys: it is now an integer counter. Scan again and update the Hyper Backup devices.
+
 ## [2.6.1] - 2026-11-25
 
 ### Fixed
