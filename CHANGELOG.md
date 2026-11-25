@@ -6,6 +6,8 @@ All notable changes to this integration are documented here. The format follows
 
 ## [Unreleased]
 
+## [2.6.1] - 2026-11-25
+
 ### Fixed
 
 - **Number of Hyper Backup versions**: the value never appeared, because DSM only answers the
@@ -182,7 +184,8 @@ First public release.
 - Publish Synology metrics reliably
 - Migrate fast polling to safe default
 
-[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/prohand/gladys-synology/compare/v2.6.1...HEAD
+[2.6.1]: https://github.com/prohand/gladys-synology/compare/v2.6.0...v2.6.1
 [2.6.0]: https://github.com/prohand/gladys-synology/compare/v2.5.3...v2.6.0
 [2.5.3]: https://github.com/prohand/gladys-synology/compare/v2.5.2...v2.5.3
 [2.5.2]: https://github.com/prohand/gladys-synology/compare/v2.5.1...v2.5.2
